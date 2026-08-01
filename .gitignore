@@ -1,0 +1,11 @@
+.worktrees/
+.superpowers/
+node_modules/
+dist/
+.astro/
+.coffee-chat/
+coverage/
+playwright-report/
+test-results/
+*.log
+.DS_Store
