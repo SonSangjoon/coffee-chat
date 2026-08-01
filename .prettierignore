@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+.astro/
+.superpowers/
+package-lock.json
+README.md
+docs/superpowers/specs/2026-07-30-coffee-chat-design.md

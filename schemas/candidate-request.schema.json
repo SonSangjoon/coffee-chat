@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/candidate-request.schema.json",
+  "title": "Coffee Chat Candidate Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "operations", "setup_effects"],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/semver" },
+    "mode": { "enum": ["make-mine", "contribute", "update"] },
+    "operations": { "type": "array", "items": { "$ref": "#/$defs/operation" } },
+    "setup_effects": {
+      "type": "array",
+      "items": { "const": "install-pre-commit" },
+      "uniqueItems": true
+    },
+    "output_paths": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repository_path" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "repository_path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "action"],
+      "properties": {
+        "type": { "enum": ["manifest", "entity", "note"] },
+        "action": { "enum": ["create", "update", "retire", "correct"] },
+        "temporary_key": { "type": "string", "minLength": 1 },
+        "path": { "$ref": "#/$defs/repository_path" }
+      }
+    }
+  }
+}

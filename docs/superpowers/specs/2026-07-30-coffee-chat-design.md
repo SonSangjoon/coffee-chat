@@ -1,6 +1,6 @@
 # Coffee Chat Design Specification
 
-- Status: Revised design; awaiting written-spec approval
+- Status: Approved
 - Date: 2026-07-30
 - Product shape: Public temporal personal knowledge graph, shared agent method, and installable multi-skill plugin
 - Primary distribution: GitHub repository

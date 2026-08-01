@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/receipt.schema.json",
+  "title": "Coffee Chat Apply Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_digest",
+    "status",
+    "changed_paths",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/semver" },
+    "candidate_digest": { "$ref": "#/$defs/digest" },
+    "status": {
+      "enum": ["applied", "partial_local_result", "approval_invalidated"]
+    },
+    "changed_paths": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/repository_path" },
+      "uniqueItems": true
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": { "status": { "enum": ["passed", "failed"] } }
+    },
+    "setup_effects": {
+      "type": "array",
+      "items": { "const": "install-pre-commit" },
+      "uniqueItems": true
+    },
+    "setup_failure": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "repository_path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+    }
+  }
+}

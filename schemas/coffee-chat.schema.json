@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/coffee-chat.schema.json",
+  "title": "Coffee Chat Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_url",
+    "schema_version",
+    "time_zone",
+    "initialization_state",
+    "profile",
+    "repository",
+    "pages_url",
+    "plugin",
+    "marketplace_name",
+    "paths"
+  ],
+  "properties": {
+    "schema_url": { "const": "./schemas/coffee-chat.schema.json" },
+    "schema_version": { "$ref": "#/$defs/semver" },
+    "time_zone": { "type": "string", "minLength": 1 },
+    "initialization_state": {
+      "enum": ["pending_first_candidate", "initialized"]
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["display_name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid_v4" },
+        "display_name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "default_branch"],
+      "properties": {
+        "url": { "$ref": "#/$defs/http_url" },
+        "default_branch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "pages_url": { "$ref": "#/$defs/http_url" },
+    "plugin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "description"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "version": { "$ref": "#/$defs/semver" },
+        "description": { "type": "string", "minLength": 1 }
+      }
+    },
+    "marketplace_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["knowledge_index", "skills", "method"],
+      "properties": {
+        "knowledge_index": { "$ref": "#/$defs/repository_path" },
+        "skills": { "$ref": "#/$defs/repository_path" },
+        "method": { "$ref": "#/$defs/repository_path" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "initialization_state": { "const": "initialized" } }
+      },
+      "then": {
+        "properties": {
+          "profile": {
+            "type": "object",
+            "properties": { "id": true },
+            "required": ["id"]
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "profile": {
+            "type": "object",
+            "not": {
+              "type": "object",
+              "properties": { "id": true },
+              "required": ["id"]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "uuid_v4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "http_url": { "type": "string", "format": "uri", "pattern": "^https?://" },
+    "repository_path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+    }
+  }
+}
