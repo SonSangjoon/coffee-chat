@@ -1,0 +1,26 @@
+{
+  "schema_url": "./schemas/coffee-chat.schema.json",
+  "schema_version": "1.0.0",
+  "time_zone": "Asia/Seoul",
+  "initialization_state": "initialized",
+  "profile": {
+    "id": "69d249c9-3c4f-4e0d-b622-74b292f87e9d",
+    "display_name": "Fixture Owner"
+  },
+  "repository": {
+    "url": "https://github.com/example/coffee-chat",
+    "default_branch": "main"
+  },
+  "pages_url": "https://example.github.io/coffee-chat/",
+  "plugin": {
+    "name": "coffee-chat-example",
+    "version": "1.0.0",
+    "description": "Fixture graph."
+  },
+  "marketplace_name": "coffee-chat-example-marketplace",
+  "paths": {
+    "knowledge_index": "./knowledge/index.json",
+    "skills": "./skills/",
+    "method": "./method/"
+  }
+}
