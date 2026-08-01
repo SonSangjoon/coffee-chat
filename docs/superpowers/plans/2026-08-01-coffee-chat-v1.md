@@ -1,5 +1,9 @@
 # Coffee Chat v1 Implementation Plan
 
+> **Status: Superseded.** The approved engine/instance split is implemented by
+> `docs/superpowers/plans/2026-08-02-coffee-chat-engine-v1.md`. Do not execute
+> this earlier personal-repository plan.
+
 **Normative product contract:** `docs/superpowers/specs/2026-07-30-coffee-chat-design.md`
 
 ## Global constraints

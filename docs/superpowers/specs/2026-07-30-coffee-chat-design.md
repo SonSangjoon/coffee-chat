@@ -1,6 +1,6 @@
 # Coffee Chat Design Specification
 
-- Status: Review requested
+- Status: Approved
 - Original approval: 2026-07-30
 - Revised: 2026-08-02
 - Product shape: Neutral Coffee Chat template and self-contained public temporal knowledge graph instances
