@@ -30,15 +30,41 @@
       "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
     },
     "operation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type", "action"],
-      "properties": {
-        "type": { "enum": ["manifest", "entity", "note"] },
-        "action": { "enum": ["create", "update", "retire", "correct"] },
-        "temporary_key": { "type": "string", "minLength": 1 },
-        "path": { "$ref": "#/$defs/repository_path" }
-      }
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "action"],
+          "properties": {
+            "type": { "const": "manifest" },
+            "action": { "enum": ["initialize", "update"] },
+            "temporary_key": { "type": "string" },
+            "path": { "$ref": "#/$defs/repository_path" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "action"],
+          "properties": {
+            "type": { "const": "entity" },
+            "action": { "enum": ["create", "update", "retire"] },
+            "temporary_key": { "type": "string" },
+            "path": { "$ref": "#/$defs/repository_path" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "action"],
+          "properties": {
+            "type": { "const": "note" },
+            "action": { "enum": ["create", "correct"] },
+            "temporary_key": { "type": "string" },
+            "path": { "$ref": "#/$defs/repository_path" }
+          }
+        }
+      ]
     }
   }
 }

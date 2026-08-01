@@ -33,7 +33,7 @@
       "items": { "const": "install-pre-commit" },
       "uniqueItems": true
     },
-    "setup_failure": { "type": "string", "minLength": 1 }
+    "setup_failure": { "type": "string" }
   },
   "$defs": {
     "semver": {

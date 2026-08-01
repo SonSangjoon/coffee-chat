@@ -169,6 +169,144 @@ describe("Coffee Chat foundation contracts", () => {
     ).toBe(false);
   });
 
+  it("does not impose semantic minimum-length gates on present text fields", async () => {
+    const validator = await contractValidator();
+    const manifest = structuredClone(await readJson("coffee-chat.json")) as {
+      time_zone: string;
+      profile: { display_name: string };
+      repository: { default_branch: string };
+      plugin: { description: string };
+    };
+    manifest.time_zone = "";
+    manifest.profile.display_name = "";
+    manifest.repository.default_branch = "";
+    manifest.plugin.description = "";
+
+    const rootManifest = validator.getSchema(
+      "https://coffee-chat.dev/schemas/coffee-chat.schema.json",
+    );
+    const note = validator.getSchema(
+      "https://coffee-chat.dev/schemas/note-frontmatter.schema.json",
+    );
+    const entities = validator.getSchema(
+      "https://coffee-chat.dev/schemas/entity-registry.schema.json",
+    );
+    const index = validator.getSchema(
+      "https://coffee-chat.dev/schemas/knowledge-index.schema.json",
+    );
+    const preview = validator.getSchema(
+      "https://coffee-chat.dev/schemas/preview.schema.json",
+    );
+    const receipt = validator.getSchema(
+      "https://coffee-chat.dev/schemas/receipt.schema.json",
+    );
+
+    expect(rootManifest?.(manifest)).toBe(true);
+    expect(
+      note?.({
+        id: "a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61",
+        title: "",
+        temporal_coverage: "2026-02",
+        recorded_on: "2026-08-01",
+        sources: [{ url: "https://example.com/source", title: "" }],
+      }),
+    ).toBe(true);
+    expect(
+      entities?.([
+        {
+          id: "48d1c840-5d38-48d0-8e74-7187d9f0c2fd",
+          label: "",
+          aliases: [""],
+          kind: "",
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      index?.({
+        schema_version: "1.0.0",
+        profile_id: "69d249c9-3c4f-4e0d-b622-74b292f87e9d",
+        knowledge_digest:
+          "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+        nodes: [
+          {
+            id: "a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61",
+            type: "note",
+            path: "./knowledge/notes/a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61.md",
+            content_digest:
+              "sha256:260304ee1f19f5f31c3d5d338bd112f56833669335a177fd129d4129c16375e0",
+            title: "",
+            temporal_coverage: "",
+            recorded_on: "2026-08-01",
+          },
+        ],
+        edges: [],
+      }),
+    ).toBe(true);
+    expect(
+      preview?.({
+        schema_version: "1.0.0",
+        candidate_digest:
+          "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+        base_commit: "583ba3e",
+        affected_paths: ["./coffee-chat.json"],
+        validation: { status: "passed" },
+        unresolved_source_limitations: [""],
+      }),
+    ).toBe(true);
+    expect(
+      receipt?.({
+        schema_version: "1.0.0",
+        candidate_digest:
+          "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+        status: "partial_local_result",
+        changed_paths: ["./coffee-chat.json"],
+        validation: { status: "failed" },
+        setup_failure: "",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects Candidate type and action cross-products that have no lifecycle branch", async () => {
+    const validator = await contractValidator();
+    const candidate = validator.getSchema(
+      "https://coffee-chat.dev/schemas/candidate-request.schema.json",
+    );
+
+    for (const operation of [
+      { type: "note", action: "retire" },
+      { type: "entity", action: "correct" },
+      { type: "manifest", action: "create" },
+    ]) {
+      expect(
+        candidate?.({
+          schema_version: "1.0.0",
+          mode: "update",
+          operations: [operation],
+          setup_effects: [],
+        }),
+      ).toBe(false);
+    }
+
+    for (const operation of [
+      { type: "manifest", action: "initialize" },
+      { type: "manifest", action: "update" },
+      { type: "entity", action: "create", temporary_key: "" },
+      { type: "entity", action: "update" },
+      { type: "entity", action: "retire" },
+      { type: "note", action: "create" },
+      { type: "note", action: "correct" },
+    ]) {
+      expect(
+        candidate?.({
+          schema_version: "1.0.0",
+          mode: "update",
+          operations: [operation],
+          setup_effects: [],
+        }),
+      ).toBe(true);
+    }
+  });
+
   it("publishes the exact code license and separate content rights boundary", async () => {
     const [license, contentLicense] = await Promise.all([
       readFile(resolve(root, "LICENSE"), "utf8"),

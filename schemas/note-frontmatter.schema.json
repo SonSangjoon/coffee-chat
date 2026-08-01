@@ -7,7 +7,7 @@
   "required": ["id", "title", "temporal_coverage", "recorded_on", "sources"],
   "properties": {
     "id": { "$ref": "#/$defs/uuid_v4" },
-    "title": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
     "temporal_coverage": { "$ref": "#/$defs/temporal_coverage" },
     "recorded_on": { "$ref": "#/$defs/date" },
     "sources": {
@@ -40,7 +40,7 @@
       "required": ["url", "title"],
       "properties": {
         "url": { "type": "string", "format": "uri", "pattern": "^https?://" },
-        "title": { "type": "string", "minLength": 1 },
+        "title": { "type": "string" },
         "published_on": { "$ref": "#/$defs/partial_date" },
         "accessed_on": { "$ref": "#/$defs/date" }
       }

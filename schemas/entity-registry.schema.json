@@ -14,13 +14,13 @@
           "type": "string",
           "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
         },
-        "label": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
         "aliases": {
           "type": "array",
-          "items": { "type": "string", "minLength": 1 },
+          "items": { "type": "string" },
           "uniqueItems": true
         },
-        "kind": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string" },
         "same_as": {
           "type": "array",
           "items": {

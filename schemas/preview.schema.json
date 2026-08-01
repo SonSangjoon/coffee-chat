@@ -33,7 +33,7 @@
     },
     "unresolved_source_limitations": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": { "type": "string" }
     }
   },
   "$defs": {
