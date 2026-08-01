@@ -31,6 +31,13 @@ import {
   generatedIndexBytes,
 } from "./generate.ts";
 import {
+  checkGeneratedProjections,
+  generatedProjectionStatePaths,
+  hasDeliveryProjectionInputs,
+  inspectGeneratedProjections,
+  writeGeneratedProjections,
+} from "./projections.ts";
+import {
   inspectHook,
   installHook,
   type GitExecutor,
@@ -763,13 +770,43 @@ async function canonicalPaths(
   );
 }
 
+async function deliveryProjectionPaths(
+  snapshot: Awaited<ReturnType<typeof createSnapshot>>,
+  graph: KnowledgeGraph,
+): Promise<string[]> {
+  if (!(await hasDeliveryProjectionInputs(snapshot))) return [];
+  return generatedProjectionStatePaths(snapshot, graph);
+}
+
+async function repositoryStatePaths(
+  root: string,
+  graph: KnowledgeGraph,
+  fileSystem: CandidateFileSystem,
+): Promise<string[]> {
+  const snapshot = await createSnapshot(root, "worktree");
+  return sortedStrings([
+    ...(await canonicalPaths(root, fileSystem)),
+    ...(await deliveryProjectionPaths(snapshot, graph)),
+  ]);
+}
+
 async function supportPaths(
   root: string,
   fileSystem: CandidateFileSystem,
 ): Promise<string[]> {
-  return (await walkFiles(fileSystem, resolve(root, "schemas"))).map(
+  const schemas = (await walkFiles(fileSystem, resolve(root, "schemas"))).map(
     (path) => `schemas/${path}`,
   );
+  const optional = [
+    "LICENSE",
+    "skills/coffee-chat/SKILL.md",
+    "skills/apply-perspective/SKILL.md",
+    "skills/build-kg/SKILL.md",
+  ];
+  const found: string[] = [];
+  for (const path of optional)
+    if (await pathExists(fileSystem, resolve(root, path))) found.push(path);
+  return sortedStrings([...schemas, ...found]);
 }
 
 async function implementationPaths(
@@ -1310,7 +1347,7 @@ function previewMarkdownBytes(manifest: CandidateManifest): Buffer {
     `Frozen date (${preview.time_zone}): \`${preview.frozen_date}\``,
     `Knowledge digest: \`${preview.knowledge_digest}\``,
     "",
-    "## Canonical changes",
+    "## Repository changes",
     "",
     ...preview.canonical_diff.map(
       (change) => `- ${change.change}: \`${change.path}\``,
@@ -1369,19 +1406,6 @@ function withoutCandidateDigest(
   return copy;
 }
 
-async function validatePreviewSchema(
-  root: string,
-  manifest: CandidateManifest,
-): Promise<void> {
-  const validate = await schemaValidator(root, "preview.schema.json");
-  if (!validate(previewObject(manifest)))
-    throw unable(
-      "preview-schema-invalid",
-      "./preview.json",
-      "Materialized Preview does not satisfy its strict public schema.",
-    );
-}
-
 export async function prepareCandidate(
   options: { root: string; requestPath: string; out: string },
   overrides: CandidateDependencies = {},
@@ -1427,6 +1451,28 @@ export async function prepareCandidate(
       ".",
       "Existing canonical graph must pass the shared validator before preparation.",
     );
+  const baseProjectionPaths = await deliveryProjectionPaths(
+    snapshot,
+    baseValidation.graph,
+  );
+  if (baseProjectionPaths.length > 0) {
+    const inspection = await inspectGeneratedProjections(
+      snapshot,
+      baseValidation.graph,
+    );
+    const ownedStale = new Set(inspection.ownedStalePaths.map(repositoryPath));
+    if (
+      inspection.blockingDiagnostics.length > 0 ||
+      inspection.diagnostics.some(
+        (diagnostic) => !ownedStale.has(diagnostic.path),
+      )
+    )
+      throw validationFailure(
+        "candidate-base-invalid",
+        ".",
+        "Existing generated delivery projections must match canonical inputs; only marker-owned stale package files may be bound for deletion.",
+      );
+  }
   const graphIds = new Set([
     ...(baseValidation.graph.manifest.profile.id
       ? [baseValidation.graph.manifest.profile.id]
@@ -1451,6 +1497,10 @@ export async function prepareCandidate(
     repository.root,
     deps.fileSystem,
   );
+  const currentState = sortedStrings([
+    ...currentCanonical,
+    ...baseProjectionPaths,
+  ]);
   const support = await supportPaths(repository.root, deps.fileSystem);
   const implementation = await implementationPaths(
     repository.root,
@@ -1529,6 +1579,26 @@ export async function prepareCandidate(
         ".",
         "Materialized Candidate failed the shared validator.",
       );
+    if (baseProjectionPaths.length > 0)
+      await writeGeneratedProjections(
+        candidateRepository,
+        materializedSnapshot,
+        materializedValidation.graph,
+      );
+    materializedSnapshot = await createSnapshot(
+      candidateRepository,
+      "worktree",
+    );
+    materializedValidation = await validateKnowledge(materializedSnapshot);
+    if (
+      !materializedValidation.graph ||
+      materializedValidation.diagnostics.length > 0
+    )
+      throw validationFailure(
+        "candidate-validation-failed",
+        ".",
+        "Materialized Candidate failed the shared validator.",
+      );
     if (
       (
         await checkGeneratedIndex(
@@ -1542,9 +1612,24 @@ export async function prepareCandidate(
         "./knowledge/index.json",
         "Materialized generated bytes do not match the shared generator.",
       );
+    if (
+      baseProjectionPaths.length > 0 &&
+      (
+        await checkGeneratedProjections(
+          materializedSnapshot,
+          materializedValidation.graph,
+        )
+      ).length > 0
+    )
+      throw validationFailure(
+        "candidate-generation-mismatch",
+        ".",
+        "Materialized delivery projections do not match the shared generator.",
+      );
 
-    const materializedCanonical = await canonicalPaths(
+    const materializedCanonical = await repositoryStatePaths(
       candidateRepository,
+      materializedValidation.graph,
       deps.fileSystem,
     );
     const outputs = await pathDigests(
@@ -1555,7 +1640,7 @@ export async function prepareCandidate(
     const currentInputs = await pathDigests(
       deps.fileSystem,
       repository.root,
-      currentCanonical,
+      currentState,
     );
     const currentByPath = new Map(
       currentInputs.map((entry) => [entry.path, entry.digest]),
@@ -1591,7 +1676,7 @@ export async function prepareCandidate(
     }));
     const relevantWorktree = await worktreeBinding(
       repository.root,
-      [...currentCanonical, ...materializedCanonical],
+      [...currentState, ...materializedCanonical],
       deps.git,
     );
     const setupEffects: SetupBinding[] = [];
@@ -1689,7 +1774,7 @@ export async function prepareCandidate(
       ...manifestWithoutDigest,
       candidate_digest: candidateDigest,
     };
-    await validatePreviewSchema(repository.root, manifest);
+    await validateCandidateManifestValue(repository.root, manifest);
     await requireCandidateLocation(
       candidateLocation,
       "before-candidate-write",
@@ -1780,17 +1865,7 @@ async function readCandidateManifest(
     );
   }
   try {
-    const validateManifest = await schemaValidator(
-      root,
-      "candidate-manifest.schema.json",
-    );
-    if (!validateManifest(value)) throw new Error("manifest schema");
-    const manifest = value as CandidateManifest;
-    const validatePreview = await schemaValidator(root, "preview.schema.json");
-    if (!validatePreview(previewObject(manifest)))
-      throw new Error("preview schema");
-    validateManifestSemantics(manifest);
-    return manifest;
+    return await validateCandidateManifestValue(root, value);
   } catch {
     throw validationFailure(
       "candidate-manifest-invalid",
@@ -1798,6 +1873,23 @@ async function readCandidateManifest(
       "Candidate manifest is invalid or damaged.",
     );
   }
+}
+
+async function validateCandidateManifestValue(
+  root: string,
+  value: unknown,
+): Promise<CandidateManifest> {
+  const validateManifest = await schemaValidator(
+    root,
+    "candidate-manifest.schema.json",
+  );
+  if (!validateManifest(value)) throw new Error("manifest schema");
+  const manifest = value as CandidateManifest;
+  const validatePreview = await schemaValidator(root, "preview.schema.json");
+  if (!validatePreview(previewObject(manifest)))
+    throw new Error("preview schema");
+  validateManifestSemantics(manifest);
+  return manifest;
 }
 
 function sameJson(left: unknown, right: unknown): boolean {
@@ -2153,7 +2245,16 @@ async function currentDigestsEqual(
   fileSystem: CandidateFileSystem,
 ): Promise<boolean> {
   try {
-    const paths = await canonicalPaths(root, fileSystem);
+    const snapshot = await createSnapshot(root, "worktree");
+    const validation = await validateKnowledge(snapshot, {
+      validateIndex: false,
+    });
+    if (!validation.graph || validation.diagnostics.length > 0) return false;
+    const paths = await repositoryStatePaths(
+      root,
+      validation.graph,
+      fileSystem,
+    );
     const actual = await pathDigests(fileSystem, root, paths);
     return sameJson(actual, expected);
   } catch {
@@ -2441,6 +2542,11 @@ async function validateAppliedState(
   if (!validation.graph || validation.diagnostics.length > 0) return false;
   if ((await checkGeneratedIndex(snapshot, validation.graph)).length > 0)
     return false;
+  if (
+    (await deliveryProjectionPaths(snapshot, validation.graph)).length > 0 &&
+    (await checkGeneratedProjections(snapshot, validation.graph)).length > 0
+  )
+    return false;
   const bytes = generatedIndexBytes(validation.graph);
   if (!bytes) return false;
   const index = parseStrictJson(
@@ -2617,6 +2723,13 @@ export async function applyCandidate(
       return invalidated(options.approvedDigest, "candidate-manifest-invalid");
     if (
       (await checkGeneratedIndex(materializedSnapshot, validation.graph))
+        .length > 0
+    )
+      return invalidated(options.approvedDigest, "candidate-generation-drift");
+    if (
+      (await deliveryProjectionPaths(materializedSnapshot, validation.graph))
+        .length > 0 &&
+      (await checkGeneratedProjections(materializedSnapshot, validation.graph))
         .length > 0
     )
       return invalidated(options.approvedDigest, "candidate-generation-drift");

@@ -1,0 +1,20 @@
+{
+  "name": "coffee-chat-sangjoon-marketplace",
+  "interface": {
+    "displayName": "Sangjoon Son Coffee Chat"
+  },
+  "plugins": [
+    {
+      "name": "coffee-chat-sangjoon",
+      "source": {
+        "source": "local",
+        "path": "./plugins/coffee-chat-sangjoon"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

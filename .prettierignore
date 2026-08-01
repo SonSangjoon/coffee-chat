@@ -6,3 +6,7 @@ coverage/
 package-lock.json
 README.md
 docs/superpowers/specs/2026-07-30-coffee-chat-design.md
+.codex-plugin/
+.claude-plugin/
+plugins/*/.codex-plugin/
+plugins/*/.claude-plugin/

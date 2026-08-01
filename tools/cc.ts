@@ -9,6 +9,11 @@ import {
 import { checkGeneratedIndex, writeGeneratedIndex } from "./generate.ts";
 import { inspectHook, installHook, uninstallHook } from "./hooks.ts";
 import { validateKnowledge } from "./knowledge.ts";
+import {
+  checkGeneratedProjections,
+  hasDeliveryProjectionInputs,
+  writeGeneratedProjections,
+} from "./projections.ts";
 import { createSnapshot } from "./snapshot.ts";
 
 type KnowledgeOptions = {
@@ -254,11 +259,19 @@ async function main(): Promise<void> {
       return;
     }
 
+    const hasDelivery = await hasDeliveryProjectionInputs(snapshot);
     let diagnostics: Diagnostic[] = [];
     if (options.command === "check" || options.generationCheck) {
-      diagnostics = await checkGeneratedIndex(snapshot, validation.graph);
+      diagnostics = [
+        ...(await checkGeneratedIndex(snapshot, validation.graph)),
+        ...(hasDelivery
+          ? await checkGeneratedProjections(snapshot, validation.graph)
+          : []),
+      ];
     } else if (options.command === "generate") {
       await writeGeneratedIndex(cwd(), validation.graph);
+      if (hasDelivery)
+        await writeGeneratedProjections(cwd(), snapshot, validation.graph);
     }
     render(diagnostics, options.format);
     process.exitCode = diagnostics.length > 0 ? 1 : 0;

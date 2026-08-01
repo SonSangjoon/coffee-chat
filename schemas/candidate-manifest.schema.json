@@ -115,21 +115,42 @@
       "type": "string",
       "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))/(?:[^/\\u0000]+/)*[^/\\u0000]+$"
     },
-    "canonical_path": {
+    "canonical_knowledge_path": {
       "type": "string",
       "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:coffee-chat\\.json|knowledge/(?:entities\\.yml|index\\.json|notes/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.md)|method/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+)$"
     },
-    "mutable_canonical_path": {
+    "mutable_knowledge_path": {
       "type": "string",
       "pattern": "^\\./(?:coffee-chat\\.json|knowledge/(?:entities\\.yml|index\\.json|notes/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.md))$"
     },
+    "delivery_projection_path": {
+      "type": "string",
+      "pattern": "^\\./(?:README\\.md|AGENTS\\.md|CLAUDE\\.md|CONTENT_LICENSE\\.md|\\.codex-plugin/plugin\\.json|\\.claude-plugin/(?:plugin|marketplace)\\.json|\\.agents/plugins/marketplace\\.json|skills/(?:coffee-chat|apply-perspective|build-kg)/references/method\\.md|plugins/[a-z0-9]+(?:-[a-z0-9]+)*/(?:(?!\\.{1,2}(?:/|$))[A-Za-z0-9._-]+/)*(?!\\.{1,2}$)[A-Za-z0-9._-]+)$"
+    },
+    "canonical_path": {
+      "anyOf": [
+        { "$ref": "#/$defs/canonical_knowledge_path" },
+        { "$ref": "#/$defs/delivery_projection_path" }
+      ]
+    },
+    "mutable_canonical_path": {
+      "anyOf": [
+        { "$ref": "#/$defs/mutable_knowledge_path" },
+        { "$ref": "#/$defs/delivery_projection_path" }
+      ]
+    },
     "support_path": {
       "type": "string",
-      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json$"
+      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|LICENSE|skills/(?:coffee-chat|apply-perspective|build-kg)/SKILL\\.md)$"
     },
     "implementation_path": {
-      "type": "string",
-      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|tools/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.ts)$"
+      "anyOf": [
+        { "$ref": "#/$defs/support_path" },
+        {
+          "type": "string",
+          "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))tools/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.ts$"
+        }
+      ]
     },
     "path_digest": {
       "type": "object",

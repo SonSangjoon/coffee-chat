@@ -1,0 +1,17 @@
+{
+  "name": "coffee-chat-sangjoon",
+  "version": "1.0.0",
+  "description": "Converse with and apply a public, dated perspective graph.",
+  "author": {
+    "name": "Sangjoon Son"
+  },
+  "homepage": "https://sonsangjoon.github.io/coffee-chat/",
+  "repository": "https://github.com/SonSangjoon/coffee-chat",
+  "license": "MIT",
+  "keywords": [
+    "coffee-chat",
+    "knowledge-graph",
+    "perspective"
+  ],
+  "skills": "./skills/"
+}
