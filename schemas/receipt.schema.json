@@ -22,19 +22,94 @@
       "items": { "$ref": "#/$defs/repository_path" },
       "uniqueItems": true
     },
-    "validation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["status"],
-      "properties": { "status": { "enum": ["passed", "failed"] } }
+    "validation": { "$ref": "#/$defs/validation" },
+    "invalidation_code": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
     "setup_effects": {
       "type": "array",
-      "items": { "const": "install-pre-commit" },
+      "items": { "$ref": "#/$defs/setup_result" },
       "uniqueItems": true
     },
     "setup_failure": { "type": "string" }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "approval_invalidated" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "changed_paths": { "type": "array", "maxItems": 0 },
+          "validation": {
+            "type": "object",
+            "properties": { "status": { "const": "not_run" } },
+            "required": ["status"]
+          },
+          "invalidation_code": true,
+          "setup_effects": false,
+          "setup_failure": false
+        },
+        "required": ["invalidation_code"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "applied" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "validation": {
+            "type": "object",
+            "properties": { "status": { "const": "passed" } },
+            "required": ["status"]
+          },
+          "invalidation_code": false,
+          "setup_effects": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "status": { "const": "applied" } },
+              "required": ["status"]
+            }
+          },
+          "setup_failure": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "partial_local_result" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "changed_paths": { "type": "array", "minItems": 1 },
+          "validation": {
+            "type": "object",
+            "properties": { "status": { "const": "passed" } },
+            "required": ["status"]
+          },
+          "invalidation_code": false,
+          "setup_effects": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "contains": {
+              "type": "object",
+              "properties": { "status": { "const": "failed" } },
+              "required": ["status"]
+            }
+          },
+          "setup_failure": true
+        },
+        "required": ["setup_effects", "setup_failure"]
+      }
+    }
+  ],
   "$defs": {
     "semver": {
       "type": "string",
@@ -44,6 +119,22 @@
     "repository_path": {
       "type": "string",
       "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": { "status": { "enum": ["passed", "not_run"] } }
+    },
+    "setup_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect", "target_path", "status"],
+      "properties": {
+        "effect": { "const": "install-pre-commit" },
+        "target_path": { "type": "string", "pattern": "^/" },
+        "status": { "enum": ["applied", "failed"] }
+      }
     }
   }
 }

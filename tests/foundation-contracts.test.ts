@@ -105,15 +105,88 @@ describe("Coffee Chat foundation contracts", () => {
       "https://coffee-chat.dev/schemas/candidate-request.schema.json": {
         schema_version: "1.0.0",
         mode: "make-mine",
-        operations: [],
+        profile: {
+          temporary_key: "owner_profile",
+          value: {
+            display_name: "Sangjoon Son",
+            repository: {
+              url: "https://github.com/SonSangjoon/coffee-chat",
+              default_branch: "main",
+            },
+            pages_url: "https://sonsangjoon.github.io/coffee-chat/",
+            plugin: {
+              name: "coffee-chat-sangjoon",
+              version: "1.0.0",
+              description: "A public perspective graph.",
+            },
+          },
+        },
+        entity_changes: [
+          {
+            action: "create",
+            temporary_key: "taste",
+            value: { label: "Taste", kind: "concept" },
+          },
+        ],
+        note_changes: [
+          {
+            action: "create",
+            temporary_key: "first_note",
+            value: {
+              title: "A dated note",
+              temporal_coverage: "2026-02/2026-07",
+              sources: [
+                {
+                  url: "https://example.com/source",
+                  title: "Source title",
+                  retrieval_status: "succeeded",
+                },
+              ],
+              entity_refs: ["taste"],
+              body: "The complete public body.",
+            },
+          },
+        ],
         setup_effects: [],
       },
       "https://coffee-chat.dev/schemas/preview.schema.json": {
         schema_version: "1.0.0",
         candidate_digest:
           "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
-        base_commit: "583ba3e",
+        candidate_directory: ".",
+        mode: "update",
+        base_commit: "583ba3e583ba3e583ba3e583ba3e583ba3e583ba",
+        time_zone: "Asia/Seoul",
+        frozen_date: "2026-08-01",
         affected_paths: ["./coffee-chat.json"],
+        output_hashes: [
+          {
+            path: "./coffee-chat.json",
+            digest:
+              "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+          },
+        ],
+        knowledge_digest:
+          "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+        canonical_diff: [
+          {
+            path: "./coffee-chat.json",
+            change: "update",
+            after_digest:
+              "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+          },
+        ],
+        worktree: {
+          fingerprint:
+            "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+          changes: [],
+        },
+        notes: [],
+        entities: [],
+        source_observations: [],
+        setup_effects: [],
+        unresolved_source_limitations: [],
+        privacy_warnings: [],
         validation: { status: "passed" },
       },
       "https://coffee-chat.dev/schemas/receipt.schema.json": {
@@ -162,7 +235,27 @@ describe("Coffee Chat foundation contracts", () => {
       candidate?.({
         schema_version: "1.0.0",
         mode: "update",
-        operations: [],
+        entity_changes: [],
+        note_changes: [
+          {
+            action: "correct",
+            target_id: "a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61",
+            value: {
+              title: "A dated note",
+              temporal_coverage: "2026-02",
+              sources: [
+                {
+                  url: "https://example.com/source",
+                  title: "Source title",
+                  retrieval_status: "unavailable",
+                  access_limitation: "The public page could not be fetched.",
+                },
+              ],
+              entity_refs: [],
+              body: "Corrected body.",
+            },
+          },
+        ],
         setup_effects: [],
         output_paths: ["./knowledge/../secrets.json"],
       }),
@@ -247,8 +340,32 @@ describe("Coffee Chat foundation contracts", () => {
         schema_version: "1.0.0",
         candidate_digest:
           "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
-        base_commit: "583ba3e",
+        candidate_directory: ".",
+        mode: "update",
+        base_commit: "583ba3e583ba3e583ba3e583ba3e583ba3e583ba",
+        time_zone: "Asia/Seoul",
+        frozen_date: "2026-08-01",
         affected_paths: ["./coffee-chat.json"],
+        output_hashes: [
+          {
+            path: "./coffee-chat.json",
+            digest:
+              "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+          },
+        ],
+        knowledge_digest:
+          "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+        canonical_diff: [],
+        worktree: {
+          fingerprint:
+            "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+          changes: [],
+        },
+        notes: [],
+        entities: [],
+        source_observations: [],
+        setup_effects: [],
+        privacy_warnings: [],
         validation: { status: "passed" },
         unresolved_source_limitations: [""],
       }),
@@ -260,51 +377,156 @@ describe("Coffee Chat foundation contracts", () => {
           "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
         status: "partial_local_result",
         changed_paths: ["./coffee-chat.json"],
-        validation: { status: "failed" },
+        validation: { status: "passed" },
+        setup_effects: [
+          {
+            effect: "install-pre-commit",
+            target_path: "/tmp/repository/.git/hooks/pre-commit",
+            status: "failed",
+          },
+        ],
         setup_failure: "",
       }),
     ).toBe(true);
   });
 
-  it("rejects Candidate type and action cross-products that have no lifecycle branch", async () => {
+  it("requires complete approval Preview fields and enforces Receipt status semantics", async () => {
+    const validator = await contractValidator();
+    const preview = validator.getSchema(
+      "https://coffee-chat.dev/schemas/preview.schema.json",
+    );
+    const receipt = validator.getSchema(
+      "https://coffee-chat.dev/schemas/receipt.schema.json",
+    );
+    const digest =
+      "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2";
+
+    expect(
+      preview?.({
+        schema_version: "1.0.0",
+        candidate_digest: digest,
+        base_commit: "583ba3e",
+        affected_paths: ["./coffee-chat.json"],
+        validation: { status: "passed" },
+      }),
+    ).toBe(false);
+
+    expect(
+      receipt?.({
+        schema_version: "1.0.0",
+        candidate_digest: digest,
+        status: "approval_invalidated",
+        changed_paths: [],
+        validation: { status: "not_run" },
+        invalidation_code: "base-head-drift",
+      }),
+    ).toBe(true);
+    expect(
+      receipt?.({
+        schema_version: "1.0.0",
+        candidate_digest: digest,
+        status: "approval_invalidated",
+        changed_paths: ["./coffee-chat.json"],
+        validation: { status: "not_run" },
+        invalidation_code: "base-head-drift",
+      }),
+    ).toBe(false);
+    expect(
+      receipt?.({
+        schema_version: "1.0.0",
+        candidate_digest: digest,
+        status: "applied",
+        changed_paths: ["./coffee-chat.json"],
+        validation: { status: "passed" },
+        setup_failure: "failed",
+      }),
+    ).toBe(false);
+    expect(
+      receipt?.({
+        schema_version: "1.0.0",
+        candidate_digest: digest,
+        status: "partial_local_result",
+        changed_paths: ["./coffee-chat.json"],
+        validation: { status: "passed" },
+      }),
+    ).toBe(false);
+  });
+
+  it("replaces the generic operation cross-product with complete typed Candidate changes", async () => {
     const validator = await contractValidator();
     const candidate = validator.getSchema(
       "https://coffee-chat.dev/schemas/candidate-request.schema.json",
     );
 
-    for (const operation of [
-      { type: "note", action: "retire" },
-      { type: "entity", action: "correct" },
-      { type: "manifest", action: "create" },
-    ]) {
-      expect(
-        candidate?.({
-          schema_version: "1.0.0",
-          mode: "update",
-          operations: [operation],
-          setup_effects: [],
-        }),
-      ).toBe(false);
-    }
+    const completeUpdate = {
+      schema_version: "1.0.0",
+      mode: "update",
+      entity_changes: [
+        {
+          action: "update",
+          target_id: "48d1c840-5d38-48d0-8e74-7187d9f0c2fd",
+          value: { label: "Iteration", aliases: ["Loop"], kind: "process" },
+        },
+      ],
+      note_changes: [],
+      setup_effects: [],
+    };
+    expect(candidate?.(completeUpdate)).toBe(true);
 
-    for (const operation of [
-      { type: "manifest", action: "initialize" },
-      { type: "manifest", action: "update" },
-      { type: "entity", action: "create", temporary_key: "" },
-      { type: "entity", action: "update" },
-      { type: "entity", action: "retire" },
-      { type: "note", action: "create" },
-      { type: "note", action: "correct" },
-    ]) {
-      expect(
-        candidate?.({
-          schema_version: "1.0.0",
-          mode: "update",
-          operations: [operation],
-          setup_effects: [],
-        }),
-      ).toBe(true);
-    }
+    expect(
+      candidate?.({
+        schema_version: "1.0.0",
+        mode: "update",
+        operations: [{ type: "entity", action: "update" }],
+        entity_changes: [],
+        note_changes: [],
+        setup_effects: [],
+      }),
+    ).toBe(false);
+    expect(
+      candidate?.({
+        ...completeUpdate,
+        entity_changes: [
+          {
+            action: "retire",
+            target_id: "48d1c840-5d38-48d0-8e74-7187d9f0c2fd",
+            note_remaps: [
+              {
+                target_id: "a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61",
+                entity_refs: ["replacement"],
+              },
+            ],
+          },
+        ],
+      }),
+    ).toBe(true);
+    expect(
+      candidate?.({
+        ...completeUpdate,
+        entity_changes: [{ action: "update" }],
+      }),
+    ).toBe(false);
+    expect(
+      candidate?.({
+        ...completeUpdate,
+        profile: {
+          temporary_key: "replacement_owner",
+          value: {
+            display_name: "Wrong mode",
+            repository: {
+              url: "https://example.com/repository",
+              default_branch: "main",
+            },
+            pages_url: "https://example.com/pages/",
+            plugin: {
+              name: "wrong-mode",
+              version: "1.0.0",
+              description: "Wrong mode.",
+            },
+          },
+        },
+      }),
+    ).toBe(false);
   });
 
   it("publishes the exact code license and separate content rights boundary", async () => {

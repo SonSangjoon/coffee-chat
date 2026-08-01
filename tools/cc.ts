@@ -1,4 +1,5 @@
 import { cwd } from "node:process";
+import { applyCandidate, prepareCandidate } from "./candidate.ts";
 import type { Diagnostic } from "./contracts.ts";
 import {
   UnableToComplete,
@@ -6,32 +7,84 @@ import {
   sortDiagnostics,
 } from "./contracts.ts";
 import { checkGeneratedIndex, writeGeneratedIndex } from "./generate.ts";
+import { inspectHook, installHook, uninstallHook } from "./hooks.ts";
 import { validateKnowledge } from "./knowledge.ts";
 import { createSnapshot } from "./snapshot.ts";
 
-type Command = "validate" | "generate" | "check";
-type Options = {
-  command: Command;
+type KnowledgeOptions = {
+  kind: "knowledge";
+  command: "validate" | "generate" | "check";
   snapshot: "worktree" | "staged";
   format: "human" | "json";
   baseRef?: string;
   generationCheck: boolean;
 };
+type CandidateOptions =
+  | { kind: "candidate-prepare"; request: string; out: string }
+  | { kind: "candidate-apply"; directory: string; approve: string };
+type HookOptions = {
+  kind: "hooks";
+  command: "inspect" | "install" | "uninstall";
+  format: "human" | "json";
+};
+type Options = KnowledgeOptions | CandidateOptions | HookOptions;
 
 function usageFailure(): UnableToComplete {
   return new UnableToComplete({
     code: "cli-usage",
     path: ".",
     message:
-      "Usage: cc <validate|generate|check> [--snapshot worktree|staged] [--format human|json] [--base-ref REV] [--check].",
+      "Usage: cc <validate|generate|check> [...], cc candidate prepare --request FILE --out DIR, cc candidate apply --dir DIR --approve DIGEST, or cc hooks inspect|install|uninstall [--format human|json].",
   });
 }
 
 function parseArguments(args: string[]): Options {
   const command = args.shift();
+  if (command === "candidate") {
+    const action = args.shift();
+    if (
+      action === "prepare" &&
+      args.length === 4 &&
+      args[0] === "--request" &&
+      args[2] === "--out" &&
+      args[1] &&
+      args[3]
+    ) {
+      return { kind: "candidate-prepare", request: args[1], out: args[3] };
+    }
+    if (
+      action === "apply" &&
+      args.length === 4 &&
+      args[0] === "--dir" &&
+      args[2] === "--approve" &&
+      args[1] &&
+      args[3] &&
+      /^sha256:[a-f0-9]{64}$/.test(args[3])
+    ) {
+      return {
+        kind: "candidate-apply",
+        directory: args[1],
+        approve: args[3],
+      };
+    }
+    throw usageFailure();
+  }
+  if (command === "hooks") {
+    const action = args.shift();
+    if (action !== "inspect" && action !== "install" && action !== "uninstall")
+      throw usageFailure();
+    let format: "human" | "json" = "human";
+    if (args.length > 0) {
+      if (args.length !== 2 || args[0] !== "--format") throw usageFailure();
+      if (args[1] !== "human" && args[1] !== "json") throw usageFailure();
+      format = args[1];
+    }
+    return { kind: "hooks", command: action, format };
+  }
   if (command !== "validate" && command !== "generate" && command !== "check")
     throw usageFailure();
-  const options: Options = {
+  const options: KnowledgeOptions = {
+    kind: "knowledge",
     command,
     snapshot: "worktree",
     format: "human",
@@ -99,6 +152,93 @@ async function main(): Promise<void> {
         : "human";
     render([failure.diagnostic], format);
     process.exitCode = 2;
+    return;
+  }
+
+  if (options.kind === "candidate-prepare") {
+    try {
+      const result = await prepareCandidate({
+        root: cwd(),
+        requestPath: options.request,
+        out: options.out,
+      });
+      process.stdout.write(
+        `${JSON.stringify({
+          candidate_digest: result.candidateDigest,
+          preview_json: result.previewJson,
+          preview_md: result.previewMarkdown,
+        })}\n`,
+      );
+      process.exitCode = 0;
+    } catch (error) {
+      const failure =
+        error instanceof UnableToComplete || error instanceof ValidationFailure
+          ? error
+          : new UnableToComplete({
+              code: "candidate-internal-error",
+              path: ".",
+              message:
+                "Candidate preparation could not complete; details are redacted.",
+            });
+      render([failure.diagnostic], "human");
+      process.exitCode = failure instanceof ValidationFailure ? 1 : 2;
+      return;
+    }
+    return;
+  }
+  if (options.kind === "candidate-apply") {
+    try {
+      const receipt = await applyCandidate({
+        root: cwd(),
+        candidateDir: options.directory,
+        approvedDigest: options.approve,
+      });
+      process.stdout.write(`${JSON.stringify(receipt)}\n`);
+      process.exitCode = receipt.status === "applied" ? 0 : 1;
+    } catch (error) {
+      const failure =
+        error instanceof UnableToComplete || error instanceof ValidationFailure
+          ? error
+          : new UnableToComplete({
+              code: "candidate-internal-error",
+              path: ".",
+              message:
+                "Candidate apply could not complete; details are redacted.",
+            });
+      render([failure.diagnostic], "human");
+      process.exitCode = failure instanceof ValidationFailure ? 1 : 2;
+      return;
+    }
+    return;
+  }
+  if (options.kind === "hooks") {
+    try {
+      const result =
+        options.command === "inspect"
+          ? await inspectHook(cwd())
+          : options.command === "install"
+            ? await installHook(cwd())
+            : await uninstallHook(cwd());
+      if (options.format === "json")
+        process.stdout.write(`${JSON.stringify(result)}\n`);
+      else
+        process.stdout.write(
+          `Coffee Chat hook ${options.command}: ${"classification" in result ? result.classification : result.status}.\n`,
+        );
+      process.exitCode = 0;
+    } catch (error) {
+      const failure =
+        error instanceof UnableToComplete || error instanceof ValidationFailure
+          ? error
+          : new UnableToComplete({
+              code: "hook-lifecycle-internal-error",
+              path: ".",
+              message:
+                "Hook lifecycle could not complete; details are redacted.",
+            });
+      render([failure.diagnostic], options.format);
+      process.exitCode = failure instanceof ValidationFailure ? 1 : 2;
+    }
     return;
   }
 

@@ -12,7 +12,7 @@ import type { Snapshot } from "./snapshot.ts";
 
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
-function compareCodePoints(left: string, right: string): number {
+export function compareCodePoints(left: string, right: string): number {
   const leftPoints = Array.from(
     left,
     (character) => character.codePointAt(0) as number,

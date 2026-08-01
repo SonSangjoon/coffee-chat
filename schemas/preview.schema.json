@@ -7,33 +7,166 @@
   "required": [
     "schema_version",
     "candidate_digest",
+    "candidate_directory",
+    "mode",
     "base_commit",
+    "time_zone",
+    "frozen_date",
     "affected_paths",
+    "output_hashes",
+    "knowledge_digest",
+    "canonical_diff",
+    "worktree",
+    "notes",
+    "entities",
+    "source_observations",
+    "setup_effects",
+    "unresolved_source_limitations",
+    "privacy_warnings",
     "validation"
   ],
   "properties": {
     "schema_version": { "$ref": "#/$defs/semver" },
     "candidate_digest": { "$ref": "#/$defs/digest" },
-    "base_commit": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
+    "candidate_directory": { "const": "." },
+    "mode": { "enum": ["make-mine", "contribute", "update"] },
+    "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+    "time_zone": { "type": "string" },
+    "frozen_date": { "$ref": "#/$defs/date" },
     "affected_paths": {
       "type": "array",
       "items": { "$ref": "#/$defs/repository_path" },
       "uniqueItems": true
     },
+    "output_hashes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/path_digest" }
+    },
+    "knowledge_digest": { "$ref": "#/$defs/digest" },
+    "canonical_diff": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "change"],
+        "properties": {
+          "path": { "$ref": "#/$defs/repository_path" },
+          "change": { "enum": ["create", "update", "delete"] },
+          "before_digest": { "$ref": "#/$defs/digest" },
+          "after_digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "worktree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint", "changes"],
+      "properties": {
+        "fingerprint": { "$ref": "#/$defs/digest" },
+        "changes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "temporal_coverage",
+          "recorded_on",
+          "sources",
+          "entities",
+          "body"
+        ],
+        "properties": {
+          "id": { "$ref": "#/$defs/uuid_v4" },
+          "title": { "type": "string" },
+          "temporal_coverage": { "type": "string" },
+          "recorded_on": { "$ref": "#/$defs/date" },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["url", "title"],
+              "properties": {
+                "url": { "type": "string" },
+                "title": { "type": "string" },
+                "published_on": { "type": "string" },
+                "accessed_on": { "$ref": "#/$defs/date" }
+              }
+            }
+          },
+          "entities": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/uuid_v4" },
+            "uniqueItems": true
+          },
+          "body": { "type": "string" },
+          "change": { "enum": ["create", "correct", "unchanged"] }
+        }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "$ref": "#/$defs/uuid_v4" },
+          "label": { "type": "string" },
+          "aliases": { "type": "array", "items": { "type": "string" } },
+          "kind": { "type": "string" },
+          "same_as": { "type": "array", "items": { "type": "string" } },
+          "change": {
+            "enum": ["create", "update", "retire", "unchanged"]
+          }
+        }
+      }
+    },
+    "source_observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["note_id", "url", "title", "retrieval_status"],
+        "properties": {
+          "note_id": { "$ref": "#/$defs/uuid_v4" },
+          "url": { "type": "string" },
+          "title": { "type": "string" },
+          "published_on": { "type": "string" },
+          "accessed_on": { "$ref": "#/$defs/date" },
+          "retrieval_status": { "enum": ["succeeded", "unavailable"] },
+          "access_limitation": { "type": "string" }
+        }
+      }
+    },
+    "setup_effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["effect", "target_path", "target_fingerprint"],
+        "properties": {
+          "effect": { "const": "install-pre-commit" },
+          "target_path": { "type": "string", "pattern": "^/" },
+          "target_fingerprint": { "type": "object" }
+        }
+      }
+    },
+    "unresolved_source_limitations": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "privacy_warnings": { "type": "array", "items": { "type": "string" } },
     "validation": {
       "type": "object",
       "additionalProperties": false,
       "required": ["status"],
       "properties": { "status": { "const": "passed" } }
-    },
-    "setup_effects": {
-      "type": "array",
-      "items": { "const": "install-pre-commit" },
-      "uniqueItems": true
-    },
-    "unresolved_source_limitations": {
-      "type": "array",
-      "items": { "type": "string" }
     }
   },
   "$defs": {
@@ -42,9 +175,26 @@
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
     "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "uuid_v4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$"
+    },
     "repository_path": {
       "type": "string",
       "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+    },
+    "path_digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "$ref": "#/$defs/repository_path" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
     }
   }
 }

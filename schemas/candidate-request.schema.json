@@ -4,64 +4,262 @@
   "title": "Coffee Chat Candidate Request",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "mode", "operations", "setup_effects"],
+  "required": [
+    "schema_version",
+    "mode",
+    "entity_changes",
+    "note_changes",
+    "setup_effects"
+  ],
   "properties": {
     "schema_version": { "$ref": "#/$defs/semver" },
     "mode": { "enum": ["make-mine", "contribute", "update"] },
-    "operations": { "type": "array", "items": { "$ref": "#/$defs/operation" } },
+    "profile": { "$ref": "#/$defs/profile_change" },
+    "entity_changes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entity_change" }
+    },
+    "note_changes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/note_change" }
+    },
     "setup_effects": {
       "type": "array",
       "items": { "const": "install-pre-commit" },
       "uniqueItems": true
-    },
-    "output_paths": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/repository_path" },
-      "uniqueItems": true
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "make-mine" } } },
+      "then": {
+        "properties": { "profile": true },
+        "required": ["profile"]
+      },
+      "else": { "properties": { "profile": false } }
+    }
+  ],
   "$defs": {
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
     },
-    "repository_path": {
+    "uuid_v4": {
       "type": "string",
-      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
     },
-    "operation": {
+    "temporary_key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "entity_ref": {
+      "oneOf": [
+        { "$ref": "#/$defs/uuid_v4" },
+        { "$ref": "#/$defs/temporary_key" }
+      ]
+    },
+    "http_url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://"
+    },
+    "partial_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$"
+    },
+    "temporal_coverage": {
+      "type": "string",
+      "pattern": "^[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?(?:/[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?)?$"
+    },
+    "profile_change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["temporary_key", "value"],
+      "properties": {
+        "temporary_key": { "$ref": "#/$defs/temporary_key" },
+        "value": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["display_name", "repository", "pages_url", "plugin"],
+          "properties": {
+            "display_name": { "type": "string" },
+            "repository": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["url", "default_branch"],
+              "properties": {
+                "url": { "$ref": "#/$defs/http_url" },
+                "default_branch": { "type": "string" }
+              }
+            },
+            "pages_url": { "$ref": "#/$defs/http_url" },
+            "plugin": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "version", "description"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "version": { "$ref": "#/$defs/semver" },
+                "description": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "entity_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": { "type": "string" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "kind": { "type": "string" },
+        "same_as": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/http_url" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "entity_change": {
       "oneOf": [
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["type", "action"],
+          "required": ["action", "temporary_key", "value"],
           "properties": {
-            "type": { "const": "manifest" },
-            "action": { "enum": ["initialize", "update"] },
-            "temporary_key": { "type": "string" },
-            "path": { "$ref": "#/$defs/repository_path" }
+            "action": { "const": "create" },
+            "temporary_key": { "$ref": "#/$defs/temporary_key" },
+            "value": { "$ref": "#/$defs/entity_value" }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["type", "action"],
+          "required": ["action", "target_id", "value"],
           "properties": {
-            "type": { "const": "entity" },
-            "action": { "enum": ["create", "update", "retire"] },
-            "temporary_key": { "type": "string" },
-            "path": { "$ref": "#/$defs/repository_path" }
+            "action": { "const": "update" },
+            "target_id": { "$ref": "#/$defs/uuid_v4" },
+            "value": { "$ref": "#/$defs/entity_value" }
           }
         },
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["type", "action"],
+          "required": ["action", "target_id", "note_remaps"],
           "properties": {
-            "type": { "const": "note" },
-            "action": { "enum": ["create", "correct"] },
-            "temporary_key": { "type": "string" },
-            "path": { "$ref": "#/$defs/repository_path" }
+            "action": { "const": "retire" },
+            "target_id": { "$ref": "#/$defs/uuid_v4" },
+            "note_remaps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["target_id", "entity_refs"],
+                "properties": {
+                  "target_id": { "$ref": "#/$defs/uuid_v4" },
+                  "entity_refs": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/entity_ref" },
+                    "uniqueItems": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "source_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "title", "retrieval_status"],
+      "properties": {
+        "url": { "$ref": "#/$defs/http_url" },
+        "title": { "type": "string" },
+        "published_on": { "$ref": "#/$defs/partial_date" },
+        "accessed_on": { "$ref": "#/$defs/date" },
+        "retrieval_status": { "enum": ["succeeded", "unavailable"] },
+        "access_limitation": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "retrieval_status": { "const": "unavailable" } }
+          },
+          "then": {
+            "properties": {
+              "access_limitation": true,
+              "accessed_on": false
+            },
+            "required": ["access_limitation"]
+          }
+        }
+      ]
+    },
+    "note_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "temporal_coverage",
+        "sources",
+        "entity_refs",
+        "body"
+      ],
+      "properties": {
+        "title": { "type": "string" },
+        "temporal_coverage": { "$ref": "#/$defs/temporal_coverage" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/source_observation" }
+        },
+        "entity_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entity_ref" },
+          "uniqueItems": true
+        },
+        "body": { "type": "string" },
+        "public_content_warnings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "note_change": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "temporary_key", "value"],
+          "properties": {
+            "action": { "const": "create" },
+            "temporary_key": { "$ref": "#/$defs/temporary_key" },
+            "value": { "$ref": "#/$defs/note_value" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["action", "target_id", "value"],
+          "properties": {
+            "action": { "const": "correct" },
+            "target_id": { "$ref": "#/$defs/uuid_v4" },
+            "value": { "$ref": "#/$defs/note_value" }
           }
         }
       ]
