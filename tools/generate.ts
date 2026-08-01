@@ -1,7 +1,11 @@
 import { lstat, readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import type { Diagnostic } from "./contracts.ts";
-import { ValidationFailure, repositoryPath } from "./contracts.ts";
+import {
+  ValidationFailure,
+  containsUnpairedUnicodeSurrogate,
+  repositoryPath,
+} from "./contracts.ts";
 import type { KnowledgeGraph } from "./knowledge.ts";
 import { sha256 } from "./knowledge.ts";
 import type { Snapshot } from "./snapshot.ts";
@@ -49,20 +53,8 @@ export function canonicalizeJson(value: Json): string {
 }
 
 function assertUnicodeScalarValue(value: string): void {
-  for (let index = 0; index < value.length; index += 1) {
-    const unit = value.charCodeAt(index);
-    if (unit >= 0xd800 && unit <= 0xdbff) {
-      const next = value.charCodeAt(index + 1);
-      if (!Number.isFinite(next) || next < 0xdc00 || next > 0xdfff) {
-        throw new Error(
-          "RFC 8785 rejects unpaired UTF-16 surrogate code units",
-        );
-      }
-      index += 1;
-    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
-      throw new Error("RFC 8785 rejects unpaired UTF-16 surrogate code units");
-    }
-  }
+  if (containsUnpairedUnicodeSurrogate(value))
+    throw new Error("RFC 8785 rejects unpaired UTF-16 surrogate code units");
 }
 
 function sortedUnique(values: string[] | undefined): string[] | undefined {

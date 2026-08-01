@@ -432,6 +432,43 @@ describe("strict authored parsing and repository integrity", () => {
     expect(JSON.stringify(urlResult.diagnostics)).not.toContain(signedValue);
   });
 
+  it("rejects private IPv6 and common credential query parameters", async () => {
+    const cases: Array<[string, string]> = [
+      ["http://[fd00::1]/shared", "private-source-url"],
+      ["http://[fe80::1]/shared", "private-source-url"],
+      ["http://[::]/shared", "private-source-url"],
+      [
+        "https://example.com/shared?api_key=synthetic-api-key-value",
+        "credential-bearing-url",
+      ],
+      [
+        "https://example.com/shared?X-Goog-Signature=synthetic-google-signature",
+        "credential-bearing-url",
+      ],
+      [
+        "https://example.com/shared?AWSAccessKeyId=synthetic-aws-key",
+        "credential-bearing-url",
+      ],
+    ];
+
+    for (const [url, code] of cases) {
+      const root = await makeRepository();
+      await mutate(
+        root,
+        "knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
+        (text) => text.replaceAll("https://example.com/shared", url),
+      );
+      const result = await diagnostics(root);
+      expect(result.exitCode, url).toBe(1);
+      expect(result.diagnostics, url).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code })]),
+      );
+      expect(JSON.stringify(result.diagnostics), url).not.toContain(
+        url.split("=")[1] ?? "value-that-is-not-present",
+      );
+    }
+  });
+
   it("rejects credential-bearing manifest URLs without echoing credentials", async () => {
     const root = await makeRepository();
     const credential = "private-password";
@@ -449,6 +486,27 @@ describe("strict authored parsing and repository integrity", () => {
       ]),
     );
     expect(JSON.stringify(result.diagnostics)).not.toContain(credential);
+  });
+
+  it("redacts secret-like authored values from diagnostic paths", async () => {
+    const root = await makeRepository();
+    const secret = "ghp_123456789012345678901234567890123456";
+    await mutate(root, "coffee-chat.json", (text) =>
+      text.replace('"skills": "./skills/"', `"skills": "./skills/${secret}/"`),
+    );
+    const outside = await mkdtemp(resolve(tmpdir(), "coffee-chat-redaction-"));
+    temporaryRoots.push(outside);
+    const { mkdir, symlink } = await import("node:fs/promises");
+    await mkdir(resolve(root, "skills"));
+    await symlink(outside, resolve(root, "skills", secret));
+    const result = await diagnostics(root);
+    expect(result.exitCode).toBe(1);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "symlink-escape" }),
+      ]),
+    );
+    expect(JSON.stringify(result.diagnostics)).not.toContain(secret);
   });
 
   it("rejects an explicit full-form custom YAML tag", async () => {
@@ -486,6 +544,102 @@ describe("strict authored parsing and repository integrity", () => {
     );
   });
 
+  it("keeps schema-invalid authored shapes on deterministic exit 1", async () => {
+    const cases: Array<[string, string, (text: string) => string]> = [
+      ["root manifest array", "coffee-chat.json", () => "[]\n"],
+      ["null Entity", "knowledge/entities.yml", () => "- null\n"],
+      [
+        "nested manifest profile array",
+        "coffee-chat.json",
+        (text) =>
+          text.replace(
+            /  "profile": \{\n    "id": "[^"]+",\n    "display_name": "[^"]+"\n  \}/,
+            '  "profile": []',
+          ),
+      ],
+      [
+        "nested Entity same_as object",
+        "knowledge/entities.yml",
+        (text) =>
+          text.replace(/  same_as:\n(?:    - "[^"]+"\n)+/, "  same_as: {}\n"),
+      ],
+      [
+        "null Citation",
+        "knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
+        (text) =>
+          text.replace(
+            /sources:\n  - url: "https:\/\/example\.com\/shared"\n    title: "A different local observation"\n    published_on: "2024-02-29"/,
+            "sources:\n  - null",
+          ),
+      ],
+    ];
+
+    for (const [name, path, edit] of cases) {
+      const root = await makeRepository();
+      await mutate(root, path, edit);
+      const result = await diagnostics(root);
+      expect(result.exitCode, name).toBe(1);
+      expect(result.diagnostics, name).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "schema-validation" }),
+        ]),
+      );
+      expect(result.diagnostics, name).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ code: "validator-internal-error" }),
+        ]),
+      );
+    }
+  });
+
+  it("rejects unpaired Unicode surrogates recursively before generation", async () => {
+    const cases: Array<[string, string, (text: string) => string]> = [
+      [
+        "Note title",
+        "knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
+        (text) => text.replace('title: "Reused source"', 'title: "\\uD800"'),
+      ],
+      [
+        "Citation title",
+        "knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
+        (text) =>
+          text.replace(
+            'title: "A different local observation"',
+            'title: "\\uDFFF"',
+          ),
+      ],
+      [
+        "Entity alias",
+        "knowledge/entities.yml",
+        (text) => text.replace('    - "Loop"', '    - "\\uD800"'),
+      ],
+      [
+        "JSON object key",
+        "coffee-chat.json",
+        (text) => text.replace("{\n", '{\n  "\\uD800": true,\n'),
+      ],
+    ];
+
+    for (const [name, path, edit] of cases) {
+      const root = await makeRepository();
+      await mutate(root, path, edit);
+      for (const command of ["validate", "generate", "check"]) {
+        const result = await diagnostics(root, command);
+        expect(result.exitCode, `${name} ${command}`).toBe(1);
+        expect(result.diagnostics, `${name} ${command}`).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ code: "invalid-unicode-scalar" }),
+          ]),
+        );
+        expect(result.diagnostics, `${name} ${command}`).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ code: "validator-internal-error" }),
+          ]),
+        );
+      }
+    }
+  });
+
   it("rejects remote HTML embeds", async () => {
     const root = await makeRepository();
     await mutate(
@@ -499,6 +653,26 @@ describe("strict authored parsing and repository integrity", () => {
         expect.objectContaining({ code: "remote-embed" }),
       ]),
     );
+  });
+
+  it("validates the first effective CommonMark reference definition", async () => {
+    for (const [firstDefinition, code] of [
+      ["javascript:alert(1)", "unsafe-link"],
+      ["https://example.com/not-declared", "undeclared-external-link"],
+    ]) {
+      const root = await makeRepository();
+      await mutate(
+        root,
+        "knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
+        (text) =>
+          `${text.slice(0, -1)}\n\nA [reference][source] anchors this note.\n\n[source]: ${firstDefinition}\n[SOURCE]: https://example.com/shared\n`,
+      );
+      const result = await diagnostics(root);
+      expect(result.exitCode, firstDefinition).toBe(1);
+      expect(result.diagnostics, firstDefinition).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code })]),
+      );
+    }
   });
 });
 
@@ -703,6 +877,44 @@ describe("deterministic temporal knowledge index", () => {
 });
 
 describe("Git snapshot and identity isolation", () => {
+  it("rejects staged chained symlinks that escape the repository", async () => {
+    const root = await makeRepository();
+    const outside = await mkdtemp(
+      resolve(tmpdir(), "coffee-chat-staged-chain-"),
+    );
+    temporaryRoots.push(outside);
+    const { symlink } = await import("node:fs/promises");
+    await symlink("inside", resolve(root, "skills"));
+    await symlink(outside, resolve(root, "inside"));
+    await execFileAsync("git", ["init", "-q"], { cwd: root });
+    await execFileAsync("git", ["add", "."], { cwd: root });
+
+    const result = await diagnostics(root, "validate", "--snapshot", "staged");
+    expect(result.exitCode).toBe(1);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "symlink-escape" }),
+      ]),
+    );
+  });
+
+  it("rejects staged symlink cycles without recursion failure", async () => {
+    const root = await makeRepository();
+    const { symlink } = await import("node:fs/promises");
+    await symlink("inside", resolve(root, "skills"));
+    await symlink("skills", resolve(root, "inside"));
+    await execFileAsync("git", ["init", "-q"], { cwd: root });
+    await execFileAsync("git", ["add", "."], { cwd: root });
+
+    const result = await diagnostics(root, "validate", "--snapshot", "staged");
+    expect(result.exitCode).toBe(1);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "symlink-cycle" }),
+      ]),
+    );
+  });
+
   it("isolates unstaged additions and staged deletions", async () => {
     const root = await makeRepository();
     await execFileAsync("git", ["init", "-q"], { cwd: root });
@@ -765,6 +977,45 @@ describe("Git snapshot and identity isolation", () => {
     expect(result.diagnostics).toEqual([
       expect.objectContaining({ code: "base-ref-unavailable" }),
     ]);
+  });
+
+  it("enforces --base-ref IDs when the selected snapshot becomes pending", async () => {
+    const root = await makeRepository();
+    await execFileAsync("git", ["init", "-q"], { cwd: root });
+    await execFileAsync(
+      "git",
+      ["config", "user.email", "fixture@example.com"],
+      {
+        cwd: root,
+      },
+    );
+    await execFileAsync("git", ["config", "user.name", "Fixture"], {
+      cwd: root,
+    });
+    await execFileAsync("git", ["add", "."], { cwd: root });
+    await execFileAsync("git", ["commit", "-qm", "initialized base"], {
+      cwd: root,
+    });
+
+    await mutate(root, "coffee-chat.json", (text) =>
+      text
+        .replace(
+          '"initialization_state": "initialized"',
+          '"initialization_state": "pending_first_candidate"',
+        )
+        .replace(/\n    "id": "69d249c9-3c4f-4e0d-b622-74b292f87e9d",/, ""),
+    );
+    await rm(resolve(root, "knowledge"), { recursive: true });
+
+    const result = await diagnostics(root, "validate", "--base-ref", "HEAD");
+    expect(result.exitCode).toBe(1);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "immutable-profile-id" }),
+        expect.objectContaining({ code: "immutable-note-id" }),
+        expect.objectContaining({ code: "immutable-entity-id" }),
+      ]),
+    );
   });
 
   it("validates only index bytes for --snapshot staged and leaves worktree bytes untouched", async () => {

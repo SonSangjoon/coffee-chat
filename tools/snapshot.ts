@@ -232,17 +232,39 @@ class GitSnapshot implements Snapshot {
   }
 
   async assertSafe(path: string): Promise<void> {
+    await this.resolveSymlinks(path);
+  }
+
+  private async resolveSymlinks(
+    path: string,
+    seen = new Set<string>(),
+    depth = 0,
+  ): Promise<string> {
     if (!safeLogicalPath(path)) throw pathFailure(path);
+    if (depth >= 40) throw pathFailure(path, "symlink-cycle");
     const entries = await this.loadEntries();
     const segments = path.split("/");
     for (let index = 1; index <= segments.length; index += 1) {
       const prefix = segments.slice(0, index).join("/");
       const entry = entries.get(prefix);
       if (entry?.mode !== "120000") continue;
+      if (seen.has(prefix)) throw pathFailure(path, "symlink-cycle");
+      seen.add(prefix);
       const target = (await this.raw(prefix)).toString("utf8");
-      const resolved = posix.normalize(posix.join(dirname(prefix), target));
-      if (!safeLogicalPath(resolved)) throw pathFailure(path, "symlink-escape");
+      if (target.startsWith("/") || target.includes("\\"))
+        throw pathFailure(path, "symlink-escape");
+      const resolvedTarget = posix.normalize(
+        posix.join(dirname(prefix), target),
+      );
+      if (!safeLogicalPath(resolvedTarget))
+        throw pathFailure(path, "symlink-escape");
+      const remainder = segments.slice(index).join("/");
+      const resolved = remainder
+        ? posix.join(resolvedTarget, remainder)
+        : resolvedTarget;
+      return this.resolveSymlinks(resolved, seen, depth + 1);
     }
+    return path;
   }
 
   async list(prefix: string): Promise<string[]> {
@@ -271,8 +293,8 @@ class GitSnapshot implements Snapshot {
   }
 
   async read(path: string): Promise<Buffer> {
-    if (!safeLogicalPath(path)) throw pathFailure(path);
-    const entry = (await this.loadEntries()).get(path);
+    const resolved = await this.resolveSymlinks(path);
+    const entry = (await this.loadEntries()).get(resolved);
     if (!entry) {
       throw new UnableToComplete({
         code: "snapshot-read-failed",
@@ -280,11 +302,7 @@ class GitSnapshot implements Snapshot {
         message: "Required snapshot input could not be read.",
       });
     }
-    if (entry.mode !== "120000") return this.raw(path);
-    const target = (await this.raw(path)).toString("utf8");
-    const resolved = posix.normalize(posix.join(dirname(path), target));
-    if (!safeLogicalPath(resolved)) throw pathFailure(path, "symlink-escape");
-    return this.read(resolved);
+    return this.raw(resolved);
   }
 }
 

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
+import { isIP } from "node:net";
 import { dirname, posix } from "node:path";
 import {
   Ajv2020,
@@ -12,6 +13,7 @@ import {
   type Diagnostic,
   UnableToComplete,
   ValidationFailure,
+  containsUnpairedUnicodeSurrogate,
   repositoryPath,
   sortDiagnostics,
 } from "./contracts.ts";
@@ -180,8 +182,28 @@ function addFailure(diagnostics: Diagnostic[], error: unknown): void {
   else throw error;
 }
 
+function unicodeScalarDiagnostic(
+  value: unknown,
+  path: string,
+): Diagnostic | undefined {
+  return containsUnpairedUnicodeSurrogate(value)
+    ? {
+        code: "invalid-unicode-scalar",
+        path: repositoryPath(path),
+        message:
+          "Canonical strings and object keys must not contain unpaired Unicode surrogates.",
+      }
+    : undefined;
+}
+
 function validUuid(value: unknown): value is string {
   return typeof value === "string" && uuidV4Pattern.test(value);
+}
+
+function recordValue(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function dateDiagnostic(
@@ -230,23 +252,88 @@ function isPublicUrl(
   const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (
     host === "localhost" ||
-    host === "::1" ||
     host.endsWith(".local") ||
-    /^127\./.test(host) ||
-    /^10\./.test(host) ||
-    /^192\.168\./.test(host) ||
-    /^169\.254\./.test(host) ||
-    /^172\.(?:1[6-9]|2\d|3[01])\./.test(host)
+    (isIP(host) === 4 && isPrivateIpv4(host)) ||
+    (isIP(host) === 6 && isPrivateIpv6(host))
   )
     return "private";
   if (
-    [...url.searchParams.keys()].some((key) =>
-      /^(?:token|access_token|signature|x-amz-signature|sig|key)$/i.test(key),
-    )
+    [...url.searchParams.keys()].some((key) => {
+      const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+      return (
+        new Set([
+          "token",
+          "accesstoken",
+          "apikey",
+          "key",
+          "secret",
+          "clientsecret",
+          "signature",
+          "sig",
+          "awsaccesskeyid",
+          "xamzcredential",
+          "xamzsecuritytoken",
+          "xamzsignature",
+          "xgoogcredential",
+          "xgoogsignature",
+          "xmssignature",
+        ]).has(normalized) || normalized.endsWith("signature")
+      );
+    })
   ) {
     return "credential";
   }
   return "ok";
+}
+
+function isPrivateIpv4(host: string): boolean {
+  const octets = host.split(".").map(Number);
+  if (octets.length !== 4) return false;
+  const [first, second] = octets as [number, number, number, number];
+  return (
+    first === 0 ||
+    first === 10 ||
+    first === 127 ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
+
+function isPrivateIpv6(host: string): boolean {
+  const halves = host.split("::");
+  if (halves.length > 2) return true;
+  const left = halves[0] ? halves[0].split(":") : [];
+  const right = halves[1] ? halves[1].split(":") : [];
+  const missing = 8 - left.length - right.length;
+  if (missing < 0) return true;
+  const hextets = [
+    ...left,
+    ...Array.from({ length: missing }, () => "0"),
+    ...right,
+  ].map((part) => Number.parseInt(part || "0", 16));
+  if (hextets.length !== 8 || hextets.some((part) => !Number.isFinite(part)))
+    return true;
+  const first = hextets[0] as number;
+  const unspecified = hextets.every((part) => part === 0);
+  const loopback =
+    hextets.slice(0, 7).every((part) => part === 0) && hextets[7] === 1;
+  const uniqueLocal = (first & 0xfe00) === 0xfc00;
+  const linkLocal = (first & 0xffc0) === 0xfe80;
+  const multicast = (first & 0xff00) === 0xff00;
+  const ipv4Mapped =
+    hextets.slice(0, 5).every((part) => part === 0) &&
+    (hextets[5] === 0 || hextets[5] === 0xffff);
+  if (ipv4Mapped) {
+    const ipv4 = [
+      (hextets[6] as number) >> 8,
+      (hextets[6] as number) & 0xff,
+      (hextets[7] as number) >> 8,
+      (hextets[7] as number) & 0xff,
+    ].join(".");
+    if (isPrivateIpv4(ipv4)) return true;
+  }
+  return unspecified || loopback || uniqueLocal || linkLocal || multicast;
 }
 
 function publicUrlDiagnostic(
@@ -324,7 +411,12 @@ function markdownLinks(
   }
   const definitions = new Map<string, string>();
   const collect = (node: MarkdownNode): void => {
-    if (node.type === "definition" && node.identifier && node.url)
+    if (
+      node.type === "definition" &&
+      node.identifier &&
+      node.url &&
+      !definitions.has(node.identifier)
+    )
       definitions.set(node.identifier, node.url);
     for (const child of node.children ?? []) collect(child);
   };
@@ -508,41 +600,10 @@ export async function validateKnowledge(
     const secret = secretDiagnostic(text, "coffee-chat.json");
     if (secret) diagnostics.push(secret);
     const value = parseStrictJson(text, "coffee-chat.json");
-    diagnostics.push(
-      ...schemaDiagnostics(schema.manifest, value, "coffee-chat.json"),
-    );
-    manifest = value as Manifest;
-    if (!supportedSchemaVersion(manifest?.schema_version)) {
-      diagnostics.push({
-        code: "unsupported-schema-version",
-        path: "./coffee-chat.json",
-        pointer: "/schema_version",
-        message: "Schema version is newer than this validator supports.",
-      });
-    }
-    if (!validTimeZone(manifest?.time_zone)) {
-      diagnostics.push({
-        code: "invalid-time-zone",
-        path: "./coffee-chat.json",
-        pointer: "/time_zone",
-        message: "Configured time zone must be a valid IANA zone.",
-      });
-    }
-    if (
-      typeof manifest?.plugin?.name === "string" &&
-      manifest.marketplace_name !== `${manifest.plugin.name}-marketplace`
-    ) {
-      diagnostics.push({
-        code: "marketplace-name-mismatch",
-        path: "./coffee-chat.json",
-        pointer: "/marketplace_name",
-        message: "Marketplace name must be derived from the plugin namespace.",
-      });
-    }
-    if (
-      manifest?.profile?.id !== undefined &&
-      !validUuid(manifest.profile.id)
-    ) {
+    const unicodeFailure = unicodeScalarDiagnostic(value, "coffee-chat.json");
+    if (unicodeFailure) diagnostics.push(unicodeFailure);
+    const rawProfile = recordValue(recordValue(value)?.profile);
+    if (rawProfile?.id !== undefined && !validUuid(rawProfile.id)) {
       diagnostics.push({
         code: "invalid-uuid-v4",
         path: "./coffee-chat.json",
@@ -550,22 +611,55 @@ export async function validateKnowledge(
         message: "ID must be a canonical lowercase UUIDv4.",
       });
     }
-    for (const [pointer, url] of [
-      ["/repository/url", manifest?.repository?.url],
-      ["/pages_url", manifest?.pages_url],
-    ] as const) {
-      const failure = publicUrlDiagnostic(url, "coffee-chat.json", pointer);
-      if (failure) diagnostics.push(failure);
-    }
-    for (const declaredPath of [
-      manifest?.schema_url,
-      manifest?.paths?.knowledge_index,
-      manifest?.paths?.skills,
-      manifest?.paths?.method,
-    ]) {
-      if (typeof declaredPath !== "string") continue;
-      const path = declaredPath.replace(/^\.\//, "").replace(/\/$/, "");
-      await snapshot.assertSafe(path);
+    const manifestSchemaDiagnostics = schemaDiagnostics(
+      schema.manifest,
+      value,
+      "coffee-chat.json",
+    );
+    diagnostics.push(...manifestSchemaDiagnostics);
+    if (manifestSchemaDiagnostics.length === 0) {
+      manifest = value as Manifest;
+      if (!supportedSchemaVersion(manifest.schema_version)) {
+        diagnostics.push({
+          code: "unsupported-schema-version",
+          path: "./coffee-chat.json",
+          pointer: "/schema_version",
+          message: "Schema version is newer than this validator supports.",
+        });
+      }
+      if (!validTimeZone(manifest.time_zone)) {
+        diagnostics.push({
+          code: "invalid-time-zone",
+          path: "./coffee-chat.json",
+          pointer: "/time_zone",
+          message: "Configured time zone must be a valid IANA zone.",
+        });
+      }
+      if (manifest.marketplace_name !== `${manifest.plugin.name}-marketplace`) {
+        diagnostics.push({
+          code: "marketplace-name-mismatch",
+          path: "./coffee-chat.json",
+          pointer: "/marketplace_name",
+          message:
+            "Marketplace name must be derived from the plugin namespace.",
+        });
+      }
+      for (const [pointer, url] of [
+        ["/repository/url", manifest.repository.url],
+        ["/pages_url", manifest.pages_url],
+      ] as const) {
+        const failure = publicUrlDiagnostic(url, "coffee-chat.json", pointer);
+        if (failure) diagnostics.push(failure);
+      }
+      for (const declaredPath of [
+        manifest.schema_url,
+        manifest.paths.knowledge_index,
+        manifest.paths.skills,
+        manifest.paths.method,
+      ]) {
+        const path = declaredPath.replace(/^\.\//, "").replace(/\/$/, "");
+        await snapshot.assertSafe(path);
+      }
     }
   } catch (error) {
     addFailure(diagnostics, error);
@@ -608,12 +702,15 @@ export async function validateKnowledge(
           "Pending initialization must not contain canonical or generated knowledge.",
       });
     }
+    const graph = { manifest, entities: [], notes: [] };
+    if (options.baseRef && diagnostics.length === 0) {
+      diagnostics.push(
+        ...(await compareBase(graph, snapshot, options.baseRef)),
+      );
+    }
     return {
       diagnostics: sortDiagnostics(diagnostics),
-      graph:
-        diagnostics.length === 0
-          ? { manifest, entities: [], notes: [] }
-          : undefined,
+      graph: diagnostics.length === 0 ? graph : undefined,
     };
   }
 
@@ -630,10 +727,31 @@ export async function validateKnowledge(
       const secret = secretDiagnostic(text, "knowledge/entities.yml");
       if (secret) diagnostics.push(secret);
       const value = parseStrictYaml(text, "knowledge/entities.yml");
-      diagnostics.push(
-        ...schemaDiagnostics(schema.entities, value, "knowledge/entities.yml"),
+      const unicodeFailure = unicodeScalarDiagnostic(
+        value,
+        "knowledge/entities.yml",
       );
-      if (Array.isArray(value)) entities = value as Entity[];
+      if (unicodeFailure) diagnostics.push(unicodeFailure);
+      if (Array.isArray(value)) {
+        for (const [index, rawEntity] of value.entries()) {
+          const id = recordValue(rawEntity)?.id;
+          if (id !== undefined && !validUuid(id)) {
+            diagnostics.push({
+              code: "invalid-uuid-v4",
+              path: "./knowledge/entities.yml",
+              pointer: `/${index}/id`,
+              message: "ID must be a canonical lowercase UUIDv4.",
+            });
+          }
+        }
+      }
+      const entitySchemaDiagnostics = schemaDiagnostics(
+        schema.entities,
+        value,
+        "knowledge/entities.yml",
+      );
+      diagnostics.push(...entitySchemaDiagnostics);
+      if (entitySchemaDiagnostics.length === 0) entities = value as Entity[];
     } catch (error) {
       addFailure(diagnostics, error);
     }
@@ -673,15 +791,24 @@ export async function validateKnowledge(
       const secret = secretDiagnostic(text, path);
       if (secret) diagnostics.push(secret);
       const parsed = parseMarkdownDocument(text, path);
-      diagnostics.push(
-        ...schemaDiagnostics(schema.note, parsed.frontmatter, path),
+      const unicodeFailure = unicodeScalarDiagnostic(parsed.frontmatter, path);
+      if (unicodeFailure) diagnostics.push(unicodeFailure);
+      const rawNoteId = recordValue(parsed.frontmatter)?.id;
+      if (rawNoteId !== undefined && !validUuid(rawNoteId)) {
+        diagnostics.push({
+          code: "invalid-uuid-v4",
+          path: repositoryPath(path),
+          pointer: "/id",
+          message: "ID must be a canonical lowercase UUIDv4.",
+        });
+      }
+      const noteSchemaDiagnostics = schemaDiagnostics(
+        schema.note,
+        parsed.frontmatter,
+        path,
       );
-      if (
-        !parsed.frontmatter ||
-        typeof parsed.frontmatter !== "object" ||
-        Array.isArray(parsed.frontmatter)
-      )
-        continue;
+      diagnostics.push(...noteSchemaDiagnostics);
+      if (noteSchemaDiagnostics.length > 0) continue;
       const frontmatter = parsed.frontmatter as NoteFrontmatter;
       if (!validUuid(frontmatter.id)) {
         diagnostics.push({
@@ -808,6 +935,11 @@ export async function validateKnowledge(
     try {
       const { text } = await strictText(snapshot, "knowledge/index.json");
       const value = parseStrictJson(text, "knowledge/index.json");
+      const unicodeFailure = unicodeScalarDiagnostic(
+        value,
+        "knowledge/index.json",
+      );
+      if (unicodeFailure) diagnostics.push(unicodeFailure);
       diagnostics.push(
         ...schemaDiagnostics(schema.index, value, "knowledge/index.json"),
       );
