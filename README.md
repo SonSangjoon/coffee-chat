@@ -1,4 +1,4 @@
-# Coffee Chat — Sangjoon Son
+# Coffee Chat — Coffee Chat
 
 ## Purpose / 목적
 
@@ -31,18 +31,18 @@ Codex install, then plugin-first removal / Codex 설치 후 플러그인 우선 
 
 ```sh
 codex plugin marketplace add https://github.com/SonSangjoon/coffee-chat
-codex plugin add coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace
-codex plugin remove coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace
-codex plugin marketplace remove coffee-chat-sangjoon-marketplace
+codex plugin add coffee-chat@coffee-chat-marketplace
+codex plugin remove coffee-chat@coffee-chat-marketplace
+codex plugin marketplace remove coffee-chat-marketplace
 ```
 
 Claude Code local-scope install, then plugin-first removal / Claude Code local scope 설치 후 플러그인 우선 삭제:
 
 ```sh
 claude plugin marketplace add https://github.com/SonSangjoon/coffee-chat --scope local
-claude plugin install coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace --scope local
-claude plugin uninstall coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace --scope local
-claude plugin marketplace remove coffee-chat-sangjoon-marketplace
+claude plugin install coffee-chat@coffee-chat-marketplace --scope local
+claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local
+claude plugin marketplace remove coffee-chat-marketplace
 ```
 
 <details>
@@ -55,7 +55,7 @@ Refresh the marketplace snapshot with the following command, then inspect `codex
 아래 명령으로 marketplace snapshot을 갱신한 뒤 `codex plugin list --json`을 확인하세요. 현재 Codex CLI에는 별도 `plugin update` 명령이 없으므로 기본 관리자가 확인해 주지 않은 설치 snapshot 변경을 단정하지 마세요.
 
 ```sh
-codex plugin marketplace upgrade coffee-chat-sangjoon-marketplace
+codex plugin marketplace upgrade coffee-chat-marketplace
 ```
 
 `plugin remove` removes this plugin from Codex local configuration and cache. Remove its marketplace only when no other plugin needs that source:
@@ -73,7 +73,7 @@ Claude Code supports `user`, `project`, and `local` scopes; `local` is the narro
 Claude Code는 `user`·`project`·`local` scope를 지원하며, 잠시 사용할 때는 `local`이 가장 좁습니다. 플러그인은 호스트 캐시에 복사되고, 다른 scope를 선택하면 해당 scope의 설정이 바뀝니다. 마지막 scope에서 삭제하면 `--keep-data`를 쓰지 않는 한 플러그인 영속 데이터도 삭제되지만 Coffee Chat v1은 영속 데이터 구성요소를 선언하지 않습니다.
 
 ```sh
-claude plugin update coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace --scope local
+claude plugin update coffee-chat@coffee-chat-marketplace --scope local
 claude plugin list --json
 claude plugin marketplace list --json
 ```

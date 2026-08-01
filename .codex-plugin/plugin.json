@@ -1,9 +1,9 @@
 {
-  "name": "coffee-chat-sangjoon",
+  "name": "coffee-chat",
   "version": "1.0.0",
   "description": "Converse with and apply a public, dated perspective graph.",
   "author": {
-    "name": "Sangjoon Son",
+    "name": "Coffee Chat",
     "url": "https://github.com/SonSangjoon/coffee-chat"
   },
   "homepage": "https://sonsangjoon.github.io/coffee-chat/",
@@ -16,10 +16,10 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Coffee Chat — Sangjoon Son",
+    "displayName": "Coffee Chat — Coffee Chat",
     "shortDescription": "Talk with a public, dated perspective graph",
     "longDescription": "Converse with, apply, or extend a source-grounded temporal perspective graph.",
-    "developerName": "Sangjoon Son",
+    "developerName": "Coffee Chat",
     "category": "Productivity",
     "capabilities": [
       "Read",

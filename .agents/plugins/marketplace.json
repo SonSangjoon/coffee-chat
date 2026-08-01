@@ -1,14 +1,14 @@
 {
-  "name": "coffee-chat-sangjoon-marketplace",
+  "name": "coffee-chat-marketplace",
   "interface": {
-    "displayName": "Sangjoon Son Coffee Chat"
+    "displayName": "Coffee Chat Coffee Chat"
   },
   "plugins": [
     {
-      "name": "coffee-chat-sangjoon",
+      "name": "coffee-chat",
       "source": {
         "source": "local",
-        "path": "./plugins/coffee-chat-sangjoon"
+        "path": "./plugins/coffee-chat"
       },
       "policy": {
         "installation": "AVAILABLE",

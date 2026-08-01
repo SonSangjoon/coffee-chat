@@ -1,16 +1,16 @@
 {
-  "name": "coffee-chat-sangjoon-marketplace",
+  "name": "coffee-chat-marketplace",
   "owner": {
-    "name": "Sangjoon Son"
+    "name": "Coffee Chat"
   },
   "plugins": [
     {
-      "name": "coffee-chat-sangjoon",
-      "source": "./plugins/coffee-chat-sangjoon",
+      "name": "coffee-chat",
+      "source": "./plugins/coffee-chat",
       "description": "Converse with and apply a public, dated perspective graph.",
       "version": "1.0.0",
       "author": {
-        "name": "Sangjoon Son"
+        "name": "Coffee Chat"
       },
       "homepage": "https://sonsangjoon.github.io/coffee-chat/",
       "repository": "https://github.com/SonSangjoon/coffee-chat",
