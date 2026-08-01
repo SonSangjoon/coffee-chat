@@ -1,25 +1,32 @@
 # Coffee Chat Design Specification
 
-- Status: Approved
-- Date: 2026-07-30
-- Product shape: Public temporal personal knowledge graph, shared agent method, and installable multi-skill plugin
+- Status: Review requested
+- Original approval: 2026-07-30
+- Revised: 2026-08-02
+- Product shape: Neutral Coffee Chat template and self-contained public temporal knowledge graph instances
 - Primary distribution: GitHub repository
 - Secondary projection: GitHub Pages
 
 ## 1. Product definition
 
-Coffee Chat turns public sources and a person's dated thoughts into a source-grounded temporal knowledge graph. An agent can use that graph in two ways:
+Coffee Chat turns public sources and a person's dated thoughts into a source-grounded temporal knowledge graph. The product has two repository roles with a hard boundary between reusable implementation and personal knowledge:
+
+1. The neutral `coffee-chat` template contains the schemas, CLI, shared method, skills, site implementation, guardrails, and tests needed to create and operate a Coffee Chat instance.
+2. A self-contained instance such as `coffee-chat-<public-handle>` contains one person's approved public profile, dated Notes, Entity Registry, generated graph, installable plugin, and Pages projection.
+
+An agent can use an initialized instance in two ways:
 
 1. Coffee Chat: reconstruct a topic-specific point of view for one conversation without installing anything.
 2. Coffee Chat plugin: install a package of related skills that can converse with the graph, apply a relevant point of view to work, or help the owner extend the graph.
 
-The repository is simultaneously:
+An initialized instance is simultaneously:
 
 - a public personal knowledge base and wiki;
 - a temporal knowledge graph;
 - a source for an AI-mediated coffee chat;
-- a source of perspective for agents working with or on behalf of the author;
-- a reusable template that other people can fork.
+- a source of perspective for agents working with or on behalf of the author.
+
+The neutral template is not a public record for any person and is not an avatar. It may be installed as the stable `coffee-chat` engine plugin, but that plugin contains no default person, canonical personal Profile, Notes, Entities, personal snapshot, instance plugin namespace, or personal Pages projection. Public author material may be used only in clearly marked test fixtures or example input, is excluded from every canonical and distributable projection, and retains its own content license.
 
 Career and recruiting are important use cases, but the product does not present itself as a resume chatbot. Its explicit purpose is to preserve how a person reads, interprets, applies, revisits, and changes ideas over time. Career value should emerge from the quality and traceability of those records.
 
@@ -67,14 +74,14 @@ Derived Perspective and Task Lens are query-time syntheses for a particular ques
 
 Canonical authority does not mean putting the whole product in one file. It means that each meaning has one authoritative authored location:
 
-- coffee-chat.json owns public profile and package metadata;
-- knowledge/notes owns dated authored thoughts;
-- knowledge/entities.yml owns Entity identity and aliases;
+- coffee-chat.json owns repository role and package metadata and, in an instance, public Profile metadata;
+- an instance's knowledge/notes owns its dated authored thoughts;
+- an instance's knowledge/entities.yml owns its Entity identity and aliases;
 - method owns shared provenance, synthesis behavior, and disclosure language;
 - README.md owns the short bilingual layout and action order, while importing generated metadata and disclosure fragments;
 - each skill owns only its trigger and task-specific boundary.
 
-Indexes, generated README fragments, skill-local method references, platform manifests, marketplace catalogs, and Pages output are generated projections. No generated surface may introduce a new opinion or worldview.
+Indexes, generated README fragments, skill-local method references, platform manifests, marketplace catalogs, and Pages output are generated projections. No generated surface may introduce a new opinion or worldview. Test and example data is never canonical input for the template itself.
 
 ### 2.5 Structural guardrails, not semantic gates
 
@@ -84,40 +91,53 @@ Automation may enforce parseability, identity, referential integrity, secrets, p
 
 The owner talks to an authoring agent instead of filling out a schema. A visitor pastes the repository URL into an agent instead of learning the repository layout. Conventional names, stable IDs, explicit time, an Entity Registry, and a generated machine index provide rigor behind that simple interface.
 
+### 2.7 Template and instance authority
+
+The neutral template is the upstream authority for reusable Coffee Chat implementation. Each initialized instance is the sole authority for its own Profile, Notes, Entities, generated graph, plugin identity, and Pages content.
+
+An instance is self-contained at the implementation snapshot it adopted. Coffee Chat does not require a runtime service, package registry, submodule, or live template checkout. Template changes never mutate an instance automatically. Updating an instance from a later template revision is an explicit, reviewable maintenance change and is outside the v1 authoring flow.
+
+The template may use public author material as an integration fixture to exercise initialization, temporal KG generation, and agent synthesis. Such material lives only below test or example paths, is labeled non-canonical, never enters the template's root graph, README metadata, plugin package, marketplace catalog, or deployed Pages, and is never presented as the template author's knowledge.
+
+The supplied Son Taste/Iteration material may be the first Candidate, temporal-KG, and synthesis fixture input. It is not used to generate package or Pages fixtures. Any Profile, Note, Entity, or graph bytes materialized from it exist only in an isolated temporary workspace, are destroyed after the test, and are neither tracked nor snapshotted as golden output.
+
+Package and Pages integration tests use synthetic non-personal instance fixtures. Their outputs are classified as ephemeral test artifacts, are written outside the repository and release inventory, and are never uploaded or deployed. This classification does not permit test/example inputs to enter a tracked, packaged, released, or deployed engine artifact.
+
+The template's software license covers reusable code, schemas, methods, skills, and presentation assets; it never claims ownership of downstream `knowledge/notes/**`. Each instance declares its own content holder and terms. A real author's fixture retained for testing keeps a path-scoped content notice and is not relicensed as template code.
+
 ## 3. Users and top-level journeys
 
 ### 3.1 Owner
 
-The owner forks the repository, explicitly chooses Make mine, opens it in Codex or Claude Code, initializes the public profile, and adds knowledge by giving the agent one or more public Source links plus their thoughts. The agent handles the schema, temporal links, Entity mapping, generated files, and validation.
+The owner creates an independent repository with GitHub's **Use this template** flow, opens it in Codex or Claude Code, explicitly chooses **Make mine**, initializes the public profile, and adds knowledge by giving the agent one or more public Source links plus their thoughts. The agent handles the schema, temporal links, Entity mapping, generated files, and validation. Using the template flow avoids inheriting another person's Git history.
+
+A framework contributor forks the neutral template and chooses **Contribute to engine**. That path preserves engine state and never initializes a personal graph. A knowledge contributor to an existing instance chooses **Contribute knowledge**, follows that instance's contribution policy, and preserves its owner identity.
 
 ### 3.2 Visitor or collaborator
 
-The visitor passes the repository URL to a web-capable agent. The agent reads the root manifest and first asks:
+The visitor passes an initialized instance URL to a web-capable agent. The agent reads the root manifest and first asks:
 
 1. Do you want a one-time Coffee Chat?
 2. Do you want to install the Coffee Chat plugin?
 
 One-time Coffee Chat does not modify the repository and leaves no installed configuration. Plugin installation uses the host's native marketplace and plugin lifecycle.
 
+When the URL is the neutral template, the agent offers **Create yours**, **Install engine plugin**, or **Contribute to engine** instead. It does not offer a personal conversation or instance-plugin installation for an absent person and never synthesizes a perspective from test fixtures.
+
 ### 3.3 Human web reader
 
-The reader uses GitHub Pages to browse Notes, Sources, Entities, backlinks, the timeline, and the graph. Pages does not modify data and does not host a chatbot, login, comments, or editing workflow.
+For an initialized instance, the reader uses GitHub Pages to browse Notes, Sources, Entities, backlinks, the timeline, and the graph. Pages does not modify data and does not host a chatbot, login, comments, or editing workflow. Template Pages, if deployed, document the product and creation flow only; instance rendering is exercised against non-canonical fixtures in CI.
 
 ## 4. System architecture
 
-The repository is the authoritative public record and the plugin source.
+The neutral template is the reusable implementation source. After initialization, the created instance is the authoritative public record and plugin source.
 
 ~~~text
 coffee-chat/
 ├── README.md
 ├── AGENTS.md                     # source-repository agent bootstrap
 ├── CLAUDE.md                     # Claude adapter to the same bootstrap
-├── coffee-chat.json
-├── knowledge/
-│   ├── notes/
-│   │   └── <stable-note-id>.md
-│   ├── entities.yml
-│   └── index.json                 # generated, tracked machine interface
+├── coffee-chat.json              # engine role; no represented person
 ├── method/                        # shared provenance and synthesis method
 ├── skills/
 │   ├── coffee-chat/
@@ -132,14 +152,32 @@ coffee-chat/
 ├── schemas/
 ├── tools/                         # generation and validation entry points
 ├── site/                          # Pages source, not built output
-├── .codex-plugin/plugin.json      # generated
-├── .claude-plugin/plugin.json     # generated
+├── tests/fixtures/                # non-canonical instance inputs
+├── .codex-plugin/plugin.json      # generated generic engine manifest
+├── .claude-plugin/plugin.json     # generated generic engine manifest
 ├── .agents/plugins/marketplace.json       # generated
 ├── .claude-plugin/marketplace.json        # generated
+├── plugins/coffee-chat/           # generated knowledge-free engine package
 ├── .gitignore
 ├── .pre-commit-config.yaml
 └── .github/workflows/
 ~~~
+
+Initialization adds the instance-only knowledge surface and replaces the role-specific generated package and manifest bytes:
+
+~~~text
+knowledge/
+├── notes/<stable-note-id>.md
+├── entities.yml
+└── index.json                     # generated, tracked machine interface
+.codex-plugin/plugin.json          # generated
+.claude-plugin/plugin.json         # generated
+.agents/plugins/marketplace.json   # generated
+.claude-plugin/marketplace.json    # generated
+plugins/<plugin-name>/              # generated self-contained package
+~~~
+
+The role conversion removes the generated `plugins/coffee-chat/` engine package from the instance tree; it does not bundle both roles into one repository. Users who want both install the generic engine from `coffee-chat` and the instance plugin from its own repository through their native plugin manager.
 
 This tree is a design boundary, not a requirement to choose a particular programming language or site generator. Those choices belong in the implementation plan.
 
@@ -147,27 +185,55 @@ Local brainstorming-companion output under `.superpowers/` is ignored. It is nev
 
 ### 4.1 Root machine manifest
 
-coffee-chat.json is the root machine-readable discovery manifest. Its canonical property shape is:
+coffee-chat.json is the root machine-readable discovery manifest. The neutral template uses an engine role and contains no represented-person identity:
 
 ~~~json
 {
   "schema_url": "./schemas/coffee-chat.schema.json",
   "schema_version": "1.0.0",
-  "time_zone": "Asia/Seoul",
-  "profile": {
-    "id": "69d249c9-3c4f-4e0d-b622-74b292f87e9d",
-    "display_name": "Public display name"
-  },
+  "repository_role": "engine",
   "repository": {
     "url": "https://github.com/example/coffee-chat",
     "default_branch": "main"
   },
   "pages_url": "https://example.github.io/coffee-chat/",
   "plugin": {
+    "name": "coffee-chat",
+    "version": "1.0.0",
+    "description": "Create, read, and apply public, dated Coffee Chat graphs."
+  },
+  "marketplace_name": "coffee-chat-marketplace",
+  "paths": {
+    "skills": "./skills/",
+    "method": "./method/"
+  }
+}
+~~~
+
+An initialized instance uses the following canonical property shape:
+
+~~~json
+{
+  "schema_url": "./schemas/coffee-chat.schema.json",
+  "schema_version": "1.0.0",
+  "repository_role": "instance",
+  "time_zone": "Asia/Seoul",
+  "profile": {
+    "id": "69d249c9-3c4f-4e0d-b622-74b292f87e9d",
+    "display_name": "Public display name",
+    "short_name": "Public short name"
+  },
+  "repository": {
+    "url": "https://github.com/example/coffee-chat-example",
+    "default_branch": "main"
+  },
+  "pages_url": "https://example.github.io/coffee-chat-example/",
+  "plugin": {
     "name": "coffee-chat-example",
     "version": "1.0.0",
     "description": "Converse with and apply a public, dated perspective graph."
   },
+  "marketplace_name": "coffee-chat-example-marketplace",
   "paths": {
     "knowledge_index": "./knowledge/index.json",
     "skills": "./skills/",
@@ -176,17 +242,21 @@ coffee-chat.json is the root machine-readable discovery manifest. Its canonical 
 }
 ~~~
 
-`schema_url` is the repository-relative location of the instance schema; `$schema` and `$id` remain reserved for the schema documents themselves. The root `schema_version` governs `coffee-chat.json`, all authored Notes, the Entity Registry, and the generated index, so authored files do not repeat it. A schema major release is incompatible and requires an explicit, previewed migration; a minor release adds backward-compatible optional capability; a patch release clarifies validation without changing valid data meaning. A validator accepts older versions within its supported major, but rejects a newer major or minor until that validator explicitly supports it.
+`repository_role` is the manifest discriminant. `engine` forbids `time_zone` and `profile`, fixes the stable generic plugin identity, and forbids canonical personal knowledge or a bundled knowledge snapshot. `instance` requires the complete public Profile and time configuration and uses an instance-specific plugin namespace. The initial approved Candidate changes a downstream target satisfying section 7.5 from the copied engine role to a complete instance atomically with its first Note. The proposed instance `time_zone` is Candidate-bound input and is used to freeze and recheck `recorded_on` and `accessed_on` before the instance manifest exists. `profile.short_name` is an explicitly authored conventional short label for generated presentation surfaces; it is never inferred from `display_name`.
 
-`schema_version` and `plugin.version` are independently versioned [SemVer](https://semver.org/) strings. Platform marketplace catalogs and manifests derive their shared identity, repository, version, and paths from this file. Root `time_zone` is an [IANA time zone](https://www.iana.org/time-zones) used only to turn agent-observed instants into public calendar dates. It is not a residence claim, and an owner who does not want to publish a local zone may choose `Etc/UTC`.
+`schema_url` is the repository-relative location of the schema; `$schema` and `$id` remain reserved for the schema documents themselves. The root `schema_version` governs `coffee-chat.json`, all authored Notes, the Entity Registry, and the generated index, so authored files do not repeat it. A schema major release is incompatible and requires an explicit, previewed migration; a minor release adds backward-compatible optional capability; a patch release clarifies validation without changing valid data meaning. A validator accepts older versions within its supported major, but rejects a newer major or minor until that validator explicitly supports it.
 
-`plugin.name` is the fork's install namespace, not a global product constant. Initialization proposes a unique lowercase kebab-case name such as `coffee-chat-<public-handle>`, shows it for approval, and generates the same identity into both platform manifests. A collision is never resolved by overwriting another installed Coffee Chat.
+`schema_version` and `plugin.version` are independently versioned [SemVer](https://semver.org/) strings. Role-specific marketplace catalogs and manifests derive their shared identity, repository, version, and paths from this file. Instance `time_zone` is an [IANA time zone](https://www.iana.org/time-zones) used only to turn agent-observed instants into public calendar dates. It is not a residence claim, and an owner who does not want to publish a local zone may choose `Etc/UTC`.
+
+For `repository_role: engine`, `plugin.name` is the stable product namespace `coffee-chat`. The generic Coffee Chat and Apply Perspective skills require an explicit verified instance URL before they can synthesize or apply any person's perspective; a checkout can only provide that URL from its manifest. Build KG instead requires an explicit local downstream or instance checkout. For `repository_role: instance`, initialization proposes a unique lowercase kebab-case name such as `coffee-chat-<public-handle>`, shows it for approval, and generates the same identity into both platform manifests. A collision is never resolved by overwriting another installed Coffee Chat.
+
+Repository ownership, package publisher, and maintainer metadata may identify the engine maintainer for software provenance, but those fields are never a represented-person Profile and cannot select a Coffee Chat perspective.
 
 It contains no personality, fixed POV, private configuration, or secret.
 
 ### 4.2 Generated index
 
-knowledge/index.json is committed because a visitor's remote agent must be able to discover the graph without cloning or running a build. It is generated-only and contains:
+In an initialized instance, knowledge/index.json is committed because a visitor's remote agent must be able to discover the graph without cloning or running a build. It is generated-only and contains:
 
 - schema and profile identity;
 - a deterministic knowledge digest;
@@ -195,6 +265,8 @@ knowledge/index.json is committed because a visitor's remote agent must be able 
 - stable paths and time metadata needed to retrieve canonical Markdown.
 
 Each generated node uses `id` and `type`; a Note node also exposes its canonical `path` and `content_digest`. Each structural edge follows the conventional triple shape `subject`, `predicate`, and `object`; `predicate` is one of `cites`, `mentions`, or `links_to`. A `cites` edge additionally carries `citation_metadata`, containing the exact Note-local `title`, optional `published_on`, and optional `accessed_on` for that Citation. The index may include additional deterministic retrieval fields defined by its versioned JSON Schema, but it cannot introduce authored meaning.
+
+The neutral template does not commit a root knowledge index. Tests may materialize indexes only inside isolated fixture workspaces and must prove that no fixture bytes enter template projections.
 
 The triple `(subject, predicate, object)` is the structural edge identity, so a duplicate triple is emitted once. Citation observations remain distinct because a Note may contain an exact Source URL only once while the same Source URL can be cited by many Notes.
 
@@ -254,14 +326,17 @@ GitHub Pages output is built and deployed but not committed.
 
 ### 4.3 Source-repository agent bootstrap
 
-`AGENTS.md` is the thin, vendor-neutral bootstrap for an agent working inside the source repository. It identifies `coffee-chat.json` and routes an explicit owner request to the relevant canonical skill under `skills/`. It does not duplicate the skill or shared method.
+`AGENTS.md` is the thin, vendor-neutral bootstrap for an agent working inside the source repository. It identifies `coffee-chat.json` and routes an explicit user request according to the repository role and the relevant canonical skill under `skills/`. It does not duplicate the skill or shared method.
 
 `CLAUDE.md` is a thin Claude Code adapter that imports or points to `AGENTS.md` rather than maintaining a second set of project instructions. The installed plugin continues to discover the same canonical skills through the plugin's `skills/` directory.
 
+The bootstrap branches on `repository_role`. In the engine repository it offers generic plugin use, downstream instance creation, or framework contribution; it never treats the repository maintainer as a represented person. In an instance repository it offers Coffee Chat, plugin installation, perspective application, or approved KG authoring against that instance.
+
 This distinction keeps both paths simple:
 
-- a cloned source repository becomes authorable through its root agent instructions;
-- an installed plugin exposes namespaced skills through the host's native plugin discovery.
+- an explicit downstream checkout becomes authorable through its root agent instructions;
+- the installed generic plugin exposes knowledge-free engine skills: read modes require a verified instance URL and Build KG requires an explicit local target checkout;
+- an installed instance plugin exposes the same skills with its own live instance as the default target.
 
 ## 5. Canonical knowledge model
 
@@ -376,7 +451,7 @@ For retrospective writing, `temporal_coverage` states the period the Note says i
 
 These are two complementary temporal axes, not a claim that the repository is a bitemporal database. Human-facing copy calls them perspective time and first recorded date: the first says what period the Note is about, and the second says when that account first became part of the public record.
 
-`recorded_on` is provenance time at calendar-day precision: the date in root `time_zone` on which the approved Note first entered the repository. It maps conceptually to [PROV `generatedAtTime`](https://www.w3.org/TR/prov-o/#generatedAtTime) without claiming instant precision or requiring PROV serialization. The agent freezes it immediately before Public-content Preview; a date rollover before write requires a regenerated preview. `published_on` is Source publication time and preserves known `YYYY`, `YYYY-MM`, or `YYYY-MM-DD` precision. `accessed_on` is the full date in root `time_zone` on which the agent successfully retrieved that Source. These fields are never substituted for one another.
+`recorded_on` is provenance time at calendar-day precision: the date in the instance `time_zone` on which the approved Note first entered the repository. During Make mine, the Candidate's proposed time zone is the authority before the instance manifest exists; afterward, root `time_zone` is authoritative. It maps conceptually to [PROV `generatedAtTime`](https://www.w3.org/TR/prov-o/#generatedAtTime) without claiming instant precision or requiring PROV serialization. The agent freezes it immediately before Public-content Preview; a date rollover before write requires a regenerated preview. `published_on` is Source publication time and preserves known `YYYY`, `YYYY-MM`, or `YYYY-MM-DD` precision. `accessed_on` is the full date in the same Candidate-bound or root time zone on which the agent successfully retrieved that Source. These fields are never substituted for one another.
 
 `recorded_on` remains unchanged when a Note receives a factual correction; it is not amendment time. A Citation's `accessed_on` is also frozen with the approved Note; later availability checks report external status without silently rewriting it. The current graph contains the corrected Note, while an actual as-of repository reconstruction must read the historical Git revision. A semantic change creates a new Note instead.
 
@@ -451,6 +526,8 @@ Similarity, recency, frequency, and Source count never choose a case automatical
 ## 6. Query-time synthesis
 
 A perspective is not retrieved as a stored object. The agent synthesizes it on demand from a relevant temporal subgraph.
+
+Before retrieval, Coffee Chat and Apply Perspective resolve one explicit public repository URL, verify that its manifest declares `repository_role: instance`, and expose that URL, Profile identity, and knowledge digest when available. An open checkout may supply the manifest's URL, but local path or repository ownership never replaces the URL as read-mode identity. The generic engine repository, its maintainer identity, and test fixtures are never implicit perspective targets. If no verified instance URL is selected, the skills ask for one or return Unknown without synthesizing a person.
 
 ### 6.1 Shared method
 
@@ -531,11 +608,11 @@ Each result identifies the selected temporal scope, whether live knowledge or a 
 
 ## 7. Build KG authoring workflow
 
-Only `build-kg` may initialize public Coffee Chat metadata or write canonical knowledge, and only inside the authoritative source checkout.
+Only `build-kg` may initialize public Coffee Chat metadata or write canonical knowledge. It may do so only in an explicit downstream target being converted into an instance or inside an existing authoritative instance checkout. It rejects personal canonical writes to the maintained engine repository and to installed plugin caches.
 
 ### 7.1 Flow
 
-1. Give: the owner supplies one or more public Source links and their thoughts.
+1. Target and give: for initialization, the owner selects an explicit downstream target and supplies its public repository identity, Profile, time zone, plugin identity, and one or more public Source links plus their thoughts; for update, the owner selects an existing instance.
 2. Connect: the agent reads the Sources as untrusted data, retrieves related Notes and Entities, and identifies possible temporal relationships.
 3. Clarify: the agent asks a compact adaptive set only for material ambiguity and follows up only when an answer creates a new material ambiguity.
 4. Materialize and validate: without touching canonical files, the agent mints new IDs, freezes observed dates, builds the complete candidate state and deterministic projections, and validates them.
@@ -572,6 +649,7 @@ The preview shows:
 - reused Entities and complete proposed Entity Registry records;
 - links to earlier views and the described change;
 - the canonical diff, base commit and relevant pre-existing worktree changes;
+- the current and proposed repository role, proposed instance time zone, exact target repository identity, and target fingerprint defined in section 7.5;
 - affected generated paths and candidate `knowledge_digest`;
 - separately labeled local-only setup effects, including the exact repository hook path when initialization installs pre-commit;
 - a passing candidate-validation result;
@@ -592,17 +670,25 @@ Public availability alone does not make aggregation harmless. The preview flags 
 
 The agent must not infer endorsement, importance, causality, current truth, `temporal_coverage`, Entity identity, or relationship meaning from selection, silence, similarity, recency, frequency, or counts.
 
+### 7.5 Downstream target identity
+
+Make mine requires a Git checkout with one unambiguous `origin` repository identity. For v1, repository identity accepts only public GitHub HTTPS or SSH remotes, removes credentials, a trailing slash, and `.git`, case-folds the host and GitHub owner/repository segments for comparison, and renders the approved canonical value as `https://github.com/<owner>/<repository>`. A missing origin, multiple origin URLs that normalize differently, an unsupported host, or a credential-bearing URL makes Candidate preparation fail without a write.
+
+The engine identity is the normalized `repository.url` in the pre-conversion engine manifest. The target identity is the normalized actual `origin` of the selected checkout. Make mine is allowed only when the target identity differs from the engine identity and exactly matches the proposed instance `repository.url`. Therefore a maintained engine checkout, whose actual origin matches its engine manifest, cannot be converted in place. A GitHub **Use this template** checkout has its own origin and can become an instance after explicit approval.
+
+Candidate preparation resolves and records a target fingerprint containing the real path plus device and inode of `git rev-parse --git-common-dir`, normalized origin identity, base commit, and digest of the pre-conversion `coffee-chat.json`. Candidate apply re-resolves every component and also rechecks the proposed time zone's calendar date, Source observations, and approved setup-effect targets. Any difference invalidates approval and requires a new Candidate. The fingerprint is local approval metadata stored only in the external Candidate directory and receipt; machine-specific paths and inode values never enter canonical files or generated projections.
+
 ## 8. Plugin architecture and lifecycle
 
-Coffee Chat is distributed as one plugin with several focused skills. This matches the common plugin shape supported by Codex and Claude while keeping workflow logic task-specific.
+Coffee Chat uses one shared three-skill architecture in two package roles. The stable generic `coffee-chat` engine plugin contains no personal graph: Coffee Chat and Apply Perspective require a verified instance URL, while Build KG requires an explicit local downstream or instance checkout. Each initialized instance may generate its own namespaced plugin with the same method and skills plus that instance's default live URL and optional fallback snapshot. This matches the common plugin shape supported by Codex and Claude while keeping workflow logic task-specific.
 
 ### 8.1 Skills
 
 | Skill | Purpose | Required side-effect behavior |
 | --- | --- | --- |
-| `coffee-chat` | One conversation about the author's documented views | Initiates no persistent repository, installation, or configuration mutation |
-| `apply-perspective` | Apply a Derived Perspective and optional Task Lens to a task | May edit explicitly named task targets, but never the Coffee Chat source repository, installed plugin, or their generated projections |
-| `build-kg` | Initialize the fork or extend its canonical graph through the approved authoring flow | May write approved paths in the source repository only after exact Public-content Preview approval |
+| `coffee-chat` | One conversation about the selected instance author's documented views | Requires a verified initialized instance URL and initiates no persistent repository, installation, or configuration mutation |
+| `apply-perspective` | Apply a selected instance's Derived Perspective and optional Task Lens to a task | Requires a verified initialized instance URL and may edit explicitly named task targets, but never the Coffee Chat source repository, installed plugin, or their generated projections |
+| `build-kg` | Create an explicit downstream instance or extend an existing instance through the approved authoring flow | May write approved paths in the selected target only after exact Public-content Preview approval; never writes personal knowledge to the engine repository |
 
 Each `SKILL.md` is a thin router with a precise trigger and boundary. Shared provenance, temporal reconstruction, and side-effect behavior live once under `method/`.
 
@@ -610,18 +696,18 @@ For Agent Skills-compatible progressive disclosure, each skill receives a genera
 
 These are Coffee Chat behavior contracts, not claims of a native cross-platform Agent Skills permission system. Host permissions and user instructions remain authoritative.
 
-If `build-kg` is invoked from an installed plugin cache or any directory that is not the authoritative source checkout, it must not edit the cached package. It directs the user to open or fork the source repository first.
+If `build-kg` is invoked from an installed plugin cache, it must not edit the cached package. It asks for an explicit downstream target or directs the user to create/open an instance checkout. Target role, repository identity, and filesystem fingerprint are bound into the Candidate approval.
 
 ### 8.2 Cross-platform packaging
 
-The common skills/ layout and method are shared. Platform-specific manifests and marketplace catalogs are generated from coffee-chat.json:
+The common skills/ layout and method are shared. Platform-specific manifests and marketplace catalogs are generated from the current repository role in coffee-chat.json:
 
 - .codex-plugin/plugin.json;
 - .claude-plugin/plugin.json;
 - Codex marketplace catalog;
 - Claude marketplace catalog.
 
-Generated manifests must agree on shared identity, version, repository, and skill inventory while allowing platform-specific presentation fields.
+Generated engine manifests use the stable generic identity and contain no Profile or knowledge snapshot. Generated instance manifests use that instance's namespace, public short label, repository, version, and skill inventory. Within either package role, Codex and Claude manifests must agree on shared identity, version, repository, and skill inventory while allowing platform-specific presentation fields.
 
 Every skill follows the open [Agent Skills format](https://agentskills.io/specification): the frontmatter `name` matches its parent directory, the `description` states both what the skill does and when it should activate, and detailed material is loaded progressively. Platform-specific frontmatter is added only when the host requires it and cannot redefine the shared method.
 
@@ -629,9 +715,9 @@ The optional Agent Skills `compatibility` field discloses required network, file
 
 ### 8.3 Live knowledge and fallback
 
-Both direct Coffee Chat and the installed plugin prefer the canonical public knowledge index. Adding a new Note does not require publishing a new workflow version.
+Direct Coffee Chat and both plugin roles prefer the selected instance's canonical public knowledge index. Adding a new Note does not require publishing a new workflow version.
 
-The installed plugin may include a generated knowledge snapshot for offline fallback. A fallback answer must disclose:
+Only an instance plugin may include a generated knowledge snapshot for offline fallback. The generic engine plugin must not contain any personal snapshot or silently select test/example data. A fallback answer must disclose:
 
 - that the snapshot, not the live graph, is in use;
 - its knowledge digest;
@@ -642,13 +728,13 @@ The snapshot is a cache, never a second authority.
 
 ### 8.4 Installation and removal
 
-The initial agent handoff asks the user to choose Coffee Chat or install the plugin. One-time Coffee Chat is the zero-install path. Before installing, the agent shows the host-supported scopes, recommends the narrowest scope that satisfies the request, and discloses the marketplace source, files or cache affected by the host, update behavior, and official removal command. It never selects a shared project/workspace scope without explicit approval.
+An initialized instance handoff asks the user to choose one-time Coffee Chat or install that instance plugin. The generic engine handoff asks for an instance URL, offers downstream instance creation, or offers installation of the knowledge-free engine plugin. One-time Coffee Chat is the zero-install path. Before installing either role, the agent shows the exact package role and namespace, host-supported scopes, recommends the narrowest scope that satisfies the request, and discloses the marketplace source, files or cache affected by the host, update behavior, and official removal command. It never selects a shared project/workspace scope without explicit approval.
 
 The installer verifies that the package matches the declared skill-only v1 shape. Unexpected hooks, MCP servers, agent definitions, LSP servers, background monitors, settings, binaries, or manifest drift stop installation and are shown to the user.
 
 Codex and Claude native plugin managers own installation, enablement, update, disablement, and removal. Coffee Chat does not copy arbitrary global files or modify unrelated skills and project instructions.
 
-Distinct forks use distinct plugin namespaces so they can coexist. Removing one Coffee Chat uses the host's official command and must not remove another fork, marketplace source, unrelated skill, or project instruction; host-owned caches follow the host's documented lifecycle. The removal receipt states what was removed, whether the marketplace remains configured, and any host-owned cache or data the official command intentionally retains.
+The generic engine and every instance use distinct plugin namespaces so they can coexist. Removing one uses the host's official command and must not remove the engine, another instance, marketplace source, unrelated skill, or project instruction; host-owned caches follow the host's documented lifecycle. The removal receipt states the removed package role and namespace, whether its marketplace remains configured, and any host-owned cache or data the official command intentionally retains.
 
 Plugin runtime hooks are excluded from v1. Implicit hooks could run in unrelated sessions, differ by host, and become a hidden behavioral or semantic rule engine. Repository validation hooks remain owner-side only.
 
@@ -658,16 +744,18 @@ No MCP server is required in v1. The static public graph, agent instructions, an
 
 ### 9.1 README
 
-The README is short, bilingual, and action-first. English and Korean appear as paired lines rather than two long duplicated documents.
+The README is short, bilingual, action-first, and generated for the repository role. English and Korean appear as paired lines rather than two long duplicated documents.
 
-Above the fold it contains:
+The generic engine README contains:
 
 1. product name;
 2. one-sentence purpose;
-3. AI-generated synthesis disclaimer;
-4. Coffee Chat action;
-5. Install plugin action;
-6. secondary links to Make mine and Browse the KG.
+3. Create yours through **Use this template**;
+4. use an explicit Coffee Chat instance URL;
+5. install the knowledge-free engine plugin;
+6. **Contribute to engine** and documentation links.
+
+It never presents the repository maintainer or a fixture author as the represented person. An initialized instance README instead contains the AI-generated synthesis disclaimer, one-time Coffee Chat action, instance-plugin installation, Make mine link back to the neutral template, and Browse the KG action.
 
 The disclosure is explicit and paired bilingually:
 
@@ -675,9 +763,9 @@ The disclosure is explicit and paired bilingually:
 >
 > 공개된 날짜별 기록을 바탕으로 AI가 만든 해석입니다. 본인이 아니며, 기록되지 않은 생각을 대신 말하지 않습니다.
 
-The copyable universal prompt tells the agent to open the repository, follow coffee-chat.json, ask which mode the user wants, use only public dated evidence, and distinguish Authored, Sourced, Inferred, and Unknown content.
+The copyable universal prompt tells the agent to open the repository and follow coffee-chat.json. For the engine role it asks for an instance URL or offers creation/contribution. For the instance role it asks whether the user wants one-time Coffee Chat or instance-plugin installation, uses only public dated evidence, and distinguishes Authored, Sourced, Inferred, and Unknown content.
 
-Architecture, schemas, detailed commands, and contribution notes remain below the first screen or in linked documentation. Installation commands are generated from canonical metadata so forks cannot leave stale owner, repository, or plugin names in the README.
+Architecture, schemas, detailed commands, and contribution notes remain below the first screen or in linked documentation. Installation commands are generated from role-specific canonical metadata so an instance cannot leave stale template, owner, repository, or plugin names in the README.
 
 Immediately after the actions, the README explains the product in exactly two short conceptual blocks:
 
@@ -686,24 +774,26 @@ Immediately after the actions, the README explains the product in exactly two sh
 
 These are explanatory blocks, not additional setup steps or a second schema.
 
-### 9.2 Fork onboarding
+### 9.2 Template and contribution onboarding
 
-The public onboarding is:
+The public personal-instance onboarding is:
 
-1. Fork the repository.
-2. Explicitly choose **Make mine** or **Contribute**. The agent never infers intent from fork ownership, repository name, or existing files.
-3. Open the fork in Codex or Claude Code.
-4. For **Make mine**, ask the agent to initialize Coffee Chat and add the first public Source. For **Contribute**, preserve the upstream profile, Notes, Entities, and plugin namespace and follow the contribution path without initialization or personal-data cleanup.
+1. Choose **Use this template** to create an independent downstream repository.
+2. Open the downstream repository in Codex or Claude Code.
+3. Explicitly choose **Make mine** and provide the new public repository, Profile, plugin identity, and first public Source.
+4. Review one Candidate that converts only that downstream target into an instance and adds its first Note.
+
+**Contribute to engine** uses a normal fork of the neutral engine repository and never enters Make mine or Candidate authoring. **Contribute knowledge** is the only user-facing action that routes to Candidate mode `contribute`, and it is available only for an already initialized instance. The agent never infers intent from ownership or repository name.
 
 Initialization configures the public profile, plugin identity, Pages URL, generated files, and repo-local pre-commit hooks. Before the first public write, it explains that public Git history, forks, clones, and caches are difficult to retract.
 
 Initialization is handled by `build-kg` and uses the same materialize, validate, Public-content Preview, and exact local-write approval boundary as a Note. In the normal first-run journey, profile/plugin configuration and the first Note are one candidate, so the owner does not complete a separate schema setup wizard.
 
-For Make mine, upstream personal Notes and Entity mappings are never adopted as the new owner's knowledge. The initialization candidate removes them from the current tree, creates a new Profile ID and plugin namespace, retains only Entities required by the approved first Note, and regenerates every projection. It does not rewrite shared Git history; the preview discloses that the upstream public records remain visible in fork history but are absent from the new canonical graph. The **Contribute** branch never runs this re-identification flow.
+The neutral template has no upstream personal Notes or Entity mappings to remove. Make mine creates a new Profile ID and plugin namespace, retains only Entities required by the approved first Note, and regenerates every instance projection. It rejects a target whose repository fingerprint still identifies the maintained engine checkout. Knowledge contribution preserves the existing instance Profile, repository, and namespace.
 
 ### 9.3 GitHub Pages
 
-Top-level views:
+Initialized instance Pages provide these top-level views:
 
 - Home: intent, disclosure, quick actions, latest available graph metadata.
 - Timeline: Notes and linked changes with both temporal coverage and recorded date visible.
@@ -718,6 +808,8 @@ Pages does not derive or publish a Derived Perspective or Task Lens. If Pages, a
 
 Pages treats Note Markdown, Citation metadata, and Entity labels as untrusted presentation input: it disables or sanitizes raw HTML, permits only approved HTTP(S) and repository-relative link schemes, never embeds fetched Source bodies, and prevents external links from controlling the opener page.
 
+Engine Pages provide product documentation and the creation flow only. Instance site components are built and tested against isolated fixtures in CI, but fixture content is never deployed from the engine repository.
+
 ## 10. Guardrails and automation
 
 ### 10.1 One validator
@@ -728,9 +820,11 @@ One deterministic repository-owned validator is called by:
 - local pre-commit for staged changes;
 - GitHub Actions for the whole repository.
 
+The validator branches structurally on `repository_role`. Engine validation rejects canonical personal knowledge, Profile fields, personal snapshots, and any tracked, packaged, released, uploaded, or deployed artifact whose dependency graph reaches a test/example path. Instance validation requires the complete Profile, graph, package, and Pages projections. A test harness may create explicitly classified ephemeral outputs outside the repository and release inventory; those outputs are never accepted by projection, release, or upload commands. This is an input-boundary guardrail, not a blacklist of names or ideas.
+
 Each validation error has a stable lowercase kebab-case `code`, repository-relative POSIX `path`, optional [RFC 6901](https://www.rfc-editor.org/rfc/rfc6901.html) `pointer`, and a redacted human-readable `message`. Exit code 0 means no errors, 1 means one or more validation errors, and 2 means the validator itself could not complete. The validator does not emit semantic quality scores or warnings.
 
-CI is the authoritative release and merge gate because Git hooks are local and can be absent or deliberately bypassed. The maintained repository requires its validation status through a branch ruleset; fork initialization offers to configure an equivalent rule when the host and user permissions allow it.
+CI is the authoritative release and merge gate because Git hooks are local and can be absent or deliberately bypassed. The maintained engine repository requires its validation status through a branch ruleset; instance initialization offers to configure an equivalent rule when the host and user permissions allow it.
 
 ### 10.2 Deterministic hard failures
 
@@ -742,8 +836,8 @@ CI is the authoritative release and merge gate because Git hooks are local and c
 | Links and paths | Broken internal Note link, path escape, undeclared external body link, remote image/embed, unsafe scheme, or credential-bearing/private/local URL |
 | Security | Secret, token, API key, private key, or tracked credential file |
 | Generation | Non-deterministic index, stale generated file, skill-local method projection drift, or manifest/catalog drift |
-| Packaging | Missing skill or asset, invalid platform package, or undeclared v1 hook/MCP/agent/LSP/monitor/settings/binary component |
-| Publication | Pages build failure, or Derived Perspective, Task Lens, query-time cache, or excluded local artifact entering Git or Pages |
+| Packaging | Missing skill or asset, invalid platform package, role/manifest mismatch, engine package containing Profile or knowledge data, fixture/example dependency entering a tracked or distributable engine artifact, or undeclared v1 hook/MCP/agent/LSP/monitor/settings/binary component |
+| Publication | Pages build failure, released or deployed engine Pages containing fixture/personal graph data, or Derived Perspective, Task Lens, query-time cache, or excluded local artifact entering Git or Pages |
 
 Unreachable or drifting external Sources, ambiguous Entity candidates, uncertain temporal precision, sensitive-data aggregation, and host availability are adaptive authoring or use-time observations. The agent exposes them in the Public-content Preview or answer without converting them into validator rules, counts, scores, or CI failures. Diagnostics and Gitleaks output never print a matched sensitive value.
 
@@ -751,7 +845,7 @@ Unreachable or drifting external Sources, ambiguous Entity candidates, uncertain
 
 The repository includes Gitleaks in `.pre-commit-config.yaml` pinned to a full immutable commit SHA, with the human-readable release tag retained as a comment.
 
-Fork initialization runs `pre-commit install` for that clone. On `git commit`:
+Instance initialization may run `pre-commit install` for that clone. An engine contributor may install the same repository-owned hooks explicitly. On `git commit`:
 
 1. Gitleaks scans staged content in redacted mode.
 2. A finding exits non-zero and the commit is not created.
@@ -766,17 +860,18 @@ GitHub Actions runs the same pinned Gitleaks configuration explicitly so local h
 
 ### 10.4 CI and Pages deployment
 
-Pull request workflow:
+The engine pull request workflow:
 
 1. read-only checkout;
 2. full schema, identity, time, internal/public-URL, and secret validation;
 3. clean deterministic regeneration and zero diff;
-4. Codex and Claude package validation;
-5. Pages build and offline asset/link inspection.
+4. knowledge-free generic Codex and Claude package validation;
+5. isolated synthetic-fixture materialization of an instance package and Pages build into an external temporary output classified as non-releasable;
+6. provenance inspection proving public-author fixtures and all ephemeral outputs do not enter engine packages, tracked snapshots, uploaded artifacts, or deployed engine Pages.
 
 It uses pull_request rather than pull_request_target, receives no repository secrets, defaults to `contents: read`, and pins every Action and tool dependency to a full immutable commit or artifact digest with a readable version comment.
 
-Main-branch workflow repeats validation and build, uploads only the explicit site output, and deploys through a separate `github-pages` environment job. Only that job receives `pages: write` and `id-token: write`; all other permissions remain disabled or read-only.
+An instance pull request runs the same structural/security gates against its canonical graph, instance packages, and instance Pages. The engine main-branch workflow deploys documentation-only Pages; an instance main-branch workflow deploys its KG Pages. Each uploads only its explicit role-appropriate site output and deploys through a separate `github-pages` environment job. Only that job receives `pages: write` and `id-token: write`; all other permissions remain disabled or read-only.
 
 ### 10.5 Explicit non-gates
 
@@ -808,7 +903,10 @@ Hooks and CI never enforce:
 | Validation fails after write | Do not commit or publish; preserve a clear recoverable diff and explain the failure |
 | Source later changes or disappears | Keep the historical Note; report the failed access during use without changing the deterministic index; request owner review |
 | Live KG unavailable to plugin | Use an identified snapshot only if available; otherwise state that evidence cannot be accessed |
-| Plugin namespace already installed from another source | Show the existing and requested sources; do not overwrite, and ask the user to rename the fork or remove the existing installation explicitly |
+| Engine Coffee Chat has no selected instance | Ask for a public instance URL and verify its initialized manifest; a checkout may only supply that URL and never replaces it as read-mode identity |
+| Personal Candidate targets the maintained engine checkout | Reject the write unless the target satisfies every downstream identity and fingerprint condition in section 7.5 |
+| Fixture or example data reaches an engine projection | Fail validation and identify the dependency path without publishing or packaging the bytes |
+| Plugin namespace already installed from another source | Show the existing and requested sources; do not overwrite, and ask the user to rename the instance namespace or remove the existing installation explicitly |
 | Existing unmanaged pre-commit hook | Do not overwrite or silently chain it; show the conflict and request explicit integration direction |
 | Pages lags or fails | Keep repository authoritative and show the last successfully built source commit |
 
@@ -816,6 +914,11 @@ Hooks and CI never enforce:
 
 ### 12.1 Data and generator tests
 
+- engine and instance manifest role discrimination;
+- engine rejection of Profile, canonical knowledge, personal snapshot, and instance-only projection inputs;
+- atomic conversion of an explicit downstream engine copy into an initialized instance without changing the upstream engine checkout;
+- Make mine rejection for missing, ambiguous, unsupported, credential-bearing, unchanged-engine, or request-mismatched origin identity;
+- Candidate invalidation when Git common-dir identity, origin, base commit, pre-conversion manifest digest, proposed time-zone date, Source observation, or setup-effect target changes;
 - valid and invalid Note frontmatter;
 - partial and ranged dates without invented precision;
 - valid calendar units, inclusive mixed-precision interval comparison, and reversed-range rejection;
@@ -845,7 +948,8 @@ Hooks and CI never enforce:
 
 Representative fixtures verify that:
 
-- coffee-chat asks for the initial mode when entered from a repository URL;
+- an engine URL offers creation, generic-plugin installation, or framework contribution; Coffee Chat and Apply Perspective require a verified initialized instance URL and never select a person implicitly;
+- an instance URL asks for one-time Coffee Chat or instance-plugin installation;
 - perspective-time answers label later-recorded retrospectives as hindsight rather than contemporaneous evidence;
 - first-recorded cutoff answers exclude Notes recorded after the cutoff and disclose that the corpus contains current corrected content;
 - actual as-of repository questions read the matching historical Git revision or return Unknown when it is unavailable;
@@ -865,17 +969,19 @@ Representative fixtures verify that:
 ### 12.3 Packaging and lifecycle tests
 
 - generated skill-local method references match the canonical root method inputs;
-- both generated manifests parse and expose the same skill inventory;
+- generic engine manifests parse, expose the shared skill inventory, and contain no personal Profile or knowledge snapshot;
+- materialized instance manifests parse, expose the same skill inventory, and use their own namespace and default instance target;
 - Agent Skill names, descriptions, compatibility declarations, and progressive-disclosure references validate against the open format;
 - the packaged v1 inventory contains no hook, MCP server, agent definition, LSP server, monitor, settings, or binary component;
 - marketplace entries resolve to the plugin source;
 - opening the source repository in Codex or Claude Code routes owner requests through the thin AGENTS.md and CLAUDE.md bootstraps to the canonical skills;
 - install, reload/new-session discovery, update, disable, and remove smoke tests for supported Codex and Claude surfaces;
-- co-install two fork namespaces and remove one without changing the other or unrelated host configuration;
+- co-install the generic engine and two instance namespaces, then remove each independently without changing the others or unrelated host configuration;
 - live KG preference and snapshot disclosure;
-- the first fork action requires an explicit Make mine or Contribute choice;
-- a Make mine fork removes upstream knowledge from the current graph and regenerates all owner-specific metadata without stale upstream values;
-- a Contribute fork leaves upstream profile and knowledge identity unchanged and cannot enter re-identification cleanup.
+- Coffee Chat and Apply Perspective cannot answer from an engine checkout, fixture, or maintainer identity without a verified initialized instance URL; only Build KG accepts an explicit local target checkout;
+- Make mine converts only an explicit downstream target and regenerates all owner-specific metadata without stale engine values;
+- instance knowledge contribution leaves its Profile and knowledge identity unchanged and cannot enter re-identification cleanup;
+- fixture/example paths cannot reach the engine package, fallback snapshot, README metadata, tracked graph, or deployed Pages.
 
 ### 12.4 Security and release tests
 
@@ -883,6 +989,7 @@ Representative fixtures verify that:
 - logs redact detected values;
 - credential-bearing URLs and private file paths fail;
 - authoring fixtures surface likely aggregation risks in the preview without automatic rejection;
+- public author fixtures retain their declared content license and remain excluded from distributable engine artifacts;
 - agents do not bypass hooks;
 - prompt-like text seeded in a Source, Note, Citation title, Entity label, or index field cannot redirect the selected workflow;
 - Pages contains only the approved public artifact inventory.
@@ -890,32 +997,40 @@ Representative fixtures verify that:
 
 ### 12.5 End-to-end acceptance path
 
-The primary end-to-end test is:
+The release has two primary end-to-end paths. The engine path is:
 
-1. create a fork and explicitly choose Make mine;
-2. initialize it with an agent;
+1. validate the neutral engine with no Profile or canonical personal knowledge;
+2. build and validate the knowledge-free generic plugin;
+3. prove Son or other public fixtures produce no package/Pages output and leave no tracked snapshot, while synthetic ephemeral fixture outputs cannot reach engine packages, uploads, or deployed Pages;
+4. pass CI and deploy documentation-only Pages;
+5. install the generic plugin, prove Coffee Chat and Apply Perspective require a verified initialized instance URL while Build KG requires an explicit local target checkout, and remove it cleanly.
+
+The disposable downstream-instance path is:
+
+1. create an independent repository through **Use this template**;
+2. explicitly choose Make mine and initialize it with an agent;
 3. add one public Source and complete one adaptive interview;
-4. approve a Public-content Preview for the exact local write;
-5. generate a valid first Note and Entity mapping;
-6. block a seeded secret before commit;
-7. pass CI;
-8. deploy Pages;
-9. run one URL-based Coffee Chat;
-10. install and remove the plugin on supported hosts.
+4. approve a Public-content Preview for the exact downstream write;
+5. generate a valid first Note, Entity mapping, instance package, and KG Pages;
+6. block a seeded secret before commit and pass instance CI;
+7. run one URL-based Coffee Chat;
+8. co-install and independently remove the generic and instance plugins.
 
 ## 13. Success criteria
 
 The first release succeeds when:
 
-- a person with no schema knowledge can fork the repository and create a complete first Note through an agent;
-- a visitor can paste the repository URL into an agent and choose Coffee Chat or plugin installation;
+- the maintained `coffee-chat` repository contains no canonical represented-person Profile, Notes, Entities, personal snapshot, or personal Pages data;
+- the generic `coffee-chat` plugin can be installed and removed, requires an explicit initialized instance before perspective synthesis, and never treats its maintainer or fixtures as the represented person;
+- a person with no schema knowledge can use the template to create an independent instance and a complete first Note through an agent;
+- a visitor can paste an instance repository URL into an agent and choose Coffee Chat or instance-plugin installation;
 - the graph supports multiple and repeated Sources without treating repetition as confidence;
 - a time-aware query explains an earlier view, change context, later view, and unresolved gaps;
 - no Derived Perspective, Task Lens, personality profile, or fixed Mental Model exists in Git or Pages;
-- Codex and Claude packages consume the same skills and shared method;
-- the plugin can be installed and removed through native managers without modifying unrelated workflow files;
+- generic and instance Codex and Claude packages consume the same skills and shared method while preserving role-specific identity and data boundaries;
+- generic and instance plugins can coexist and be installed or removed through native managers without modifying each other or unrelated workflow files;
 - Gitleaks prevents a detected staged secret from becoming a normal commit and CI repeats the check;
-- GitHub Pages exposes the same Notes, Sources, Entities, timeline, graph, backlinks, perspective-time state, and first-recorded cutoff as the current canonical repository;
+- instance GitHub Pages exposes the same Notes, Sources, Entities, timeline, graph, backlinks, perspective-time state, and first-recorded cutoff as that instance's canonical repository, while engine Pages remains documentation-only;
 - all generated surfaces can be recreated from canonical inputs without drift.
 
 ## 14. Explicit v1 non-goals
@@ -930,19 +1045,22 @@ The first release succeeds when:
 - semantic ranking, confidence scoring, or promotion workflow;
 - plugin MCP server or runtime hooks;
 - automatic publication or push without owner approval;
+- automatic template-to-instance upgrades or silent cross-repository synchronization;
+- a bundled default person, personal snapshot, or maintainer-derived perspective in the generic engine;
 - public marketplace submission before local and Git-repository marketplace validation.
 
 The exact implementation language, static-site framework, graph visualization library, and packaging scripts are intentionally left to the implementation plan. They may change without changing this product contract.
 
 ## 15. Implementation slices
 
-This is one product specification because the data, query-time synthesis, packaging, and public projection share one contract. Implementation should still proceed in independently verifiable slices:
+This is one product specification because the engine and its instances share the data, query-time synthesis, packaging, and public-projection contracts. Implementation should still proceed in independently verifiable slices:
 
-1. Core knowledge: schemas, Note and Entity fixtures, deterministic index, and validator.
-2. Agent behavior: shared method, source-repository bootstraps, coffee-chat, apply-perspective, and build-kg.
-3. Distribution: canonical plugin metadata, Codex and Claude manifests, marketplace catalogs, and lifecycle smoke tests.
-4. Public projection: concise bilingual README, Timeline, Graph, Detail, and two-axis temporal behavior.
-5. Release safety: Gitleaks pre-commit, CI, generated-file drift checks, and Pages deployment.
+1. Role boundary: engine/instance manifest discrimination, downstream-only initialization, and fixture provenance isolation.
+2. Core knowledge: schemas, Note and Entity fixtures, deterministic index, and validator.
+3. Agent behavior: shared method, role-aware source-repository bootstraps, coffee-chat, apply-perspective, and build-kg.
+4. Distribution: generic and instance plugin metadata, Codex and Claude manifests, marketplace catalogs, and lifecycle smoke tests.
+5. Public projection: role-aware concise bilingual README, documentation-only engine Pages, and instance Timeline, Graph, Detail, and two-axis temporal behavior.
+6. Release safety: Gitleaks pre-commit, CI, generated-file provenance and drift checks, and role-appropriate Pages deployment.
 
 Each slice depends only on the stable contracts defined above and must pass its own tests before the next slice relies on it.
 
