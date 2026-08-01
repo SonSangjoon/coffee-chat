@@ -15,7 +15,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { dirname, posix, relative, resolve, sep } from "node:path";
+import { basename, dirname, posix, relative, resolve, sep } from "node:path";
 import { promisify } from "node:util";
 import { Ajv2020, type ValidateFunction } from "ajv/dist/2020.js";
 import type { FormatsPlugin } from "ajv-formats";
@@ -40,6 +40,7 @@ import {
 import {
   type Citation,
   type Entity,
+  type KnowledgeGraph,
   type LoadedNote,
   type Manifest,
   type NoteFrontmatter,
@@ -120,6 +121,19 @@ type CanonicalDiff = {
   before_digest?: string;
   after_digest?: string;
 };
+type MaterializedEntityChange =
+  | { action: "create"; id: string; value: EntityValue }
+  | { action: "update"; target_id: string; value: EntityValue }
+  | {
+      action: "retire";
+      target_id: string;
+      note_remaps: Array<{ target_id: string; entity_ids: string[] }>;
+    };
+type MaterializedNoteChange = {
+  action: "create" | "correct";
+  id: string;
+  value: NoteFrontmatter & { body: string };
+};
 type PreviewNote = NoteFrontmatter & {
   body: string;
   entities: string[];
@@ -165,8 +179,8 @@ export type CandidateManifest = {
   source_observations: SourceObservation[];
   materialized_changes: {
     profile?: { id: string; value: ProfileValue };
-    entity_changes: Array<Record<string, unknown>>;
-    note_changes: Array<Record<string, unknown>>;
+    entity_changes: MaterializedEntityChange[];
+    note_changes: MaterializedNoteChange[];
   };
   setup_effects: SetupBinding[];
   outputs: PathDigest[];
@@ -193,6 +207,11 @@ export type CandidateReceipt = {
 };
 
 export type MutationPoint =
+  | "before-candidate-root-create"
+  | "before-candidate-write"
+  | "before-candidate-manifest-read"
+  | "before-candidate-inventory"
+  | "before-candidate-transaction"
   | "temp-write"
   | "temp-fsync"
   | "backup"
@@ -540,6 +559,12 @@ function validateRequestSemantics(request: CandidateRequest): void {
         change.action === "retire",
     )
     .flatMap((change) => change.note_remaps.map((remap) => remap.target_id));
+  if (new Set(remappedNotes).size !== remappedNotes.length)
+    throw validationFailure(
+      "conflicting-entity-retirement-remap",
+      ".",
+      "A Note may be remapped by only one Entity retirement in one Candidate.",
+    );
   const correctedNotes = new Set(
     request.note_changes
       .filter(
@@ -605,41 +630,121 @@ async function repositoryBinding(
   };
 }
 
-async function assertExternalOutput(
-  repositoryRoot: string,
-  out: string,
+type DirectoryIdentity = {
+  observed_path: string;
+  real_path: string;
+  device: number;
+  inode: number;
+};
+
+type CandidateLocationBinding = {
+  requested_root: string;
+  safe_root: string;
+  parent: DirectoryIdentity;
+  root?: DirectoryIdentity;
+};
+
+async function directoryIdentity(
+  path: string,
   fileSystem: CandidateFileSystem,
-): Promise<void> {
-  const absolute = resolve(out);
+): Promise<DirectoryIdentity> {
+  const before = await fileSystem.lstat(path);
+  if (before.isSymbolicLink() || !before.isDirectory())
+    throw new Error("unsafe directory");
+  const realPath = await fileSystem.realpath(path);
+  const after = await fileSystem.lstat(path);
+  if (
+    after.isSymbolicLink() ||
+    !after.isDirectory() ||
+    before.dev !== after.dev ||
+    before.ino !== after.ino
+  )
+    throw new Error("directory changed");
+  return {
+    observed_path: path,
+    real_path: realPath,
+    device: after.dev,
+    inode: after.ino,
+  };
+}
+
+async function sameDirectoryIdentity(
+  identity: DirectoryIdentity,
+  fileSystem: CandidateFileSystem,
+): Promise<boolean> {
   try {
-    const status = await fileSystem.lstat(absolute);
-    if (status.isSymbolicLink() || !status.isDirectory())
-      throw new Error("unsafe");
-    const resolved = await fileSystem.realpath(absolute);
-    if (pathWithin(repositoryRoot, resolved)) throw new Error("inside");
+    const current = await directoryIdentity(identity.observed_path, fileSystem);
+    return (
+      current.real_path === identity.real_path &&
+      current.device === identity.device &&
+      current.inode === identity.inode
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function bindExternalCandidateLocation(
+  repositoryRoot: string,
+  candidateRoot: string,
+  fileSystem: CandidateFileSystem,
+  options: { requireExisting: boolean; requireEmpty: boolean },
+): Promise<CandidateLocationBinding> {
+  const requestedRoot = resolve(candidateRoot);
+  if (pathWithin(repositoryRoot, requestedRoot)) throw new Error("inside");
+  const parent = await directoryIdentity(dirname(requestedRoot), fileSystem);
+  const safeRoot = resolve(parent.real_path, basename(requestedRoot));
+  if (
+    pathWithin(repositoryRoot, parent.real_path) ||
+    pathWithin(repositoryRoot, safeRoot)
+  )
+    throw new Error("inside");
+  let root: DirectoryIdentity | undefined;
+  try {
+    root = await directoryIdentity(requestedRoot, fileSystem);
     if (
-      (await fileSystem.readdir(resolved, { withFileTypes: true })).length > 0
+      root.real_path !== safeRoot ||
+      pathWithin(repositoryRoot, root.real_path)
+    )
+      throw new Error("unsafe root");
+    if (
+      options.requireEmpty &&
+      (await fileSystem.readdir(root.real_path, { withFileTypes: true }))
+        .length > 0
     )
       throw new Error("nonempty");
-    return;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-      throw validationFailure(
-        "candidate-output-must-be-external",
-        ".",
-        "Candidate output must be an empty, non-symlinked directory outside the repository.",
-      );
-    }
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    if (options.requireExisting) throw error;
   }
-  let parent = dirname(absolute);
-  while (!(await pathExists(fileSystem, parent))) parent = dirname(parent);
-  const resolvedParent = await fileSystem.realpath(parent);
-  const projected = resolve(resolvedParent, relative(parent, absolute));
-  if (pathWithin(repositoryRoot, projected))
+  return {
+    requested_root: requestedRoot,
+    safe_root: safeRoot,
+    parent,
+    ...(root ? { root } : {}),
+  };
+}
+
+async function candidateLocationMatches(
+  binding: CandidateLocationBinding,
+  fileSystem: CandidateFileSystem,
+): Promise<boolean> {
+  if (!(await sameDirectoryIdentity(binding.parent, fileSystem))) return false;
+  if (!binding.root) return !(await pathExists(fileSystem, binding.safe_root));
+  return sameDirectoryIdentity(binding.root, fileSystem);
+}
+
+async function requireCandidateLocation(
+  binding: CandidateLocationBinding,
+  point: MutationPoint,
+  fileSystem: CandidateFileSystem,
+): Promise<void> {
+  await fileSystem.checkpoint(point, binding.requested_root);
+  if (!(await candidateLocationMatches(binding, fileSystem)))
     throw validationFailure(
-      "candidate-output-must-be-external",
+      "candidate-output-drift",
       ".",
-      "Candidate output must be outside the repository.",
+      "The bound external Candidate location changed during the operation.",
     );
 }
 
@@ -754,14 +859,20 @@ function resolveEntityRefs(
 function materializeCitation(
   source: SourceObservationInput,
   frozenDate: string,
+  prior?: Citation,
 ): Citation {
+  const accessedOn =
+    source.accessed_on ??
+    (prior?.url === source.url ? prior.accessed_on : undefined);
   return {
     url: source.url,
     title: source.title,
     ...(source.published_on ? { published_on: source.published_on } : {}),
-    ...(source.retrieval_status === "succeeded"
-      ? { accessed_on: source.accessed_on ?? frozenDate }
-      : {}),
+    ...(accessedOn !== undefined
+      ? { accessed_on: accessedOn }
+      : source.retrieval_status === "succeeded"
+        ? { accessed_on: frozenDate }
+        : {}),
   };
 }
 
@@ -817,6 +928,13 @@ function serializeNote(frontmatter: NoteFrontmatter, body: string): Buffer {
 
 function canonicalNoteBody(body: string): string {
   return body.endsWith("\n") ? body.slice(0, -1) : body;
+}
+
+function loadedCanonicalNoteBody(body: string): string {
+  const withoutDelimiterNewline = body.startsWith("\n") ? body.slice(1) : body;
+  return withoutDelimiterNewline.endsWith("\n")
+    ? withoutDelimiterNewline.slice(0, -1)
+    : withoutDelimiterNewline;
 }
 
 function manifestBytes(manifest: Manifest): Buffer {
@@ -932,6 +1050,9 @@ function buildDesiredState(
       minted,
       knownEntityIds,
     );
+    const priorSources = new Map(
+      existing?.frontmatter.sources.map((source) => [source.url, source]) ?? [],
+    );
     const frontmatter: NoteFrontmatter = {
       id,
       title: change.value.title,
@@ -941,7 +1062,7 @@ function buildDesiredState(
           ? (existing as LoadedNote).frontmatter.recorded_on
           : frozenDate,
       sources: change.value.sources.map((source) =>
-        materializeCitation(source, frozenDate),
+        materializeCitation(source, frozenDate, priorSources.get(source.url)),
       ),
       ...(entityIds.length > 0 ? { entities: entityIds } : {}),
     };
@@ -952,7 +1073,12 @@ function buildDesiredState(
         title: source.title,
         ...(source.published_on ? { published_on: source.published_on } : {}),
         ...(source.retrieval_status === "succeeded"
-          ? { accessed_on: source.accessed_on ?? frozenDate }
+          ? {
+              accessed_on:
+                source.accessed_on ??
+                priorSources.get(source.url)?.accessed_on ??
+                frozenDate,
+            }
           : {}),
         retrieval_status: source.retrieval_status,
         ...(source.access_limitation
@@ -1270,7 +1396,21 @@ export async function prepareCandidate(
     deps.git,
     deps.fileSystem,
   );
-  await assertExternalOutput(repository.root, options.out, deps.fileSystem);
+  let candidateLocation: CandidateLocationBinding;
+  try {
+    candidateLocation = await bindExternalCandidateLocation(
+      repository.root,
+      options.out,
+      deps.fileSystem,
+      { requireExisting: false, requireEmpty: true },
+    );
+  } catch {
+    throw validationFailure(
+      "candidate-output-must-be-external",
+      ".",
+      "Candidate output must be an empty, non-symlinked directory outside the repository.",
+    );
+  }
   const parsed = await parseRequest(
     repository.root,
     options.requestPath,
@@ -1318,11 +1458,28 @@ export async function prepareCandidate(
   );
   let createdOutput = false;
   try {
-    if (!(await pathExists(deps.fileSystem, options.out))) {
-      await deps.fileSystem.mkdir(options.out, { recursive: true });
+    if (!candidateLocation.root) {
+      await requireCandidateLocation(
+        candidateLocation,
+        "before-candidate-root-create",
+        deps.fileSystem,
+      );
+      await deps.fileSystem.mkdir(candidateLocation.safe_root);
       createdOutput = true;
+      candidateLocation = await bindExternalCandidateLocation(
+        repository.root,
+        candidateLocation.safe_root,
+        deps.fileSystem,
+        { requireExisting: true, requireEmpty: true },
+      );
     }
-    const candidateRepository = resolve(options.out, "repository");
+    await requireCandidateLocation(
+      candidateLocation,
+      "before-candidate-write",
+      deps.fileSystem,
+    );
+    const candidateRoot = candidateLocation.root?.real_path as string;
+    const candidateRepository = resolve(candidateRoot, "repository");
     await writeMaterializedRepository(
       candidateRepository,
       repository.root,
@@ -1533,27 +1690,40 @@ export async function prepareCandidate(
       candidate_digest: candidateDigest,
     };
     await validatePreviewSchema(repository.root, manifest);
+    await requireCandidateLocation(
+      candidateLocation,
+      "before-candidate-write",
+      deps.fileSystem,
+    );
     await deps.fileSystem.writeFile(
-      resolve(options.out, "candidate-manifest.json"),
+      resolve(candidateRoot, "candidate-manifest.json"),
       `${JSON.stringify(manifest, null, 2)}\n`,
     );
     await deps.fileSystem.writeFile(
-      resolve(options.out, "preview.json"),
+      resolve(candidateRoot, "preview.json"),
       previewJsonBytes(manifest),
     );
     await deps.fileSystem.writeFile(
-      resolve(options.out, "preview.md"),
+      resolve(candidateRoot, "preview.md"),
       previewMarkdownBytes(manifest),
     );
     return {
       candidateDigest,
-      previewJson: resolve(options.out, "preview.json"),
-      previewMarkdown: resolve(options.out, "preview.md"),
+      previewJson: resolve(candidateRoot, "preview.json"),
+      previewMarkdown: resolve(candidateRoot, "preview.md"),
     };
   } catch (error) {
-    if (createdOutput)
-      await deps.fileSystem.rm(options.out, { recursive: true, force: true });
-    else {
+    const locationStable = await candidateLocationMatches(
+      candidateLocation,
+      deps.fileSystem,
+    ).catch(() => false);
+    if (locationStable && createdOutput)
+      await deps.fileSystem.rm(candidateLocation.safe_root, {
+        recursive: true,
+        force: true,
+      });
+    else if (locationStable) {
+      const candidateRoot = candidateLocation.root?.real_path as string;
       for (const path of [
         "candidate-manifest.json",
         "preview.json",
@@ -1561,7 +1731,7 @@ export async function prepareCandidate(
         "repository",
       ])
         await deps.fileSystem
-          .rm(resolve(options.out, path), { recursive: true, force: true })
+          .rm(resolve(candidateRoot, path), { recursive: true, force: true })
           .catch(() => undefined);
     }
     throw error;
@@ -1580,6 +1750,7 @@ function invalidated(candidateDigest: string, code: string): CandidateReceipt {
 }
 
 async function readCandidateManifest(
+  root: string,
   candidateDir: string,
   fileSystem: CandidateFileSystem,
 ): Promise<CandidateManifest> {
@@ -1595,11 +1766,31 @@ async function readCandidateManifest(
       "Materialized Candidate could not be read safely.",
     );
   }
+  let value: unknown;
   try {
-    return parseStrictJson(
+    value = parseStrictJson(
       decodeCanonicalText(bytes, "candidate-manifest.json"),
       "candidate-manifest.json",
-    ) as CandidateManifest;
+    );
+  } catch {
+    throw validationFailure(
+      "candidate-manifest-invalid",
+      "./candidate-manifest.json",
+      "Candidate manifest is invalid or damaged.",
+    );
+  }
+  try {
+    const validateManifest = await schemaValidator(
+      root,
+      "candidate-manifest.schema.json",
+    );
+    if (!validateManifest(value)) throw new Error("manifest schema");
+    const manifest = value as CandidateManifest;
+    const validatePreview = await schemaValidator(root, "preview.schema.json");
+    if (!validatePreview(previewObject(manifest)))
+      throw new Error("preview schema");
+    validateManifestSemantics(manifest);
+    return manifest;
   } catch {
     throw validationFailure(
       "candidate-manifest-invalid",
@@ -1611,6 +1802,299 @@ async function readCandidateManifest(
 
 function sameJson(left: unknown, right: unknown): boolean {
   return canonicalizeJson(left as never) === canonicalizeJson(right as never);
+}
+
+function exactSortedUnique(values: string[]): boolean {
+  return (
+    new Set(values).size === values.length &&
+    sameJson(values, sortedStrings(values))
+  );
+}
+
+function exactSortedUniqueDigests(values: PathDigest[]): boolean {
+  return (
+    exactSortedUnique(values.map((entry) => entry.path)) &&
+    sameJson(
+      values,
+      sorted(values, (entry) => entry.path),
+    )
+  );
+}
+
+function validateManifestSemantics(manifest: CandidateManifest): void {
+  const digestInventories = [
+    manifest.canonical_inputs,
+    manifest.implementation_inputs,
+    manifest.support_files,
+    manifest.outputs,
+  ];
+  if (
+    digestInventories.some(
+      (inventory) => !exactSortedUniqueDigests(inventory),
+    ) ||
+    !exactSortedUnique(manifest.deletions) ||
+    !exactSortedUnique(manifest.changed_paths) ||
+    !exactSortedUnique(manifest.worktree.paths)
+  )
+    throw new Error("manifest inventories must be sorted and unique");
+
+  const inputs = new Map(
+    manifest.canonical_inputs.map((entry) => [entry.path, entry.digest]),
+  );
+  const outputs = new Map(
+    manifest.outputs.map((entry) => [entry.path, entry.digest]),
+  );
+  const deletions = [...inputs.keys()]
+    .filter((path) => !outputs.has(path))
+    .sort(compareCodePoints);
+  const changedPaths = [
+    ...new Set([
+      ...manifest.outputs
+        .filter((entry) => inputs.get(entry.path) !== entry.digest)
+        .map((entry) => entry.path),
+      ...deletions,
+    ]),
+  ].sort(compareCodePoints);
+  const canonicalDiff: CanonicalDiff[] = changedPaths.map((path) => ({
+    path,
+    change: !inputs.has(path)
+      ? "create"
+      : !outputs.has(path)
+        ? "delete"
+        : "update",
+    ...(inputs.has(path) ? { before_digest: inputs.get(path) } : {}),
+    ...(outputs.has(path) ? { after_digest: outputs.get(path) } : {}),
+  }));
+  const preview = manifest.preview;
+  if (
+    !sameJson(manifest.deletions, deletions) ||
+    !sameJson(manifest.changed_paths, changedPaths) ||
+    !sameJson(preview.affected_paths, changedPaths) ||
+    !sameJson(preview.output_hashes, manifest.outputs) ||
+    !sameJson(preview.canonical_diff, canonicalDiff) ||
+    preview.mode !== manifest.mode ||
+    preview.base_commit !== manifest.base_commit ||
+    preview.time_zone !== manifest.time_zone ||
+    preview.frozen_date !== manifest.frozen_date ||
+    preview.knowledge_digest !== manifest.knowledge_digest ||
+    preview.worktree.fingerprint !== manifest.worktree.fingerprint ||
+    preview.candidate_directory !== "." ||
+    manifest.validation.status !== "passed" ||
+    preview.validation.status !== "passed" ||
+    !sameJson(preview.worktree.changes, manifest.worktree.changes) ||
+    !sameJson(preview.source_observations, manifest.source_observations) ||
+    !sameJson(preview.setup_effects, manifest.setup_effects) ||
+    manifest.setup_effects.some(
+      (effect) => effect.target_path !== effect.target_fingerprint.target_path,
+    )
+  )
+    throw new Error("manifest cross-field mismatch");
+}
+
+function validateMaterializedRequestBinding(
+  manifest: CandidateManifest,
+  request: CandidateRequest,
+  baseGraph: KnowledgeGraph,
+): boolean {
+  if (
+    request.mode !== manifest.mode ||
+    !sameJson(
+      request.setup_effects,
+      manifest.setup_effects.map((effect) => effect.effect),
+    )
+  )
+    return false;
+  const temporaryIds = new Map<string, string>();
+  if (request.profile) {
+    const profile = manifest.materialized_changes.profile;
+    if (!profile || !sameJson(profile.value, request.profile.value))
+      return false;
+    temporaryIds.set(request.profile.temporary_key, profile.id);
+  } else if (manifest.materialized_changes.profile) return false;
+
+  if (
+    request.entity_changes.length !==
+    manifest.materialized_changes.entity_changes.length
+  )
+    return false;
+  for (const [index, requested] of request.entity_changes.entries()) {
+    const materialized = manifest.materialized_changes.entity_changes[index];
+    if (requested.action === "create") {
+      if (
+        materialized.action !== "create" ||
+        typeof materialized.id !== "string" ||
+        !sameJson(materialized.value, requested.value)
+      )
+        return false;
+      temporaryIds.set(requested.temporary_key, materialized.id);
+    }
+  }
+  const knownEntityIds = new Set(baseGraph.entities.map((entity) => entity.id));
+  for (const change of manifest.materialized_changes.entity_changes)
+    if (change.action === "create") knownEntityIds.add(change.id);
+  const resolveRequestedEntityIds = (refs: string[]): string[] | undefined => {
+    try {
+      return resolveEntityRefs(refs, temporaryIds, knownEntityIds);
+    } catch {
+      return undefined;
+    }
+  };
+  for (const [index, requested] of request.entity_changes.entries()) {
+    const materialized = manifest.materialized_changes.entity_changes[index];
+    if (requested.action === "update") {
+      if (
+        materialized.action !== "update" ||
+        materialized.target_id !== requested.target_id ||
+        !sameJson(materialized.value, requested.value)
+      )
+        return false;
+    } else if (requested.action === "retire") {
+      const expectedRemaps = requested.note_remaps.map((remap) => ({
+        target_id: remap.target_id,
+        entity_ids: resolveRequestedEntityIds(remap.entity_refs),
+      }));
+      if (
+        expectedRemaps.some((remap) => remap.entity_ids === undefined) ||
+        materialized.action !== "retire" ||
+        materialized.target_id !== requested.target_id ||
+        !sameJson(materialized.note_remaps, expectedRemaps)
+      )
+        return false;
+    }
+  }
+  if (
+    request.note_changes.length !==
+    manifest.materialized_changes.note_changes.length
+  )
+    return false;
+  const expectedSourceObservations: SourceObservation[] = [];
+  const expectedPrivacyWarnings: string[] = [];
+  for (const [index, requested] of request.note_changes.entries()) {
+    const materialized = manifest.materialized_changes.note_changes[index];
+    if (requested.action === "create") {
+      if (materialized.action !== "create") return false;
+      temporaryIds.set(requested.temporary_key, materialized.id);
+    }
+    const expectedId =
+      requested.action === "create"
+        ? temporaryIds.get(requested.temporary_key)
+        : requested.target_id;
+    const existing = baseGraph.notes.find(
+      (note) => note.frontmatter.id === expectedId,
+    );
+    if (requested.action === "correct" && !existing) return false;
+    const priorSources = new Map(
+      existing?.frontmatter.sources.map((source) => [source.url, source]) ?? [],
+    );
+    const expectedEntities = resolveRequestedEntityIds(
+      requested.value.entity_refs,
+    );
+    if (!expectedId || expectedEntities === undefined) return false;
+    const expectedValue: MaterializedNoteChange["value"] = {
+      id: expectedId,
+      title: requested.value.title,
+      temporal_coverage: requested.value.temporal_coverage,
+      recorded_on:
+        requested.action === "correct"
+          ? (existing as LoadedNote).frontmatter.recorded_on
+          : manifest.frozen_date,
+      sources: requested.value.sources.map((source) =>
+        materializeCitation(
+          source,
+          manifest.frozen_date,
+          priorSources.get(source.url),
+        ),
+      ),
+      ...(expectedEntities.length > 0 ? { entities: expectedEntities } : {}),
+      body: canonicalNoteBody(requested.value.body),
+    };
+    if (
+      materialized.action !== requested.action ||
+      materialized.id !== expectedId ||
+      !sameJson(materialized.value, expectedValue)
+    )
+      return false;
+    for (const source of requested.value.sources)
+      expectedSourceObservations.push({
+        note_id: expectedId,
+        url: source.url,
+        title: source.title,
+        ...(source.published_on ? { published_on: source.published_on } : {}),
+        ...(source.retrieval_status === "succeeded"
+          ? {
+              accessed_on:
+                source.accessed_on ??
+                priorSources.get(source.url)?.accessed_on ??
+                manifest.frozen_date,
+            }
+          : {}),
+        retrieval_status: source.retrieval_status,
+        ...(source.access_limitation
+          ? { access_limitation: source.access_limitation }
+          : {}),
+      });
+    expectedPrivacyWarnings.push(
+      ...(requested.value.public_content_warnings ?? []),
+    );
+  }
+  const sortedSourceObservations = sorted(
+    expectedSourceObservations,
+    (source) => `${source.note_id}\u0000${source.url}`,
+  );
+  const expectedLimitations = sortedSourceObservations
+    .flatMap((source) => source.access_limitation ?? [])
+    .filter((value, index, values) => values.indexOf(value) === index);
+  return (
+    sameJson(manifest.source_observations, sortedSourceObservations) &&
+    sameJson(
+      manifest.preview.unresolved_source_limitations,
+      expectedLimitations,
+    ) &&
+    sameJson(manifest.preview.privacy_warnings, [
+      ...new Set(expectedPrivacyWarnings),
+    ])
+  );
+}
+
+function validateCandidateProjection(
+  manifest: CandidateManifest,
+  graph: KnowledgeGraph,
+): boolean {
+  const entityChanges = new Map<string, "create" | "update">();
+  for (const change of manifest.materialized_changes.entity_changes) {
+    if (change.action === "create") entityChanges.set(change.id, "create");
+    if (change.action === "update")
+      entityChanges.set(change.target_id, "update");
+  }
+  const previewEntities: PreviewEntity[] = sorted(
+    graph.entities.map((entity) => ({
+      ...entity,
+      change: entityChanges.get(entity.id) ?? "unchanged",
+    })),
+    (entity) => entity.id,
+  );
+  if (!sameJson(previewEntities, manifest.preview.entities)) return false;
+
+  const candidateNotes = new Map(
+    graph.notes.map((note) => [note.frontmatter.id, note]),
+  );
+  const previewNotes: PreviewNote[] = [];
+  for (const change of manifest.materialized_changes.note_changes) {
+    const note = candidateNotes.get(change.id);
+    const body = note ? loadedCanonicalNoteBody(note.body) : undefined;
+    if (!note || !sameJson(change.value, { ...note.frontmatter, body }))
+      return false;
+    previewNotes.push({
+      ...note.frontmatter,
+      entities: note.frontmatter.entities ?? [],
+      body: body as string,
+      change: change.action,
+    });
+  }
+  return sameJson(
+    sorted(previewNotes, (note) => note.id),
+    manifest.preview.notes,
+  );
 }
 
 async function verifyCandidateInventory(
@@ -1811,6 +2295,7 @@ async function applyTransaction(
     "sha256:".length,
     "sha256:".length + 12,
   );
+  const transactionRoot = dirname(candidateDir);
   for (const [index, path] of manifest.changed_paths.entries()) {
     const target = resolve(root, logicalPath(path));
     const output = outputMap.get(path);
@@ -1838,7 +2323,12 @@ async function applyTransaction(
         : {}),
       ...(before ? { before, beforeMode } : {}),
       ...(before
-        ? { backup: `${target}.coffee-chat-${suffix}-${index}.bak` }
+        ? {
+            backup: resolve(
+              transactionRoot,
+              `.coffee-chat-${suffix}-${index}.bak`,
+            ),
+          }
         : {}),
       deletion: !output,
       mutated: false,
@@ -1849,7 +2339,7 @@ async function applyTransaction(
     const journalName = `.coffee-chat-${manifest.candidate_digest.slice(
       "sha256:".length,
     )}.transaction.json`;
-    journalPath = resolve(dirname(candidateDir), journalName);
+    journalPath = resolve(transactionRoot, journalName);
     const journal = await fileSystem.open(journalPath, "wx", 0o600);
     journalCreated = true;
     try {
@@ -1967,10 +2457,48 @@ export async function applyCandidate(
   const deps = dependencies(overrides);
   if (!DIGEST.test(options.approvedDigest))
     return invalidated(options.approvedDigest, "approved-digest-invalid");
+  let repository: Awaited<ReturnType<typeof repositoryBinding>>;
+  let candidateLocation: CandidateLocationBinding;
+  try {
+    repository = await repositoryBinding(
+      options.root,
+      deps.git,
+      deps.fileSystem,
+    );
+  } catch {
+    return invalidated(options.approvedDigest, "candidate-location-invalid");
+  }
+  try {
+    candidateLocation = await bindExternalCandidateLocation(
+      repository.root,
+      options.candidateDir,
+      deps.fileSystem,
+      { requireExisting: false, requireEmpty: false },
+    );
+  } catch {
+    return invalidated(options.approvedDigest, "candidate-location-invalid");
+  }
+  if (!candidateLocation.root)
+    throw unable(
+      "candidate-unavailable",
+      ".",
+      "Materialized Candidate could not be read safely.",
+    );
+  try {
+    await requireCandidateLocation(
+      candidateLocation,
+      "before-candidate-manifest-read",
+      deps.fileSystem,
+    );
+  } catch {
+    return invalidated(options.approvedDigest, "candidate-location-drift");
+  }
+  const candidateRoot = candidateLocation.root?.real_path as string;
   let manifest: CandidateManifest;
   try {
     manifest = await readCandidateManifest(
-      options.candidateDir,
+      repository.root,
+      candidateRoot,
       deps.fileSystem,
     );
   } catch (error) {
@@ -1988,23 +2516,32 @@ export async function applyCandidate(
     )
       return invalidated(options.approvedDigest, "candidate-digest-mismatch");
     if (
+      !(await requireCandidateLocation(
+        candidateLocation,
+        "before-candidate-inventory",
+        deps.fileSystem,
+      ).then(
+        () => true,
+        () => false,
+      ))
+    )
+      return invalidated(options.approvedDigest, "candidate-location-drift");
+    if (
       !(await verifyCandidateInventory(
-        options.candidateDir,
+        candidateRoot,
         manifest,
         deps.fileSystem,
       ))
     )
       return invalidated(options.approvedDigest, "candidate-artifact-drift");
-    const requestBytes = await deps.fileSystem.readFile(
+    const parsedRequest = await parseRequest(
+      repository.root,
       manifest.request_binding.path,
-    );
-    if (sha256(requestBytes) !== manifest.request_binding.digest)
-      return invalidated(options.approvedDigest, "source-observation-drift");
-    const repository = await repositoryBinding(
-      options.root,
-      deps.git,
       deps.fileSystem,
     );
+    if (sha256(parsedRequest.bytes) !== manifest.request_binding.digest)
+      return invalidated(options.approvedDigest, "source-observation-drift");
+    validateRequestSemantics(parsedRequest.request);
     if (
       repository.head !== manifest.base_commit ||
       !sameJson(repository.identity, manifest.repository_identity)
@@ -2033,6 +2570,20 @@ export async function applyCandidate(
     );
     if (!sameJson(currentWorktree, manifest.worktree))
       return invalidated(options.approvedDigest, "worktree-drift");
+    const baseSnapshot = await createSnapshot(repository.root, "worktree");
+    const baseValidation = await validateKnowledge(baseSnapshot, {
+      validateIndex: false,
+    });
+    if (!baseValidation.graph || baseValidation.diagnostics.length > 0)
+      return invalidated(options.approvedDigest, "candidate-base-drift");
+    if (
+      !validateMaterializedRequestBinding(
+        manifest,
+        parsedRequest.request,
+        baseValidation.graph,
+      )
+    )
+      return invalidated(options.approvedDigest, "candidate-manifest-invalid");
     const rootManifest = parseStrictJson(
       decodeCanonicalText(
         await deps.fileSystem.readFile(
@@ -2054,7 +2605,7 @@ export async function applyCandidate(
         return invalidated(options.approvedDigest, "hook-target-drift");
     }
     await deps.preflight.checkpoint("before-shared-validation");
-    const materializedRoot = resolve(options.candidateDir, "repository");
+    const materializedRoot = resolve(candidateRoot, "repository");
     const materializedSnapshot = await createSnapshot(
       materializedRoot,
       "worktree",
@@ -2062,6 +2613,8 @@ export async function applyCandidate(
     const validation = await validateKnowledge(materializedSnapshot);
     if (!validation.graph || validation.diagnostics.length > 0)
       return invalidated(options.approvedDigest, "candidate-validation-drift");
+    if (!validateCandidateProjection(manifest, validation.graph))
+      return invalidated(options.approvedDigest, "candidate-manifest-invalid");
     if (
       (await checkGeneratedIndex(materializedSnapshot, validation.graph))
         .length > 0
@@ -2077,9 +2630,18 @@ export async function applyCandidate(
     if (generatedValue.knowledge_digest !== manifest.knowledge_digest)
       return invalidated(options.approvedDigest, "candidate-generation-drift");
 
+    try {
+      await requireCandidateLocation(
+        candidateLocation,
+        "before-candidate-transaction",
+        deps.fileSystem,
+      );
+    } catch {
+      return invalidated(options.approvedDigest, "candidate-location-drift");
+    }
     await applyTransaction(
       repository.root,
-      options.candidateDir,
+      candidateRoot,
       manifest,
       deps.fileSystem,
       () => validateAppliedState(repository.root, manifest),

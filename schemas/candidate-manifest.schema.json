@@ -1,0 +1,471 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/candidate-manifest.schema.json",
+  "title": "Coffee Chat Materialized Candidate Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_format_version",
+    "candidate_digest",
+    "request_binding",
+    "mode",
+    "base_commit",
+    "repository_identity",
+    "time_zone",
+    "frozen_date",
+    "canonical_inputs",
+    "implementation_inputs",
+    "support_files",
+    "worktree",
+    "source_observations",
+    "materialized_changes",
+    "setup_effects",
+    "outputs",
+    "deletions",
+    "changed_paths",
+    "knowledge_digest",
+    "validation",
+    "preview"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "candidate_format_version": { "const": "1.0.0" },
+    "candidate_digest": { "$ref": "#/$defs/digest" },
+    "request_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "$ref": "#/$defs/absolute_path" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "mode": { "enum": ["make-mine", "contribute", "update"] },
+    "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+    "repository_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top_level", "git_common_dir", "branch"],
+      "properties": {
+        "top_level": { "$ref": "#/$defs/absolute_path" },
+        "git_common_dir": { "$ref": "#/$defs/absolute_path" },
+        "branch": { "type": "string", "minLength": 1 }
+      }
+    },
+    "time_zone": { "type": "string", "minLength": 1 },
+    "frozen_date": { "$ref": "#/$defs/date" },
+    "canonical_inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/canonical_path_digest" }
+    },
+    "implementation_inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/implementation_path_digest" }
+    },
+    "support_files": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/support_path_digest" }
+    },
+    "worktree": { "$ref": "#/$defs/worktree" },
+    "source_observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/source_observation" }
+    },
+    "materialized_changes": { "$ref": "#/$defs/materialized_changes" },
+    "setup_effects": {
+      "type": "array",
+      "maxItems": 1,
+      "items": { "$ref": "#/$defs/setup_binding" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/canonical_path_digest" }
+    },
+    "deletions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/canonical_path" }
+    },
+    "changed_paths": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/mutable_canonical_path" }
+    },
+    "knowledge_digest": { "$ref": "#/$defs/digest" },
+    "validation": { "$ref": "#/$defs/passed_validation" },
+    "preview": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "uuid_v4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$"
+    },
+    "partial_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))/(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "canonical_path": {
+      "type": "string",
+      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:coffee-chat\\.json|knowledge/(?:entities\\.yml|index\\.json|notes/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.md)|method/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+)$"
+    },
+    "mutable_canonical_path": {
+      "type": "string",
+      "pattern": "^\\./(?:coffee-chat\\.json|knowledge/(?:entities\\.yml|index\\.json|notes/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.md))$"
+    },
+    "support_path": {
+      "type": "string",
+      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json$"
+    },
+    "implementation_path": {
+      "type": "string",
+      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|tools/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.ts)$"
+    },
+    "path_digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "type": "string" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "canonical_path_digest": {
+      "allOf": [
+        { "$ref": "#/$defs/path_digest" },
+        {
+          "type": "object",
+          "properties": {
+            "path": { "$ref": "#/$defs/canonical_path" }
+          }
+        }
+      ]
+    },
+    "support_path_digest": {
+      "allOf": [
+        { "$ref": "#/$defs/path_digest" },
+        {
+          "type": "object",
+          "properties": {
+            "path": { "$ref": "#/$defs/support_path" }
+          }
+        }
+      ]
+    },
+    "implementation_path_digest": {
+      "allOf": [
+        { "$ref": "#/$defs/path_digest" },
+        {
+          "type": "object",
+          "properties": {
+            "path": { "$ref": "#/$defs/implementation_path" }
+          }
+        }
+      ]
+    },
+    "worktree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paths", "fingerprint", "changes"],
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/canonical_path" }
+        },
+        "fingerprint": { "$ref": "#/$defs/digest" },
+        "changes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "title"],
+      "properties": {
+        "url": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "title": { "type": "string" },
+        "published_on": { "$ref": "#/$defs/partial_date" },
+        "accessed_on": { "$ref": "#/$defs/date" }
+      }
+    },
+    "source_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["note_id", "url", "title", "retrieval_status"],
+      "properties": {
+        "note_id": { "$ref": "#/$defs/uuid_v4" },
+        "url": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "title": { "type": "string" },
+        "published_on": { "$ref": "#/$defs/partial_date" },
+        "accessed_on": { "$ref": "#/$defs/date" },
+        "retrieval_status": { "enum": ["succeeded", "unavailable"] },
+        "access_limitation": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "retrieval_status": { "const": "unavailable" } }
+          },
+          "then": {
+            "required": ["access_limitation"],
+            "properties": {
+              "access_limitation": true,
+              "accessed_on": false
+            }
+          }
+        }
+      ]
+    },
+    "profile_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["display_name", "repository", "pages_url", "plugin"],
+      "properties": {
+        "display_name": { "type": "string" },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url", "default_branch"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https?://"
+            },
+            "default_branch": { "type": "string" }
+          }
+        },
+        "pages_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        "plugin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        }
+      }
+    },
+    "entity_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": { "type": "string" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "kind": { "type": "string" },
+        "same_as": {
+          "type": "array",
+          "items": { "type": "string", "format": "uri" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "note_materialized_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "temporal_coverage",
+        "recorded_on",
+        "sources",
+        "body"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid_v4" },
+        "title": { "type": "string" },
+        "temporal_coverage": { "type": "string" },
+        "recorded_on": { "$ref": "#/$defs/date" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/citation" }
+        },
+        "entities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/uuid_v4" },
+          "uniqueItems": true
+        },
+        "body": { "type": "string" }
+      }
+    },
+    "materialized_changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_changes", "note_changes"],
+      "properties": {
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "value"],
+          "properties": {
+            "id": { "$ref": "#/$defs/uuid_v4" },
+            "value": { "$ref": "#/$defs/profile_value" }
+          }
+        },
+        "entity_changes": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action", "id", "value"],
+                "properties": {
+                  "action": { "const": "create" },
+                  "id": { "$ref": "#/$defs/uuid_v4" },
+                  "value": { "$ref": "#/$defs/entity_value" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action", "target_id", "value"],
+                "properties": {
+                  "action": { "const": "update" },
+                  "target_id": { "$ref": "#/$defs/uuid_v4" },
+                  "value": { "$ref": "#/$defs/entity_value" }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["action", "target_id", "note_remaps"],
+                "properties": {
+                  "action": { "const": "retire" },
+                  "target_id": { "$ref": "#/$defs/uuid_v4" },
+                  "note_remaps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["target_id", "entity_ids"],
+                      "properties": {
+                        "target_id": { "$ref": "#/$defs/uuid_v4" },
+                        "entity_ids": {
+                          "type": "array",
+                          "items": { "$ref": "#/$defs/uuid_v4" },
+                          "uniqueItems": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "note_changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "id", "value"],
+            "properties": {
+              "action": { "enum": ["create", "correct"] },
+              "id": { "$ref": "#/$defs/uuid_v4" },
+              "value": { "$ref": "#/$defs/note_materialized_value" }
+            }
+          }
+        }
+      }
+    },
+    "hook_fingerprint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state"],
+          "properties": { "state": { "const": "absent" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "digest",
+            "mode",
+            "size",
+            "device",
+            "inode",
+            "change_time_ms"
+          ],
+          "properties": {
+            "state": { "const": "file" },
+            "digest": { "$ref": "#/$defs/digest" },
+            "mode": { "type": "integer", "minimum": 0 },
+            "size": { "type": "integer", "minimum": 0 },
+            "device": { "type": "integer", "minimum": 0 },
+            "inode": { "type": "integer", "minimum": 0 },
+            "change_time_ms": { "type": "number", "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "kind", "device", "inode"],
+          "properties": {
+            "state": { "const": "unsafe" },
+            "kind": { "enum": ["symlink", "directory", "other"] },
+            "device": { "type": "integer", "minimum": 0 },
+            "inode": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "hook_inspection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "target_path",
+        "ownership_path",
+        "git_common_dir",
+        "fingerprint"
+      ],
+      "properties": {
+        "classification": { "enum": ["absent", "managed", "unmanaged"] },
+        "target_path": { "$ref": "#/$defs/absolute_path" },
+        "ownership_path": { "$ref": "#/$defs/absolute_path" },
+        "git_common_dir": { "$ref": "#/$defs/absolute_path" },
+        "fingerprint": { "$ref": "#/$defs/hook_fingerprint" }
+      }
+    },
+    "setup_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect", "target_path", "target_fingerprint"],
+      "properties": {
+        "effect": { "const": "install-pre-commit" },
+        "target_path": { "$ref": "#/$defs/absolute_path" },
+        "target_fingerprint": { "$ref": "#/$defs/hook_inspection" }
+      }
+    },
+    "passed_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": { "status": { "const": "passed" } }
+    }
+  }
+}

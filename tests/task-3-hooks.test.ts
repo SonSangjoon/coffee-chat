@@ -164,8 +164,8 @@ describe("conservative hook inspection", () => {
   });
 });
 
-describe("owned native pre-commit lifecycle", () => {
-  it("installs only after immediate reinspection, records ownership digest, and verifies managed bytes", async () => {
+describe("owned exclusive pre-commit lifecycle", () => {
+  it("uses a non-mutating availability probe, then exclusively installs and records target identity", async () => {
     const root = await makeRepository();
     const initial = await inspectHook(root);
     const calls: Array<{
@@ -177,8 +177,7 @@ describe("owned native pre-commit lifecycle", () => {
       process: {
         execute: async (request) => {
           calls.push(request);
-          await writeFile(initial.target_path, FRAMEWORK_HOOK, { mode: 0o755 });
-          return { exitCode: 0, stdout: "installed\n", stderr: "" };
+          return { exitCode: 0, stdout: "pre-commit 4.0.1\n", stderr: "" };
         },
       },
     });
@@ -189,7 +188,7 @@ describe("owned native pre-commit lifecycle", () => {
     expect(calls).toEqual([
       expect.objectContaining({
         command: "pre-commit",
-        args: ["install", "--hook-type", "pre-commit"],
+        args: ["--version"],
       }),
     ]);
     expect(JSON.stringify(calls)).not.toMatch(
@@ -200,6 +199,8 @@ describe("owned native pre-commit lifecycle", () => {
     ) as {
       owner: string;
       hook_digest: string;
+      hook_device: number;
+      hook_inode: number;
     };
     expect(ownership.owner).toBe("coffee-chat");
     const fingerprint = result.inspection.fingerprint;
@@ -209,6 +210,8 @@ describe("owned native pre-commit lifecycle", () => {
       );
     }
     expect(ownership.hook_digest).toBe(fingerprint.digest);
+    expect(ownership.hook_device).toBe(fingerprint.device);
+    expect(ownership.hook_inode).toBe(fingerprint.inode);
   });
 
   it("uninstalls only exact Coffee Chat-owned managed bytes and runtime", async () => {
@@ -216,27 +219,24 @@ describe("owned native pre-commit lifecycle", () => {
     const initial = await inspectHook(root);
     const installed = await installHook(root, {
       process: {
-        execute: async () => {
-          await writeFile(initial.target_path, FRAMEWORK_HOOK, { mode: 0o755 });
-          return { exitCode: 0, stdout: "", stderr: "" };
-        },
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
       },
     });
+    let processCalls = 0;
     const removal = await uninstallHook(root, {
       process: {
-        execute: async (request) => {
-          expect(request.command).toBe("pre-commit");
-          expect(request.args).toEqual([
-            "uninstall",
-            "--hook-type",
-            "pre-commit",
-          ]);
-          await unlink(installed.inspection.target_path);
+        execute: async () => {
+          processCalls += 1;
           return { exitCode: 0, stdout: "", stderr: "" };
         },
       },
     });
     expect(removal.status).toBe("uninstalled");
+    expect(processCalls).toBe(0);
     expect((await inspectHook(root)).classification).toBe("absent");
     await expect(lstat(installed.inspection.ownership_path)).rejects.toThrow();
     expect(await readFile(resolve(root, "sentinel.txt"), "utf8")).toBe(
@@ -249,10 +249,11 @@ describe("owned native pre-commit lifecycle", () => {
     const initial = await inspectHook(root);
     const installed = await installHook(root, {
       process: {
-        execute: async () => {
-          await writeFile(initial.target_path, FRAMEWORK_HOOK, { mode: 0o755 });
-          return { exitCode: 0, stdout: "", stderr: "" };
-        },
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
       },
     });
     await writeFile(
@@ -320,7 +321,7 @@ describe("owned native pre-commit lifecycle", () => {
         },
       }),
     ).rejects.toMatchObject({
-      diagnostic: { code: "hook-install-verification-failed" },
+      diagnostic: { code: "hook-target-race" },
     });
     expect(await readFile(afterInspection.target_path, "utf8")).toContain(
       "competitor",
@@ -340,12 +341,11 @@ describe("owned native pre-commit lifecycle", () => {
     await expect(
       installHook(root, {
         process: {
-          execute: async () => {
-            await writeFile(inspection.target_path, FRAMEWORK_HOOK, {
-              mode: 0o755,
-            });
-            return { exitCode: 0, stdout: "", stderr: "" };
-          },
+          execute: async () => ({
+            exitCode: 0,
+            stdout: "pre-commit 4.0.1\n",
+            stderr: "",
+          }),
         },
       }),
     ).rejects.toMatchObject({
@@ -383,12 +383,11 @@ describe("owned native pre-commit lifecycle", () => {
           },
         },
         process: {
-          execute: async () => {
-            await writeFile(inspection.target_path, FRAMEWORK_HOOK, {
-              mode: 0o755,
-            });
-            return { exitCode: 0, stdout: "", stderr: "" };
-          },
+          execute: async () => ({
+            exitCode: 0,
+            stdout: "pre-commit 4.0.1\n",
+            stderr: "",
+          }),
         },
       }),
     ).rejects.toMatchObject({
@@ -396,6 +395,7 @@ describe("owned native pre-commit lifecycle", () => {
     });
     expect(raced).toBe(true);
     expect(await readdir(outside)).toEqual([]);
+    await expect(lstat(inspection.target_path)).rejects.toThrow();
   });
 
   it("preserves managed hook bytes when the ownership marker becomes a symlink or races", async () => {
@@ -403,10 +403,11 @@ describe("owned native pre-commit lifecycle", () => {
     const initial = await inspectHook(root);
     const installed = await installHook(root, {
       process: {
-        execute: async () => {
-          await writeFile(initial.target_path, FRAMEWORK_HOOK, { mode: 0o755 });
-          return { exitCode: 0, stdout: "", stderr: "" };
-        },
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
       },
     });
     const saved = `${installed.inspection.ownership_path}.saved`;
@@ -449,17 +450,155 @@ describe("owned native pre-commit lifecycle", () => {
     expect(await readFile(initial.target_path, "utf8")).toBe(FRAMEWORK_HOOK);
   });
 
-  it("treats process success without an expected framework hook as failure", async () => {
+  it("creates the exact hook itself after availability succeeds", async () => {
     const root = await makeRepository();
+    const result = await installHook(root, {
+      process: {
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
+      },
+    });
+    expect(result.inspection.classification).toBe("managed");
+    expect(await readFile(result.inspection.target_path, "utf8")).toBe(
+      FRAMEWORK_HOOK,
+    );
+  });
+
+  it("preserves an unowned hook that appears at the exclusive-create boundary", async () => {
+    const root = await makeRepository();
+    const initial = await inspectHook(root);
+    const competitor = "#!/bin/sh\necho competitor\n";
+    let raced = false;
     await expect(
       installHook(root, {
+        fileSystem: {
+          ...hookNodeFileSystem,
+          checkpoint: async (point, path) => {
+            await hookNodeFileSystem.checkpoint(point, path);
+            if (!raced && point === "before-owned-hook-create") {
+              raced = true;
+              await writeFile(initial.target_path, competitor, { mode: 0o755 });
+            }
+          },
+        },
         process: {
-          execute: async () => ({ exitCode: 0, stdout: "ok\n", stderr: "" }),
+          execute: async () => ({
+            exitCode: 0,
+            stdout: "pre-commit 4.0.1\n",
+            stderr: "",
+          }),
+        },
+      }),
+    ).rejects.toMatchObject({ diagnostic: { code: "hook-target-race" } });
+    expect(raced).toBe(true);
+    expect(await readFile(initial.target_path, "utf8")).toBe(competitor);
+  });
+
+  it("preserves an unowned replacement at the owned-remove boundary", async () => {
+    const root = await makeRepository();
+    const installed = await installHook(root, {
+      process: {
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
+      },
+    });
+    const competitor = "#!/bin/sh\necho replacement\n";
+    let raced = false;
+    await expect(
+      uninstallHook(root, {
+        fileSystem: {
+          ...hookNodeFileSystem,
+          checkpoint: async (point, path) => {
+            await hookNodeFileSystem.checkpoint(point, path);
+            if (!raced && point === "before-owned-hook-remove") {
+              raced = true;
+              await writeFile(installed.inspection.target_path, competitor);
+            }
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ diagnostic: { code: "hook-target-race" } });
+    expect(raced).toBe(true);
+    expect(await readFile(installed.inspection.target_path, "utf8")).toBe(
+      competitor,
+    );
+  });
+
+  it("detects an intermediate same-path rewrite even when expected bytes are restored", async () => {
+    const root = await makeRepository();
+    const installed = await installHook(root, {
+      process: {
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
+      },
+    });
+    let raced = false;
+    await expect(
+      uninstallHook(root, {
+        fileSystem: {
+          ...hookNodeFileSystem,
+          checkpoint: async (point, path) => {
+            await hookNodeFileSystem.checkpoint(point, path);
+            if (!raced && point === "before-owned-hook-remove") {
+              raced = true;
+              await writeFile(
+                installed.inspection.target_path,
+                "#!/bin/sh\necho intermediate\n",
+              );
+              await writeFile(installed.inspection.target_path, FRAMEWORK_HOOK);
+            }
+          },
+        },
+      }),
+    ).rejects.toMatchObject({ diagnostic: { code: "hook-target-race" } });
+    expect(raced).toBe(true);
+    expect(await readFile(installed.inspection.target_path, "utf8")).toBe(
+      FRAMEWORK_HOOK,
+    );
+  });
+
+  it("recovers an exact stale ownership marker on a second uninstall", async () => {
+    const root = await makeRepository();
+    const installed = await installHook(root, {
+      process: {
+        execute: async () => ({
+          exitCode: 0,
+          stdout: "pre-commit 4.0.1\n",
+          stderr: "",
+        }),
+      },
+    });
+    let failedOnce = false;
+    await expect(
+      uninstallHook(root, {
+        fileSystem: {
+          ...hookNodeFileSystem,
+          checkpoint: async (point, path) => {
+            await hookNodeFileSystem.checkpoint(point, path);
+            if (!failedOnce && point === "before-ownership-remove") {
+              failedOnce = true;
+              throw new Error("injected ownership removal failure");
+            }
+          },
         },
       }),
     ).rejects.toMatchObject({
-      diagnostic: { code: "hook-install-verification-failed" },
+      diagnostic: { code: "unsafe-hook-ownership-path" },
     });
-    expect((await inspectHook(root)).classification).toBe("absent");
+    await expect(lstat(installed.inspection.target_path)).rejects.toThrow();
+    expect(await lstat(installed.inspection.ownership_path)).toBeDefined();
+
+    const recovered = await uninstallHook(root);
+    expect(recovered.status).toBe("already_absent");
+    await expect(lstat(installed.inspection.ownership_path)).rejects.toThrow();
   });
 });

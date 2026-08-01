@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { Stats } from "node:fs";
 import {
   chmod,
+  link,
   lstat,
   mkdir,
   open,
@@ -59,6 +60,8 @@ export type HookLifecycle = {
 };
 
 export type HookFileSystemPoint =
+  | "before-owned-hook-create"
+  | "before-owned-hook-remove"
   | "before-ownership-read"
   | "before-ownership-temp-open"
   | "before-ownership-rename"
@@ -66,6 +69,8 @@ export type HookFileSystemPoint =
 
 type HookFileHandle = {
   writeFile(bytes: string | Buffer): Promise<void>;
+  chmod(mode: number): Promise<void>;
+  stat(): Promise<Stats>;
   sync(): Promise<void>;
   close(): Promise<void>;
 };
@@ -78,6 +83,7 @@ export type HookFileSystem = {
   mkdir(path: string, options?: { recursive?: boolean }): Promise<unknown>;
   open(path: string, flags: string, mode?: number): Promise<HookFileHandle>;
   rename(from: string, to: string): Promise<void>;
+  link(from: string, to: string): Promise<void>;
   chmod(path: string, mode: number): Promise<void>;
   unlink(path: string): Promise<void>;
   rm(
@@ -94,6 +100,7 @@ export const hookNodeFileSystem: HookFileSystem = {
   mkdir,
   open: async (path, flags, mode) => open(path, flags, mode),
   rename,
+  link,
   chmod,
   unlink,
   rm,
@@ -115,6 +122,7 @@ export type HookFingerprint =
       size: number;
       device: number;
       inode: number;
+      change_time_ms: number;
     }
   | {
       state: "unsafe";
@@ -146,6 +154,11 @@ type Ownership = {
   owner: "coffee-chat";
   hook_path: string;
   hook_digest: string;
+  hook_device: number;
+  hook_inode: number;
+  hook_mode: number;
+  hook_size: number;
+  hook_change_time_ms: number;
 };
 
 function failure(code: string, message: string): UnableToComplete {
@@ -265,6 +278,7 @@ async function fingerprint(
       size: status.size,
       device: status.dev,
       inode: status.ino,
+      change_time_ms: status.ctimeMs,
     };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT")
@@ -300,11 +314,30 @@ async function readOwnership(
     )
       return undefined;
     const value = JSON.parse(bytes.toString("utf8")) as Partial<Ownership>;
+    const keys = Object.keys(value).sort();
     if (
+      canonicalizeJson(keys as never) ===
+        canonicalizeJson([
+          "hook_change_time_ms",
+          "hook_device",
+          "hook_digest",
+          "hook_inode",
+          "hook_mode",
+          "hook_path",
+          "hook_size",
+          "owner",
+          "schema_version",
+        ] as never) &&
       value.schema_version === OWNERSHIP_VERSION &&
       value.owner === "coffee-chat" &&
       typeof value.hook_path === "string" &&
-      /^sha256:[a-f0-9]{64}$/.test(value.hook_digest ?? "")
+      /^sha256:[a-f0-9]{64}$/.test(value.hook_digest ?? "") &&
+      Number.isSafeInteger(value.hook_device) &&
+      Number.isSafeInteger(value.hook_inode) &&
+      Number.isSafeInteger(value.hook_mode) &&
+      Number.isSafeInteger(value.hook_size) &&
+      typeof value.hook_change_time_ms === "number" &&
+      Number.isFinite(value.hook_change_time_ms)
     )
       return value as Ownership;
   } catch (error) {
@@ -409,6 +442,31 @@ export async function inspectHook(
     );
   }
   if (targetFingerprint.state === "absent") {
+    const ownership = await readOwnership(ownershipPath, fileSystem);
+    if (ownership?.hook_path === targetPath)
+      return {
+        classification: "absent",
+        target_path: targetPath,
+        ownership_path: ownershipPath,
+        git_common_dir: commonDir,
+        fingerprint: targetFingerprint,
+      };
+    try {
+      await fileSystem.lstat(ownershipPath);
+      return {
+        classification: "unmanaged",
+        target_path: targetPath,
+        ownership_path: ownershipPath,
+        git_common_dir: commonDir,
+        fingerprint: targetFingerprint,
+      };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT")
+        throw failure(
+          "unsafe-hook-ownership-path",
+          "Coffee Chat hook ownership state could not be classified safely.",
+        );
+    }
     return {
       classification: "absent",
       target_path: targetPath,
@@ -426,7 +484,12 @@ export async function inspectHook(
     if (
       frameworkManaged(bytes) &&
       ownership?.hook_path === targetPath &&
-      ownership.hook_digest === targetFingerprint.digest
+      ownership.hook_digest === targetFingerprint.digest &&
+      ownership.hook_device === targetFingerprint.device &&
+      ownership.hook_inode === targetFingerprint.inode &&
+      ownership.hook_mode === targetFingerprint.mode &&
+      ownership.hook_size === targetFingerprint.size &&
+      ownership.hook_change_time_ms === targetFingerprint.change_time_ms
     )
       classification = "managed";
   }
@@ -445,7 +508,7 @@ function sameInspection(left: HookInspection, right: HookInspection): boolean {
 
 async function writeOwnership(
   inspection: HookInspection,
-  digest: string,
+  target: Extract<HookFingerprint, { state: "file" }>,
   fileSystem: HookFileSystem,
 ): Promise<void> {
   if (
@@ -464,7 +527,12 @@ async function writeOwnership(
     schema_version: "1.0.0",
     owner: "coffee-chat",
     hook_path: inspection.target_path,
-    hook_digest: digest,
+    hook_digest: target.digest,
+    hook_device: target.device,
+    hook_inode: target.inode,
+    hook_mode: target.mode,
+    hook_size: target.size,
+    hook_change_time_ms: target.change_time_ms,
   };
   const bytes = `${JSON.stringify(ownership, null, 2)}\n`;
   await fileSystem.mkdir(dirname(inspection.ownership_path), {
@@ -519,7 +587,10 @@ async function writeOwnership(
   const verified = await readOwnership(inspection.ownership_path, fileSystem);
   if (
     verified?.hook_path !== inspection.target_path ||
-    verified.hook_digest !== digest
+    verified.hook_digest !== target.digest ||
+    verified.hook_device !== target.device ||
+    verified.hook_inode !== target.inode ||
+    verified.hook_change_time_ms !== target.change_time_ms
   )
     throw failure(
       "unsafe-hook-ownership-path",
@@ -534,6 +605,11 @@ async function removeOwnership(
   const ownership = await readOwnership(inspection.ownership_path, fileSystem);
   if (
     ownership?.hook_path !== inspection.target_path ||
+    inspection.fingerprint.state !== "file" ||
+    ownership.hook_digest !== inspection.fingerprint.digest ||
+    ownership.hook_device !== inspection.fingerprint.device ||
+    ownership.hook_inode !== inspection.fingerprint.inode ||
+    ownership.hook_change_time_ms !== inspection.fingerprint.change_time_ms ||
     !(await ownershipPathIsSafe(
       inspection.git_common_dir,
       inspection.ownership_path,
@@ -544,15 +620,55 @@ async function removeOwnership(
       "unsafe-hook-ownership-path",
       "Coffee Chat ownership runtime no longer matches the inspected target.",
     );
-  await fileSystem.checkpoint(
-    "before-ownership-remove",
-    inspection.ownership_path,
-  );
+  try {
+    await fileSystem.checkpoint(
+      "before-ownership-remove",
+      inspection.ownership_path,
+    );
+  } catch {
+    throw failure(
+      "unsafe-hook-ownership-path",
+      "Coffee Chat ownership state could not be removed safely.",
+    );
+  }
   const rechecked = await readOwnership(inspection.ownership_path, fileSystem);
   if (!sameJsonOwnership(ownership, rechecked))
     throw failure(
       "hook-target-race",
       "Coffee Chat ownership bytes changed before removal and were preserved.",
+    );
+  await fileSystem.unlink(inspection.ownership_path);
+  await fileSystem
+    .rm(dirname(inspection.ownership_path), { recursive: false })
+    .catch(() => undefined);
+}
+
+async function removeStaleOwnership(
+  inspection: HookInspection,
+  fileSystem: HookFileSystem,
+): Promise<void> {
+  const ownership = await readOwnership(inspection.ownership_path, fileSystem);
+  if (ownership?.hook_path !== inspection.target_path)
+    throw failure(
+      "unsafe-hook-ownership-path",
+      "The stale Coffee Chat ownership state could not be identified exactly.",
+    );
+  try {
+    await fileSystem.checkpoint(
+      "before-ownership-remove",
+      inspection.ownership_path,
+    );
+  } catch {
+    throw failure(
+      "unsafe-hook-ownership-path",
+      "Coffee Chat ownership state could not be removed safely.",
+    );
+  }
+  const rechecked = await readOwnership(inspection.ownership_path, fileSystem);
+  if (!sameJsonOwnership(ownership, rechecked))
+    throw failure(
+      "hook-target-race",
+      "Coffee Chat ownership bytes changed before stale-state removal and were preserved.",
     );
   await fileSystem.unlink(inspection.ownership_path);
   await fileSystem
@@ -593,35 +709,133 @@ export async function installHook(
   const processResult = await deps.process.execute({
     cwd: root,
     command: "pre-commit",
-    args: ["install", "--hook-type", "pre-commit"],
+    args: ["--version"],
   });
   if (processResult.exitCode !== 0) {
     throw failure(
       "hook-install-failed",
-      "The native pre-commit installer did not complete successfully.",
+      "The pre-commit runtime availability check did not complete successfully.",
     );
   }
-  const postFingerprint = await fingerprint(
-    initial.target_path,
-    deps.fileSystem,
-  );
-  if (postFingerprint.state !== "file") {
+  const afterProbe = await inspectHook(root, deps);
+  if (!sameInspection(initial, afterProbe))
     throw failure(
-      "hook-install-verification-failed",
-      "The native installer did not create a verifiable framework hook.",
+      "hook-target-race",
+      "The pre-commit target changed during the availability check and was preserved.",
     );
-  }
-  const bytes = (await deps.fileSystem.readFile(initial.target_path)) as Buffer;
-  if (!frameworkManaged(bytes)) {
+  if (initial.classification === "managed")
+    return {
+      status: "installed",
+      inspection: initial as HookInspection & { classification: "managed" },
+    };
+
+  const temporary = `${initial.target_path}.coffee-chat-${randomUUID()}.tmp`;
+  let linked = false;
+  let createdFingerprint:
+    | Extract<HookFingerprint, { state: "file" }>
+    | undefined;
+  try {
+    const handle = await deps.fileSystem.open(temporary, "wx", 0o700);
+    let temporaryStatus: Stats;
+    try {
+      await handle.writeFile(MINIMAL_FRAMEWORK_HOOK);
+      await handle.chmod(0o755);
+      await handle.sync();
+      temporaryStatus = await handle.stat();
+    } finally {
+      await handle.close();
+    }
+    await deps.fileSystem.checkpoint(
+      "before-owned-hook-create",
+      initial.target_path,
+    );
+    const beforeLink = await inspectHook(root, deps);
+    if (!sameInspection(initial, beforeLink))
+      throw failure(
+        "hook-target-race",
+        "The pre-commit target changed before exclusive creation and was preserved.",
+      );
+    try {
+      await deps.fileSystem.link(temporary, initial.target_path);
+      linked = true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "EEXIST")
+        throw failure(
+          "hook-target-race",
+          "An unowned pre-commit target appeared and was preserved.",
+        );
+      throw error;
+    }
+    const postFingerprint = await fingerprint(
+      initial.target_path,
+      deps.fileSystem,
+    );
+    if (
+      postFingerprint.state !== "file" ||
+      postFingerprint.device !== temporaryStatus.dev ||
+      postFingerprint.inode !== temporaryStatus.ino ||
+      postFingerprint.digest !== sha256(Buffer.from(MINIMAL_FRAMEWORK_HOOK)) ||
+      postFingerprint.mode !== 0o755
+    )
+      throw failure(
+        "hook-install-verification-failed",
+        "The exclusively created pre-commit target changed before ownership could be recorded.",
+      );
+    await deps.fileSystem.unlink(temporary);
+    const ownedFingerprint = await fingerprint(
+      initial.target_path,
+      deps.fileSystem,
+    );
+    if (
+      ownedFingerprint.state !== "file" ||
+      ownedFingerprint.device !== temporaryStatus.dev ||
+      ownedFingerprint.inode !== temporaryStatus.ino ||
+      ownedFingerprint.digest !== sha256(Buffer.from(MINIMAL_FRAMEWORK_HOOK)) ||
+      ownedFingerprint.mode !== 0o755
+    )
+      throw failure(
+        "hook-install-verification-failed",
+        "The exclusively created pre-commit target changed before ownership could be recorded.",
+      );
+    createdFingerprint = ownedFingerprint;
+    await writeOwnership(initial, ownedFingerprint, deps.fileSystem);
+  } catch (error) {
+    if (createdFingerprint) {
+      const current = await fingerprint(
+        initial.target_path,
+        deps.fileSystem,
+      ).catch(() => ({ state: "unsafe" as const }));
+      if (
+        current.state === "file" &&
+        current.digest === createdFingerprint.digest &&
+        current.device === createdFingerprint.device &&
+        current.inode === createdFingerprint.inode &&
+        current.change_time_ms === createdFingerprint.change_time_ms
+      ) {
+        await deps.fileSystem
+          .unlink(initial.target_path)
+          .catch(() => undefined);
+        const ownership = await readOwnership(
+          initial.ownership_path,
+          deps.fileSystem,
+        );
+        if (ownership?.hook_path === initial.target_path)
+          await removeStaleOwnership(initial, deps.fileSystem).catch(
+            () => undefined,
+          );
+      }
+    }
+    await deps.fileSystem.rm(temporary, { force: true }).catch(() => undefined);
+    if (error instanceof UnableToComplete) throw error;
     throw failure(
-      "hook-install-verification-failed",
-      "The installed pre-commit target is not the expected framework-managed hook.",
+      linked ? "hook-install-verification-failed" : "hook-target-race",
+      linked
+        ? "The exclusively created pre-commit target could not be verified safely."
+        : "The pre-commit target could not be created exclusively and existing bytes were preserved.",
     );
   }
-  await writeOwnership(initial, postFingerprint.digest, deps.fileSystem);
   const verified = await inspectHook(root, deps);
   if (verified.classification !== "managed") {
-    await deps.fileSystem.rm(initial.ownership_path, { force: true });
     throw failure(
       "hook-install-verification-failed",
       "The installed pre-commit target changed before ownership verification.",
@@ -646,9 +860,8 @@ export async function uninstallHook(
       initial.ownership_path,
       deps.fileSystem,
     );
-    if (ownership?.hook_path === initial.target_path) {
-      await removeOwnership(initial, deps.fileSystem);
-    }
+    if (ownership?.hook_path === initial.target_path)
+      await removeStaleOwnership(initial, deps.fileSystem);
     return { status: "already_absent", inspection: initial };
   }
   await deps.lifecycle.checkpoint("before-uninstall-reinspection");
@@ -659,22 +872,23 @@ export async function uninstallHook(
       "The pre-commit target changed during inspection and was preserved.",
     );
   }
-  const processResult = await deps.process.execute({
-    cwd: root,
-    command: "pre-commit",
-    args: ["uninstall", "--hook-type", "pre-commit"],
-  });
-  if (processResult.exitCode !== 0)
+  await deps.fileSystem.checkpoint(
+    "before-owned-hook-remove",
+    initial.target_path,
+  );
+  const beforeRemove = await inspectHook(root, deps);
+  if (!sameInspection(initial, beforeRemove))
     throw failure(
-      "hook-uninstall-failed",
-      "The native pre-commit uninstaller did not complete successfully.",
+      "hook-target-race",
+      "The owned pre-commit target changed before removal and was preserved.",
     );
+  await deps.fileSystem.unlink(initial.target_path);
+  await removeOwnership(initial, deps.fileSystem);
   const after = await inspectHook(root, deps);
   if (after.classification !== "absent")
     throw failure(
       "hook-uninstall-verification-failed",
-      "The pre-commit target was not removed exactly by the native uninstaller.",
+      "The owned pre-commit lifecycle could not verify exact removal.",
     );
-  await removeOwnership(initial, deps.fileSystem);
   return { status: "uninstalled", inspection: after };
 }

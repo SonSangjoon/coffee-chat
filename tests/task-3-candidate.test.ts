@@ -24,7 +24,11 @@ import {
   type CandidateReceipt,
   type MutationPoint,
 } from "../tools/candidate.ts";
-import { canonicalizeJson, checkGeneratedIndex } from "../tools/generate.ts";
+import {
+  canonicalizeJson,
+  checkGeneratedIndex,
+  generatedIndexBytes,
+} from "../tools/generate.ts";
 import { sha256, validateKnowledge } from "../tools/knowledge.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
@@ -131,6 +135,7 @@ function makeMineRequest(setupEffects: string[] = []): Record<string, unknown> {
               url: "https://example.com/public-source",
               title: "Public source",
               published_on: "2026-07",
+              accessed_on: "2026-07-31",
               retrieval_status: "succeeded",
             },
             {
@@ -195,6 +200,45 @@ async function readJson<T>(path: string): Promise<T> {
   return JSON.parse(await readFile(path, "utf8")) as T;
 }
 
+async function resignCandidateManifest(
+  fixture: RepositoryFixture,
+  mutate: (manifest: Record<string, unknown>) => void,
+): Promise<CandidateManifest> {
+  const manifest = await readJson<Record<string, unknown>>(
+    resolve(fixture.out, "candidate-manifest.json"),
+  );
+  const oldDigest = manifest.candidate_digest as string;
+  mutate(manifest);
+  delete manifest.candidate_digest;
+  const candidateDigest = sha256(canonicalizeJson(manifest as never));
+  manifest.candidate_digest = candidateDigest;
+  await writeFile(
+    resolve(fixture.out, "candidate-manifest.json"),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+  );
+  await writeFile(
+    resolve(fixture.out, "preview.json"),
+    `${JSON.stringify(
+      {
+        schema_version: manifest.schema_version,
+        candidate_digest: candidateDigest,
+        ...(manifest.preview as Record<string, unknown>),
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const previewMarkdown = await readFile(
+    resolve(fixture.out, "preview.md"),
+    "utf8",
+  );
+  await writeFile(
+    resolve(fixture.out, "preview.md"),
+    previewMarkdown.replace(oldDigest, candidateDigest),
+  );
+  return manifest as unknown as CandidateManifest;
+}
+
 async function recursiveFiles(root: string): Promise<string[]> {
   const found: string[] = [];
   async function walk(directory: string): Promise<void> {
@@ -245,6 +289,63 @@ afterEach(async () => {
 });
 
 describe("Candidate request, mode, action, and temporary-key contracts", () => {
+  it("rejects two Entity retirements that both remap the same Note", async () => {
+    const fixture = await makeRepository("initialized");
+    await writeFile(
+      resolve(fixture.root, "knowledge/entities.yml"),
+      `${await readFile(resolve(fixture.root, "knowledge/entities.yml"), "utf8")}- id: "${SECOND_ENTITY_ID}"\n  label: "Second retirement target"\n  kind: "concept"\n`,
+    );
+    const notePath = resolve(
+      fixture.root,
+      `knowledge/notes/${EXISTING_NOTE_ID}.md`,
+    );
+    await writeFile(
+      notePath,
+      (await readFile(notePath, "utf8")).replace(
+        `  - "${EXISTING_ENTITY_ID}"`,
+        `  - "${EXISTING_ENTITY_ID}"\n  - "${SECOND_ENTITY_ID}"`,
+      ),
+    );
+    const snapshot = await createSnapshot(fixture.root, "worktree");
+    const validation = await validateKnowledge(snapshot);
+    expect(validation.diagnostics).toEqual([]);
+    await writeFile(
+      resolve(fixture.root, "knowledge/index.json"),
+      generatedIndexBytes(
+        validation.graph as NonNullable<typeof validation.graph>,
+      ) as Buffer,
+    );
+    await git(fixture.root, "add", ".");
+    await git(fixture.root, "commit", "-qm", "add second retirement target");
+    await writeRequest(fixture, {
+      schema_version: "1.0.0",
+      mode: "update",
+      entity_changes: [EXISTING_ENTITY_ID, SECOND_ENTITY_ID].map(
+        (target_id) => ({
+          action: "retire",
+          target_id,
+          note_remaps: [{ target_id: EXISTING_NOTE_ID, entity_refs: [] }],
+        }),
+      ),
+      note_changes: [],
+      setup_effects: [],
+    });
+
+    await expect(
+      prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        fixedDependencies([]),
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "conflicting-entity-retirement-remap" },
+    });
+    await expect(lstat(resolve(fixture.out, "preview.json"))).rejects.toThrow();
+  });
+
   it.each([
     [
       "no-op",
@@ -392,6 +493,46 @@ describe("Candidate request, mode, action, and temporary-key contracts", () => {
 });
 
 describe("external-only complete Candidate materialization", () => {
+  it("rejects external-parent substitution before root creation without writing or unsafe cleanup", async () => {
+    const fixture = await makeRepository();
+    const parent = resolve(fixture.base, "candidate-parent");
+    const movedParent = resolve(fixture.base, "candidate-parent-original");
+    const attacker = resolve(fixture.base, "attacker-parent");
+    await Promise.all([mkdir(parent), mkdir(attacker)]);
+    fixture.out = resolve(parent, "candidate");
+    await writeRequest(fixture, makeMineRequest());
+    let substituted = false;
+
+    await expect(
+      prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        {
+          ...fixedDependencies(),
+          fileSystem: {
+            ...nodeFileSystem,
+            checkpoint: async (point, path) => {
+              await nodeFileSystem.checkpoint(point, path);
+              if (!substituted && point === "before-candidate-root-create") {
+                substituted = true;
+                await rename(parent, movedParent);
+                await symlink(attacker, parent);
+              }
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "candidate-output-drift" },
+    });
+    expect(substituted).toBe(true);
+    await expect(lstat(resolve(attacker, "candidate"))).rejects.toThrow();
+    await expect(lstat(resolve(movedParent, "candidate"))).rejects.toThrow();
+  });
+
   it("reports only the public-content warnings supplied by the request", async () => {
     const fixture = await makeRepository();
     const request = makeMineRequest();
@@ -452,6 +593,11 @@ describe("external-only complete Candidate materialization", () => {
       validation: { status: "passed" },
       source_observations: expect.arrayContaining([
         expect.objectContaining({
+          url: "https://example.com/public-source",
+          accessed_on: "2026-07-31",
+          retrieval_status: "succeeded",
+        }),
+        expect.objectContaining({
           retrieval_status: "unavailable",
           access_limitation: "The public page did not respond.",
         }),
@@ -492,6 +638,12 @@ describe("external-only complete Candidate materialization", () => {
     expect(
       await readFile(resolve(fixture.out, "preview.md"), "utf8"),
     ).toContain("A complete public body");
+    expect(
+      await readFile(
+        resolve(fixture.out, `repository/knowledge/notes/${NOTE_ID}.md`),
+        "utf8",
+      ),
+    ).toContain('accessed_on: "2026-07-31"');
     const allCandidateText = Object.values(await bytesByPath(fixture.out))
       .map((bytes) => Buffer.from(bytes, "base64").toString("utf8"))
       .join("\n");
@@ -606,7 +758,7 @@ describe("external-only complete Candidate materialization", () => {
         requestPath: contribute.requestPath,
         out: contribute.out,
       },
-      fixedDependencies([NOTE_ID]),
+      fixedDependencies([NOTE_ID], "2026-08-02T15:30:00.000Z"),
     );
     const manifest = await readJson<Record<string, unknown>>(
       resolve(contribute.out, "repository/coffee-chat.json"),
@@ -683,7 +835,7 @@ describe("external-only complete Candidate materialization", () => {
         requestPath: fixture.requestPath,
         out: fixture.out,
       },
-      fixedDependencies([NOTE_ID]),
+      fixedDependencies([NOTE_ID], "2026-08-02T15:30:00.000Z"),
     );
     const corrected = await readFile(
       resolve(fixture.out, `repository/knowledge/notes/${EXISTING_NOTE_ID}.md`),
@@ -691,7 +843,14 @@ describe("external-only complete Candidate materialization", () => {
     );
     expect(corrected).toContain(`id: "${EXISTING_NOTE_ID}"`);
     expect(corrected).toContain('recorded_on: "2026-08-01"');
+    expect(corrected).toContain('accessed_on: "2026-08-01"');
     expect(corrected).toContain("Corrected complete body.");
+    expect(
+      await readFile(
+        resolve(fixture.out, `repository/knowledge/notes/${NOTE_ID}.md`),
+        "utf8",
+      ),
+    ).toContain('accessed_on: "2026-08-03"');
     expect(
       await lstat(
         resolve(fixture.out, `repository/knowledge/notes/${OTHER_NOTE_ID}.md`),
@@ -702,6 +861,79 @@ describe("external-only complete Candidate materialization", () => {
         resolve(fixture.out, `repository/knowledge/notes/${NOTE_ID}.md`),
       ),
     ).toBeDefined();
+    const manifest = await readJson<CandidateManifest>(
+      resolve(fixture.out, "candidate-manifest.json"),
+    );
+    const receipt = await applyCandidate(
+      {
+        root: fixture.root,
+        candidateDir: fixture.out,
+        approvedDigest: manifest.candidate_digest,
+      },
+      fixedDependencies([NOTE_ID], "2026-08-02T15:30:00.000Z"),
+    );
+    expect(receipt.status).toBe("applied");
+    expect(
+      await readFile(
+        resolve(fixture.root, `knowledge/notes/${EXISTING_NOTE_ID}.md`),
+        "utf8",
+      ),
+    ).toContain('accessed_on: "2026-08-01"');
+  });
+
+  it("preserves a prior approved accessed_on when correction retrieval is unavailable", async () => {
+    const fixture = await makeRepository("initialized");
+    await writeRequest(fixture, {
+      schema_version: "1.0.0",
+      mode: "update",
+      entity_changes: [],
+      note_changes: [
+        {
+          action: "correct",
+          target_id: EXISTING_NOTE_ID,
+          value: {
+            title: "Unavailable correction observation",
+            temporal_coverage: "2024-02/2024-03-01",
+            sources: [
+              {
+                url: "https://example.com/shared",
+                title: "Shared title is temporarily unavailable",
+                retrieval_status: "unavailable",
+                access_limitation: "The source timed out during correction.",
+              },
+            ],
+            entity_refs: [EXISTING_ENTITY_ID],
+            body: "The correction retains the approved citation history.",
+          },
+        },
+      ],
+      setup_effects: [],
+    });
+
+    await prepareCandidate(
+      {
+        root: fixture.root,
+        requestPath: fixture.requestPath,
+        out: fixture.out,
+      },
+      fixedDependencies([], "2026-08-02T15:30:00.000Z"),
+    );
+
+    const corrected = await readFile(
+      resolve(fixture.out, `repository/knowledge/notes/${EXISTING_NOTE_ID}.md`),
+      "utf8",
+    );
+    expect(corrected).toContain('accessed_on: "2026-08-01"');
+    const preview = await readJson<{
+      source_observations: Array<Record<string, unknown>>;
+    }>(resolve(fixture.out, "preview.json"));
+    expect(preview.source_observations).toEqual([
+      expect.objectContaining({
+        retrieval_status: "unavailable",
+        access_limitation: "The source timed out during correction.",
+      }),
+    ]);
+    expect(preview.source_observations[0]).not.toHaveProperty("accessed_on");
   });
 
   it("materializes explicit Entity split/retire remaps without dangling or redirect records", async () => {
@@ -782,6 +1014,388 @@ describe("external-only complete Candidate materialization", () => {
 });
 
 describe("exact approval preflight invalidation", () => {
+  it.each(["inside", "symlink", "non-directory"])(
+    "rejects an initially %s Candidate location without canonical mutation",
+    async (kind) => {
+      const fixture = await makeRepository("initialized");
+      await writeRequest(fixture, updateRequest());
+      await prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        fixedDependencies([]),
+      );
+      const manifest = await readJson<CandidateManifest>(
+        resolve(fixture.out, "candidate-manifest.json"),
+      );
+      let candidateDir = fixture.out;
+      if (kind === "inside") {
+        candidateDir = resolve(fixture.root, "candidate");
+        await mkdir(candidateDir);
+      } else if (kind === "symlink") {
+        const realCandidate = resolve(fixture.base, "real-candidate");
+        await rename(fixture.out, realCandidate);
+        await symlink(realCandidate, fixture.out);
+      } else {
+        await rm(fixture.out, { recursive: true });
+        await writeFile(fixture.out, "not a directory\n");
+      }
+      const before = await canonicalBytes(fixture.root);
+
+      const receipt = await applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir,
+          approvedDigest: manifest.candidate_digest,
+        },
+        fixedDependencies([]),
+      );
+
+      expect(receipt).toMatchObject({
+        status: "approval_invalidated",
+        invalidation_code: "candidate-location-invalid",
+        changed_paths: [],
+      });
+      expect(await canonicalBytes(fixture.root)).toEqual(before);
+    },
+  );
+
+  it("invalidates parent substitution before transaction and creates no journal in either parent", async () => {
+    const fixture = await makeRepository("initialized");
+    const candidateParent = resolve(fixture.base, "candidate-parent");
+    const movedParent = resolve(fixture.base, "candidate-parent-original");
+    const attackerParent = resolve(fixture.base, "attacker-parent");
+    await Promise.all([mkdir(candidateParent), mkdir(attackerParent)]);
+    fixture.out = resolve(candidateParent, "candidate");
+    await writeRequest(fixture, updateRequest());
+    await prepareCandidate(
+      {
+        root: fixture.root,
+        requestPath: fixture.requestPath,
+        out: fixture.out,
+      },
+      fixedDependencies([]),
+    );
+    const manifest = await readJson<CandidateManifest>(
+      resolve(fixture.out, "candidate-manifest.json"),
+    );
+    const before = await canonicalBytes(fixture.root);
+    let substituted = false;
+
+    const receipt = await applyCandidate(
+      {
+        root: fixture.root,
+        candidateDir: fixture.out,
+        approvedDigest: manifest.candidate_digest,
+      },
+      {
+        ...fixedDependencies([]),
+        fileSystem: {
+          ...nodeFileSystem,
+          checkpoint: async (point, path) => {
+            await nodeFileSystem.checkpoint(point, path);
+            if (!substituted && point === "before-candidate-transaction") {
+              substituted = true;
+              await rename(candidateParent, movedParent);
+              await symlink(attackerParent, candidateParent);
+            }
+          },
+        },
+      },
+    );
+
+    expect(receipt).toMatchObject({
+      status: "approval_invalidated",
+      invalidation_code: "candidate-location-drift",
+      changed_paths: [],
+    });
+    expect(await canonicalBytes(fixture.root)).toEqual(before);
+    expect(
+      (await readdir(attackerParent)).some((name) =>
+        name.endsWith(".transaction.json"),
+      ),
+    ).toBe(false);
+    expect(
+      (await readdir(movedParent)).some((name) =>
+        name.endsWith(".transaction.json"),
+      ),
+    ).toBe(false);
+  });
+
+  it("invalidates when the bound Candidate root is relocated before manifest read", async () => {
+    const fixture = await makeRepository("initialized");
+    await writeRequest(fixture, updateRequest());
+    await prepareCandidate(
+      {
+        root: fixture.root,
+        requestPath: fixture.requestPath,
+        out: fixture.out,
+      },
+      fixedDependencies([]),
+    );
+    const manifest = await readJson<CandidateManifest>(
+      resolve(fixture.out, "candidate-manifest.json"),
+    );
+    const relocated = resolve(fixture.base, "relocated-candidate");
+    let relocatedAtBoundary = false;
+    const before = await canonicalBytes(fixture.root);
+
+    const receipt = await applyCandidate(
+      {
+        root: fixture.root,
+        candidateDir: fixture.out,
+        approvedDigest: manifest.candidate_digest,
+      },
+      {
+        ...fixedDependencies([]),
+        fileSystem: {
+          ...nodeFileSystem,
+          checkpoint: async (point, path) => {
+            await nodeFileSystem.checkpoint(point, path);
+            if (
+              !relocatedAtBoundary &&
+              point === "before-candidate-manifest-read"
+            ) {
+              relocatedAtBoundary = true;
+              await rename(fixture.out, relocated);
+              await mkdir(fixture.out);
+            }
+          },
+        },
+      },
+    );
+
+    expect(relocatedAtBoundary).toBe(true);
+    expect(receipt).toMatchObject({
+      status: "approval_invalidated",
+      invalidation_code: "candidate-location-drift",
+      changed_paths: [],
+    });
+    expect(await canonicalBytes(fixture.root)).toEqual(before);
+    expect(
+      await readFile(resolve(relocated, "candidate-manifest.json"), "utf8"),
+    ).toContain(manifest.candidate_digest);
+  });
+
+  it.each([
+    {
+      name: "unknown manifest fields",
+      mutate: (manifest: Record<string, unknown>) => {
+        manifest.untrusted_extension = true;
+      },
+    },
+    {
+      name: "a traversal transaction path",
+      mutate: (manifest: Record<string, unknown>) => {
+        manifest.changed_paths = [
+          ...(manifest.changed_paths as string[]),
+          "./../escape.txt",
+        ];
+      },
+    },
+    {
+      name: "a non-POSIX transaction path",
+      mutate: (manifest: Record<string, unknown>) => {
+        manifest.changed_paths = [
+          ...(manifest.changed_paths as string[]),
+          ".\\knowledge\\escape.txt",
+        ];
+      },
+    },
+    {
+      name: "a traversal support-file path",
+      mutate: (manifest: Record<string, unknown>) => {
+        const files = manifest.support_files as Array<Record<string, unknown>>;
+        files[0]!.path = "./schemas/../tools/candidate.json";
+        files.sort((left, right) =>
+          String(left.path).localeCompare(String(right.path)),
+        );
+      },
+    },
+    {
+      name: "a traversal absolute request path",
+      mutate: (manifest: Record<string, unknown>) => {
+        const binding = manifest.request_binding as Record<string, unknown>;
+        binding.path = "/tmp/../forged-request.json";
+      },
+    },
+    {
+      name: "a duplicate transaction path",
+      mutate: (manifest: Record<string, unknown>) => {
+        manifest.changed_paths = [
+          ...(manifest.changed_paths as string[]),
+          (manifest.changed_paths as string[])[0],
+        ];
+      },
+    },
+    {
+      name: "a Preview/top-level path mismatch",
+      mutate: (manifest: Record<string, unknown>) => {
+        const preview = manifest.preview as Record<string, unknown>;
+        preview.affected_paths = [];
+      },
+    },
+    {
+      name: "a materialized-change/request mismatch",
+      mutate: (manifest: Record<string, unknown>) => {
+        const changes = manifest.materialized_changes as {
+          entity_changes: Array<Record<string, unknown>>;
+        };
+        const first = changes.entity_changes[0] as Record<string, unknown>;
+        const value = first.value as Record<string, unknown>;
+        value.label = "Forged materialized label";
+      },
+    },
+    {
+      name: "a Preview/materialized Entity mismatch",
+      mutate: (manifest: Record<string, unknown>) => {
+        const preview = manifest.preview as {
+          entities: Array<Record<string, unknown>>;
+        };
+        const changed = preview.entities.find(
+          (entity) => entity.id === EXISTING_ENTITY_ID,
+        ) as Record<string, unknown>;
+        changed.change = "unchanged";
+      },
+    },
+  ])(
+    "invalidates a digest-valid Candidate with $name before mutation",
+    async ({ mutate }) => {
+      const fixture = await makeRepository("initialized");
+      await writeRequest(fixture, updateRequest());
+      await prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        fixedDependencies([]),
+      );
+      const escaped = resolve(fixture.base, "escape.txt");
+      await writeFile(escaped, "outside sentinel\n");
+      const manifest = await resignCandidateManifest(fixture, mutate);
+      const before = await canonicalBytes(fixture.root);
+
+      const receipt = await applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir: fixture.out,
+          approvedDigest: manifest.candidate_digest,
+        },
+        fixedDependencies([]),
+      ).catch((error: unknown) => error);
+
+      expect(receipt).toMatchObject({
+        status: "approval_invalidated",
+        invalidation_code: "candidate-manifest-invalid",
+        changed_paths: [],
+      });
+      expect(await canonicalBytes(fixture.root)).toEqual(before);
+      expect(await readFile(escaped, "utf8")).toBe("outside sentinel\n");
+    },
+  );
+
+  it.each([
+    {
+      name: "forged request-derived Source observations",
+      previewReplacement: undefined,
+      mutate: (manifest: Record<string, unknown>) => {
+        const observations = manifest.source_observations as Array<
+          Record<string, unknown>
+        >;
+        const preview = manifest.preview as Record<string, unknown>;
+        const previewObservations = preview.source_observations as Array<
+          Record<string, unknown>
+        >;
+        observations[0]!.title = "Forged observation";
+        previewObservations[0]!.title = "Forged observation";
+      },
+    },
+    {
+      name: "forged privacy warnings",
+      previewReplacement: ["Approved warning", "Forged warning"] as const,
+      mutate: (manifest: Record<string, unknown>) => {
+        const preview = manifest.preview as Record<string, unknown>;
+        preview.privacy_warnings = ["Forged warning"];
+      },
+    },
+    {
+      name: "forged unresolved limitations",
+      previewReplacement: [
+        "The public page did not respond.",
+        "Forged limitation",
+      ] as const,
+      mutate: (manifest: Record<string, unknown>) => {
+        const preview = manifest.preview as Record<string, unknown>;
+        preview.unresolved_source_limitations = ["Forged limitation"];
+      },
+    },
+    {
+      name: "forged materialized Note provenance",
+      previewReplacement: undefined,
+      mutate: (manifest: Record<string, unknown>) => {
+        const materialized = manifest.materialized_changes as {
+          note_changes: Array<{
+            value: {
+              recorded_on: string;
+              sources: Array<{ accessed_on?: string }>;
+            };
+          }>;
+        };
+        materialized.note_changes[0]!.value.recorded_on = "2026-07-01";
+        materialized.note_changes[0]!.value.sources[0]!.accessed_on =
+          "2026-07-01";
+      },
+    },
+  ])(
+    "invalidates $name even when the Candidate digest and self-mirrors agree",
+    async ({ mutate, previewReplacement }) => {
+      const fixture = await makeRepository();
+      const request = makeMineRequest();
+      const note = (request.note_changes as Array<Record<string, unknown>>)[0]!;
+      (note.value as Record<string, unknown>).public_content_warnings = [
+        "Approved warning",
+      ];
+      await writeRequest(fixture, request);
+      await prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        fixedDependencies(),
+      );
+      const manifest = await resignCandidateManifest(fixture, mutate);
+      if (previewReplacement) {
+        const [before, after] = previewReplacement;
+        const previewPath = resolve(fixture.out, "preview.md");
+        await writeFile(
+          previewPath,
+          (await readFile(previewPath, "utf8")).replace(before, after),
+        );
+      }
+      const before = await canonicalBytes(fixture.root);
+
+      const receipt = await applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir: fixture.out,
+          approvedDigest: manifest.candidate_digest,
+        },
+        fixedDependencies(),
+      );
+
+      expect(receipt).toMatchObject({
+        status: "approval_invalidated",
+        invalidation_code: "candidate-manifest-invalid",
+        changed_paths: [],
+      });
+      expect(await canonicalBytes(fixture.root)).toEqual(before);
+    },
+  );
+
   const cases: Array<{
     name: string;
     setupEffect?: boolean;
@@ -1367,7 +1981,7 @@ describe("transaction rollback and setup receipt semantics", () => {
       ),
     ).toBe(true);
     expect(
-      (await recursiveFiles(fixture.root)).some((path) =>
+      (await recursiveFiles(fixture.base)).some((path) =>
         path.endsWith(".bak"),
       ),
     ).toBe(true);

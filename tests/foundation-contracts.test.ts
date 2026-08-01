@@ -15,6 +15,7 @@ const schemaNames = [
   "entity-registry.schema.json",
   "knowledge-index.schema.json",
   "candidate-request.schema.json",
+  "candidate-manifest.schema.json",
   "preview.schema.json",
   "receipt.schema.json",
 ] as const;
