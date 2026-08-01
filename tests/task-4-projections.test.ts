@@ -135,12 +135,12 @@ describe("Task 4 deterministic delivery projections", () => {
     const { snapshot, graph } = await projectGraph();
     const generated = await generatedProjectionBytes(snapshot, graph);
     for (const name of skillNames) {
-      expect(
-        generated.has(`plugins/coffee-chat-sangjoon/skills/${name}/SKILL.md`),
-      ).toBe(true);
+      expect(generated.has(`plugins/coffee-chat/skills/${name}/SKILL.md`)).toBe(
+        true,
+      );
       expect(
         generated.has(
-          `plugins/coffee-chat-sangjoon/skills/${name}/references/method.md`,
+          `plugins/coffee-chat/skills/${name}/references/method.md`,
         ),
       ).toBe(true);
     }
@@ -153,7 +153,7 @@ describe("Task 4 deterministic delivery projections", () => {
     ).toEqual([]);
   });
 
-  it("projects the shared method, thin routers, package, marketplace, README, and pending fallback byte-identically", async () => {
+  it("projects the shared method, thin routers, package, marketplace, and README for the generic engine", async () => {
     const { snapshot, graph } = await projectGraph();
 
     const first = await generatedProjectionBytes(snapshot, graph);
@@ -164,35 +164,29 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(bytes.equals(second.get(path)!)).toBe(true);
 
     expect(first.get("CLAUDE.md")?.toString("utf8")).toBe("@AGENTS.md\n");
-    expect(first.get("CONTENT_LICENSE.md")).toEqual(
-      await snapshot.read("CONTENT_LICENSE.md"),
-    );
+    expect(first.has("CONTENT_LICENSE.md")).toBe(false);
     expect(first.get("AGENTS.md")?.toString("utf8")).toContain(
       "skills/coffee-chat/SKILL.md",
     );
     expect(first.get("skills/coffee-chat/references/method.md")).toBeDefined();
     expect(
-      first.get("plugins/coffee-chat-sangjoon/skills/coffee-chat/SKILL.md"),
+      first.get("plugins/coffee-chat/skills/coffee-chat/SKILL.md"),
     ).toEqual(await snapshot.read("skills/coffee-chat/SKILL.md"));
     expect(
-      first.get(
-        "plugins/coffee-chat-sangjoon/skills/coffee-chat/references/method.md",
-      ),
+      first.get("plugins/coffee-chat/skills/coffee-chat/references/method.md"),
     ).toEqual(first.get("skills/coffee-chat/references/method.md"));
-    expect(first.has("plugins/coffee-chat-sangjoon/knowledge/index.json")).toBe(
+    expect(first.has("plugins/coffee-chat/knowledge/index.json")).toBe(false);
+    expect(first.has("plugins/coffee-chat/knowledge/coffee-chat.json")).toBe(
       false,
     );
-    expect(
-      first.get("plugins/coffee-chat-sangjoon/knowledge/coffee-chat.json"),
-    ).toEqual(await snapshot.read("coffee-chat.json"));
 
     const codexManifest = JSON.parse(
       first
-        .get("plugins/coffee-chat-sangjoon/.codex-plugin/plugin.json")!
+        .get("plugins/coffee-chat/.codex-plugin/plugin.json")!
         .toString("utf8"),
     ) as Record<string, unknown>;
     expect(codexManifest).toMatchObject({
-      name: "coffee-chat-sangjoon",
+      name: "coffee-chat",
       version: "1.0.0",
       repository: "https://github.com/SonSangjoon/coffee-chat",
       skills: "./skills/",
@@ -213,11 +207,11 @@ describe("Task 4 deterministic delivery projections", () => {
       first.get(".agents/plugins/marketplace.json")!.toString("utf8"),
     ) as { name: string; plugins: Array<Record<string, unknown>> };
     expect(codexMarketplace).toMatchObject({
-      name: "coffee-chat-sangjoon-marketplace",
+      name: "coffee-chat-marketplace",
       plugins: [
         {
-          name: "coffee-chat-sangjoon",
-          source: { source: "local", path: "./plugins/coffee-chat-sangjoon" },
+          name: "coffee-chat",
+          source: { source: "local", path: "./plugins/coffee-chat" },
           policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
           category: "Productivity",
         },
@@ -262,10 +256,10 @@ describe("Task 4 deterministic delivery projections", () => {
       readme.indexOf("## Make mine / 내 것으로 만들기"),
     );
     expect(readme).toContain(
-      "codex plugin remove coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace",
+      "codex plugin remove coffee-chat@coffee-chat-marketplace",
     );
     expect(readme).toContain(
-      "codex plugin marketplace upgrade coffee-chat-sangjoon-marketplace",
+      "codex plugin marketplace upgrade coffee-chat-marketplace",
     );
     expect(readme).toContain("Codex exposes no plugin scope selector");
     expect(readme).toContain("host-managed configuration and cache");
@@ -273,13 +267,13 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(readme).toContain("codex plugin list --json");
     expect(readme).toContain("codex plugin marketplace list --json");
     expect(readme).toContain(
-      "claude plugin install coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace --scope local",
+      "claude plugin install coffee-chat@coffee-chat-marketplace --scope local",
     );
     expect(readme).toContain(
-      "claude plugin update coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace --scope local",
+      "claude plugin update coffee-chat@coffee-chat-marketplace --scope local",
     );
     expect(readme).toContain(
-      "claude plugin uninstall coffee-chat-sangjoon@coffee-chat-sangjoon-marketplace --scope local",
+      "claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local",
     );
     expect(readme.toLowerCase()).toContain("host conversation history");
     expect(readme).not.toContain("codex plugin update");
@@ -305,6 +299,15 @@ describe("Task 4 deterministic delivery projections", () => {
       await cp(resolve(projectRoot, path), resolve(root, path), {
         recursive: true,
       });
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/coffee-chat.json"),
+      resolve(root, "coffee-chat.json"),
+    );
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/knowledge"),
+      resolve(root, "knowledge"),
+      { recursive: true },
+    );
     const manifest = JSON.parse(
       await readFile(resolve(root, "coffee-chat.json"), "utf8"),
     ) as {
@@ -398,7 +401,7 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(await readFile(fourthSkill, "utf8")).toContain("name: fourth");
     await rm(resolve(root, "skills/fourth"), { recursive: true });
 
-    const currentPackage = resolve(root, "plugins/coffee-chat-sangjoon");
+    const currentPackage = resolve(root, "plugins/coffee-chat");
     const staleNote = resolve(
       currentPackage,
       "knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
@@ -413,10 +416,7 @@ describe("Task 4 deterministic delivery projections", () => {
 
     const obsoletePackage = resolve(root, "plugins/coffee-chat-obsolete");
     await cp(currentPackage, obsoletePackage, { recursive: true });
-    for (const relativePath of [
-      ".codex-plugin/plugin.json",
-      "knowledge/coffee-chat.json",
-    ]) {
+    for (const relativePath of [".codex-plugin/plugin.json"]) {
       const path = resolve(obsoletePackage, relativePath);
       const value = JSON.parse(await readFile(path, "utf8")) as {
         name?: string;
@@ -438,8 +438,8 @@ describe("Task 4 deterministic delivery projections", () => {
       path: string;
     }>;
     for (const path of [
-      "./plugins/coffee-chat-sangjoon/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
-      "./plugins/coffee-chat-sangjoon/hooks/hooks.json",
+      "./plugins/coffee-chat/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
+      "./plugins/coffee-chat/hooks/hooks.json",
       "./plugins/coffee-chat-obsolete/.codex-plugin/plugin.json",
     ])
       expect(staleDiagnostics).toContainEqual(
@@ -480,10 +480,10 @@ describe("Task 4 deterministic delivery projections", () => {
     );
     expect(
       await readFile(
-        resolve(root, "plugins/coffee-chat-sangjoon/.codex-plugin/plugin.json"),
+        resolve(root, "plugins/coffee-chat/.codex-plugin/plugin.json"),
         "utf8",
       ),
-    ).toContain('"name": "coffee-chat-sangjoon"');
+    ).toContain('"name": "coffee-chat"');
     expect(await runCli(root, "check", "--format", "json")).toEqual({
       exitCode: 0,
       stdout: "[]\n",

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://coffee-chat.dev/schemas/knowledge-index.schema.json",
-  "title": "Coffee Chat Generated Index",
+  "title": "Coffee Chat Instance Generated Index",
   "type": "object",
   "additionalProperties": false,
   "required": [

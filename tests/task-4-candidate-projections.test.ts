@@ -23,7 +23,7 @@ import {
   type CandidateManifest,
 } from "../tools/candidate.ts";
 import { checkGeneratedIndex } from "../tools/generate.ts";
-import { validateKnowledge } from "../tools/knowledge.ts";
+import { isInstanceGraph, validateKnowledge } from "../tools/knowledge.ts";
 import { checkGeneratedProjections } from "../tools/projections.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
@@ -79,6 +79,15 @@ async function repositoryFixture(
       recursive: true,
     });
   if (options.upstreamIdentity) {
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/coffee-chat.json"),
+      resolve(root, "coffee-chat.json"),
+    );
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/knowledge"),
+      resolve(root, "knowledge"),
+      { recursive: true },
+    );
     const manifestPath = resolve(root, "coffee-chat.json");
     const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
       profile: { display_name: string };
@@ -367,7 +376,13 @@ describe("Task 4 Candidate projection transaction", () => {
     const validation = await validateKnowledge(snapshot);
     expect(validation.diagnostics).toEqual([]);
     expect(validation.graph).toBeDefined();
-    expect(await checkGeneratedIndex(snapshot, validation.graph!)).toEqual([]);
+    expect(validation.graph && isInstanceGraph(validation.graph)).toBe(true);
+    expect(
+      await checkGeneratedIndex(
+        snapshot,
+        validation.graph as Parameters<typeof checkGeneratedIndex>[1],
+      ),
+    ).toEqual([]);
     expect(
       await checkGeneratedProjections(snapshot, validation.graph!),
     ).toEqual([]);

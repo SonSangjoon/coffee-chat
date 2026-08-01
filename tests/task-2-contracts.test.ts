@@ -126,7 +126,7 @@ describe("Coffee Chat Task 2 public CLI", () => {
     expect(usage.stdout).toContain("[cli-usage]");
   });
 
-  it("accepts a pending graph without inventing canonical knowledge", async () => {
+  it("accepts a generic engine without loading canonical knowledge", async () => {
     const root = projectRoot;
     expect(await runCli(root, "validate", "--format", "json")).toMatchObject({
       exitCode: 0,
@@ -553,7 +553,7 @@ describe("strict authored parsing and repository integrity", () => {
         "coffee-chat.json",
         (text) =>
           text.replace(
-            /  "profile": \{\n    "id": "[^"]+",\n    "display_name": "[^"]+"\n  \}/,
+            /  "profile": \{\n    "id": "[^"]+",\n    "display_name": "[^"]+",\n    "short_name": "[^"]+"\n  \}/,
             '  "profile": []',
           ),
       ],
@@ -979,7 +979,7 @@ describe("Git snapshot and identity isolation", () => {
     ]);
   });
 
-  it("enforces --base-ref IDs when the selected snapshot becomes pending", async () => {
+  it("enforces --base-ref IDs when the selected snapshot becomes an engine", async () => {
     const root = await makeRepository();
     await execFileAsync("git", ["init", "-q"], { cwd: root });
     await execFileAsync(
@@ -997,13 +997,11 @@ describe("Git snapshot and identity isolation", () => {
       cwd: root,
     });
 
-    await mutate(root, "coffee-chat.json", (text) =>
-      text
-        .replace(
-          '"initialization_state": "initialized"',
-          '"initialization_state": "pending_first_candidate"',
-        )
-        .replace(/\n    "id": "69d249c9-3c4f-4e0d-b622-74b292f87e9d",/, ""),
+    await writeFile(
+      resolve(root, "coffee-chat.json"),
+      await readFile(
+        resolve(projectRoot, "tests/fixtures/engine-valid/coffee-chat.json"),
+      ),
     );
     await rm(resolve(root, "knowledge"), { recursive: true });
 
@@ -1011,7 +1009,6 @@ describe("Git snapshot and identity isolation", () => {
     expect(result.exitCode).toBe(1);
     expect(result.diagnostics).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ code: "immutable-profile-id" }),
         expect.objectContaining({ code: "immutable-note-id" }),
         expect.objectContaining({ code: "immutable-entity-id" }),
       ]),

@@ -6,7 +6,7 @@ import {
   containsUnpairedUnicodeSurrogate,
   repositoryPath,
 } from "./contracts.ts";
-import type { KnowledgeGraph } from "./knowledge.ts";
+import type { InstanceGraph } from "./knowledge.ts";
 import { sha256 } from "./knowledge.ts";
 import type { Snapshot } from "./snapshot.ts";
 
@@ -63,12 +63,9 @@ function sortedUnique(values: string[] | undefined): string[] | undefined {
 }
 
 export function buildKnowledgeIndex(
-  graph: KnowledgeGraph,
-): Record<string, Json> | undefined {
-  if (graph.manifest.initialization_state === "pending_first_candidate")
-    return undefined;
+  graph: InstanceGraph,
+): Record<string, Json> {
   const profileId = graph.manifest.profile.id;
-  if (!profileId) throw new Error("Initialized graph has no Profile ID");
 
   const nodes: Array<Record<string, Json>> = [];
   for (const entity of graph.entities) {
@@ -178,19 +175,16 @@ export function buildKnowledgeIndex(
   };
 }
 
-export function generatedIndexBytes(graph: KnowledgeGraph): Buffer | undefined {
+export function generatedIndexBytes(graph: InstanceGraph): Buffer {
   const index = buildKnowledgeIndex(graph);
-  return index
-    ? Buffer.from(`${JSON.stringify(index, null, 2)}\n`, "utf8")
-    : undefined;
+  return Buffer.from(`${JSON.stringify(index, null, 2)}\n`, "utf8");
 }
 
 export async function checkGeneratedIndex(
   snapshot: Snapshot,
-  graph: KnowledgeGraph,
+  graph: InstanceGraph,
 ): Promise<Diagnostic[]> {
   const expected = generatedIndexBytes(graph);
-  if (!expected) return [];
   const configured = graph.manifest.paths.knowledge_index;
   const path = configured.startsWith("./") ? configured.slice(2) : configured;
   if (!(await snapshot.exists(path))) {
@@ -216,10 +210,9 @@ export async function checkGeneratedIndex(
 
 export async function writeGeneratedIndex(
   root: string,
-  graph: KnowledgeGraph,
+  graph: InstanceGraph,
 ): Promise<void> {
   const bytes = generatedIndexBytes(graph);
-  if (!bytes) return;
   const configured = graph.manifest.paths.knowledge_index;
   const path = configured.startsWith("./") ? configured.slice(2) : configured;
   const absolute = resolve(root, ...path.split("/"));

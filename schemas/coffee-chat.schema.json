@@ -2,34 +2,112 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://coffee-chat.dev/schemas/coffee-chat.schema.json",
   "title": "Coffee Chat Manifest",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "schema_url",
-    "schema_version",
-    "time_zone",
-    "initialization_state",
-    "profile",
-    "repository",
-    "pages_url",
-    "plugin",
-    "marketplace_name",
-    "paths"
+  "oneOf": [
+    { "$ref": "#/$defs/engine_manifest" },
+    { "$ref": "#/$defs/instance_manifest" }
   ],
-  "properties": {
-    "schema_url": { "const": "./schemas/coffee-chat.schema.json" },
-    "schema_version": { "$ref": "#/$defs/semver" },
-    "time_zone": { "type": "string" },
-    "initialization_state": {
-      "enum": ["pending_first_candidate", "initialized"]
-    },
-    "profile": {
+  "$defs": {
+    "engine_manifest": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["display_name"],
+      "required": [
+        "schema_url",
+        "schema_version",
+        "repository_role",
+        "repository",
+        "pages_url",
+        "plugin",
+        "marketplace_name",
+        "paths"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/uuid_v4" },
-        "display_name": { "type": "string" }
+        "schema_url": { "const": "./schemas/coffee-chat.schema.json" },
+        "schema_version": { "$ref": "#/$defs/semver" },
+        "repository_role": { "const": "engine" },
+        "repository": { "$ref": "#/$defs/repository" },
+        "pages_url": { "$ref": "#/$defs/http_url" },
+        "plugin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "properties": {
+            "name": { "const": "coffee-chat" },
+            "version": { "$ref": "#/$defs/semver" },
+            "description": { "type": "string" }
+          }
+        },
+        "marketplace_name": { "const": "coffee-chat-marketplace" },
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["skills", "method"],
+          "properties": {
+            "skills": { "$ref": "#/$defs/repository_path" },
+            "method": { "$ref": "#/$defs/repository_path" }
+          }
+        }
+      }
+    },
+    "instance_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_url",
+        "schema_version",
+        "repository_role",
+        "time_zone",
+        "profile",
+        "repository",
+        "pages_url",
+        "plugin",
+        "marketplace_name",
+        "paths"
+      ],
+      "properties": {
+        "schema_url": { "const": "./schemas/coffee-chat.schema.json" },
+        "schema_version": { "$ref": "#/$defs/semver" },
+        "repository_role": { "const": "instance" },
+        "time_zone": { "type": "string" },
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "display_name", "short_name"],
+          "properties": {
+            "id": { "$ref": "#/$defs/uuid_v4" },
+            "display_name": { "type": "string" },
+            "short_name": { "type": "string" }
+          }
+        },
+        "repository": { "$ref": "#/$defs/repository" },
+        "pages_url": { "$ref": "#/$defs/http_url" },
+        "plugin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+              "not": { "const": "coffee-chat" }
+            },
+            "version": { "$ref": "#/$defs/semver" },
+            "description": { "type": "string" }
+          }
+        },
+        "marketplace_name": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["knowledge_index", "skills", "method"],
+          "properties": {
+            "knowledge_index": { "$ref": "#/$defs/repository_path" },
+            "skills": { "$ref": "#/$defs/repository_path" },
+            "method": { "$ref": "#/$defs/repository_path" }
+          }
+        }
       }
     },
     "repository": {
@@ -41,61 +119,6 @@
         "default_branch": { "type": "string" }
       }
     },
-    "pages_url": { "$ref": "#/$defs/http_url" },
-    "plugin": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "version", "description"],
-      "properties": {
-        "name": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
-        "version": { "$ref": "#/$defs/semver" },
-        "description": { "type": "string" }
-      }
-    },
-    "marketplace_name": {
-      "type": "string",
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-    },
-    "paths": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["knowledge_index", "skills", "method"],
-      "properties": {
-        "knowledge_index": { "$ref": "#/$defs/repository_path" },
-        "skills": { "$ref": "#/$defs/repository_path" },
-        "method": { "$ref": "#/$defs/repository_path" }
-      }
-    }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": { "initialization_state": { "const": "initialized" } }
-      },
-      "then": {
-        "properties": {
-          "profile": {
-            "type": "object",
-            "properties": { "id": true },
-            "required": ["id"]
-          }
-        }
-      },
-      "else": {
-        "properties": {
-          "profile": {
-            "type": "object",
-            "not": {
-              "type": "object",
-              "properties": { "id": true },
-              "required": ["id"]
-            }
-          }
-        }
-      }
-    }
-  ],
-  "$defs": {
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"

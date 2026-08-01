@@ -29,7 +29,11 @@ import {
   checkGeneratedIndex,
   generatedIndexBytes,
 } from "../tools/generate.ts";
-import { sha256, validateKnowledge } from "../tools/knowledge.ts";
+import {
+  isInstanceGraph,
+  sha256,
+  validateKnowledge,
+} from "../tools/knowledge.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
 const execFileAsync = promisify(execFile);
@@ -309,11 +313,12 @@ describe("Candidate request, mode, action, and temporary-key contracts", () => {
     const snapshot = await createSnapshot(fixture.root, "worktree");
     const validation = await validateKnowledge(snapshot);
     expect(validation.diagnostics).toEqual([]);
+    expect(validation.graph && isInstanceGraph(validation.graph)).toBe(true);
     await writeFile(
       resolve(fixture.root, "knowledge/index.json"),
       generatedIndexBytes(
-        validation.graph as NonNullable<typeof validation.graph>,
-      ) as Buffer,
+        validation.graph as Parameters<typeof generatedIndexBytes>[0],
+      ),
     );
     await git(fixture.root, "add", ".");
     await git(fixture.root, "commit", "-qm", "add second retirement target");
@@ -588,7 +593,7 @@ describe("external-only complete Candidate materialization", () => {
       schema_version: "1.0.0",
       candidate_format_version: "1.0.0",
       mode: "make-mine",
-      time_zone: "Asia/Seoul",
+      time_zone: "UTC",
       frozen_date: "2026-08-01",
       validation: { status: "passed" },
       source_observations: expect.arrayContaining([
@@ -621,7 +626,7 @@ describe("external-only complete Candidate materialization", () => {
       candidate_directory: ".",
       base_commit: manifest.base_commit,
       frozen_date: "2026-08-01",
-      time_zone: "Asia/Seoul",
+      time_zone: "UTC",
       knowledge_digest: manifest.knowledge_digest,
       validation: { status: "passed" },
       notes: [
@@ -657,10 +662,11 @@ describe("external-only complete Candidate materialization", () => {
     const validation = await validateKnowledge(snapshot);
     expect(validation.diagnostics).toEqual([]);
     expect(validation.graph).toBeDefined();
+    expect(validation.graph && isInstanceGraph(validation.graph)).toBe(true);
     expect(
       await checkGeneratedIndex(
         snapshot,
-        validation.graph as NonNullable<typeof validation.graph>,
+        validation.graph as Parameters<typeof checkGeneratedIndex>[1],
       ),
     ).toEqual([]);
 
@@ -1459,7 +1465,7 @@ describe("exact approval preflight invalidation", () => {
         await writeFile(
           path,
           (await readFile(path, "utf8")).replace(
-            "Fixture Owner",
+            "Example Author",
             "Drifted Owner",
           ),
         );
@@ -1675,10 +1681,11 @@ describe("exact approval preflight invalidation", () => {
     const snapshot = await createSnapshot(applied.root, "worktree");
     const validation = await validateKnowledge(snapshot);
     expect(validation.diagnostics).toEqual([]);
+    expect(validation.graph && isInstanceGraph(validation.graph)).toBe(true);
     expect(
       await checkGeneratedIndex(
         snapshot,
-        validation.graph as NonNullable<typeof validation.graph>,
+        validation.graph as Parameters<typeof checkGeneratedIndex>[1],
       ),
     ).toEqual([]);
   });

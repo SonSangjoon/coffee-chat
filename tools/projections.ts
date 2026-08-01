@@ -15,11 +15,22 @@ import {
   sortDiagnostics,
 } from "./contracts.ts";
 import { compareCodePoints, generatedIndexBytes } from "./generate.ts";
-import type { KnowledgeGraph, Manifest } from "./knowledge.ts";
+import {
+  isInstanceGraph,
+  isInstanceManifest,
+  type KnowledgeGraph,
+  type Manifest,
+} from "./knowledge.ts";
 import type { Snapshot } from "./snapshot.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
 
 const SKILL_NAMES = ["coffee-chat", "apply-perspective", "build-kg"] as const;
+
+function ownerName(manifest: Manifest): string {
+  return isInstanceManifest(manifest)
+    ? manifest.profile.display_name
+    : "Coffee Chat";
+}
 
 function jsonBytes(value: unknown): Buffer {
   return Buffer.from(`${JSON.stringify(value, null, 2)}\n`, "utf8");
@@ -71,7 +82,7 @@ function codexManifest(manifest: Manifest): Record<string, unknown> {
     version: manifest.plugin.version,
     description: manifest.plugin.description,
     author: {
-      name: manifest.profile.display_name,
+      name: ownerName(manifest),
       url: manifest.repository.url,
     },
     homepage: manifest.pages_url,
@@ -80,11 +91,11 @@ function codexManifest(manifest: Manifest): Record<string, unknown> {
     keywords: ["coffee-chat", "knowledge-graph", "perspective"],
     skills: "./skills/",
     interface: {
-      displayName: `Coffee Chat — ${manifest.profile.display_name}`,
+      displayName: `Coffee Chat — ${ownerName(manifest)}`,
       shortDescription: "Talk with a public, dated perspective graph",
       longDescription:
         "Converse with, apply, or extend a source-grounded temporal perspective graph.",
-      developerName: manifest.profile.display_name,
+      developerName: ownerName(manifest),
       category: "Productivity",
       capabilities: ["Read", "Write"],
       websiteURL: manifest.pages_url,
@@ -102,7 +113,7 @@ function claudeManifest(manifest: Manifest): Record<string, unknown> {
     name: manifest.plugin.name,
     version: manifest.plugin.version,
     description: manifest.plugin.description,
-    author: { name: manifest.profile.display_name },
+    author: { name: ownerName(manifest) },
     homepage: manifest.pages_url,
     repository: manifest.repository.url,
     license: "MIT",
@@ -114,7 +125,7 @@ function claudeManifest(manifest: Manifest): Record<string, unknown> {
 function codexMarketplace(manifest: Manifest): Record<string, unknown> {
   return {
     name: manifest.marketplace_name,
-    interface: { displayName: `${manifest.profile.display_name} Coffee Chat` },
+    interface: { displayName: `${ownerName(manifest)} Coffee Chat` },
     plugins: [
       {
         name: manifest.plugin.name,
@@ -135,14 +146,14 @@ function codexMarketplace(manifest: Manifest): Record<string, unknown> {
 function claudeMarketplace(manifest: Manifest): Record<string, unknown> {
   return {
     name: manifest.marketplace_name,
-    owner: { name: manifest.profile.display_name },
+    owner: { name: ownerName(manifest) },
     plugins: [
       {
         name: manifest.plugin.name,
         source: `./plugins/${manifest.plugin.name}`,
         description: manifest.plugin.description,
         version: manifest.plugin.version,
-        author: { name: manifest.profile.display_name },
+        author: { name: ownerName(manifest) },
         homepage: manifest.pages_url,
         repository: manifest.repository.url,
         license: "MIT",
@@ -157,7 +168,7 @@ function claudeMarketplace(manifest: Manifest): Record<string, unknown> {
 function readme(manifest: Manifest): Buffer {
   const pluginSelector = `${manifest.plugin.name}@${manifest.marketplace_name}`;
   const lines = [
-    `# Coffee Chat — ${manifest.profile.display_name}`,
+    `# Coffee Chat — ${ownerName(manifest)}`,
     "",
     "## Purpose / 목적",
     "",
@@ -271,6 +282,10 @@ function readme(manifest: Manifest): Buffer {
 }
 
 function contentLicense(manifest: Manifest): Buffer {
+  if (!isInstanceManifest(manifest))
+    return textBytes(
+      "# Content License\n\nThis generic engine contains no represented-person knowledge or original public prose.\n",
+    );
   return textBytes(
     `# Content License\n\n\`knowledge/notes/**\` and ${manifest.profile.display_name}'s original public prose are © 2026 ${manifest.profile.display_name}, All rights reserved.\n\nThird-party Sources retain their own terms. Linking to, citing, indexing, or describing a third-party Source does not grant rights in that Source beyond its applicable terms.\n`,
   );
@@ -295,7 +310,8 @@ export async function generatedProjectionBytes(
   const codex = jsonBytes(codexManifest(manifest));
   const claude = jsonBytes(claudeManifest(manifest));
   values.set("README.md", readme(manifest));
-  values.set("CONTENT_LICENSE.md", contentLicense(manifest));
+  if (isInstanceManifest(manifest))
+    values.set("CONTENT_LICENSE.md", contentLicense(manifest));
   values.set(
     "AGENTS.md",
     textBytes(
@@ -315,11 +331,13 @@ export async function generatedProjectionBytes(
   );
   values.set(`${packageRoot}/.codex-plugin/plugin.json`, codex);
   values.set(`${packageRoot}/.claude-plugin/plugin.json`, claude);
-  values.set(
-    `${packageRoot}/knowledge/coffee-chat.json`,
-    await snapshot.read("coffee-chat.json"),
-  );
-  values.set(`${packageRoot}/CONTENT_LICENSE.md`, contentLicense(manifest));
+  if (isInstanceManifest(manifest)) {
+    values.set(
+      `${packageRoot}/knowledge/coffee-chat.json`,
+      await snapshot.read("coffee-chat.json"),
+    );
+    values.set(`${packageRoot}/CONTENT_LICENSE.md`, contentLicense(manifest));
+  }
   if (await snapshot.exists("LICENSE"))
     values.set(`${packageRoot}/LICENSE`, await snapshot.read("LICENSE"));
   for (const skill of skills) {
@@ -328,9 +346,8 @@ export async function generatedProjectionBytes(
     values.set(`${packageRoot}/skills/${skill}/SKILL.md`, skillBytes);
     values.set(`${packageRoot}/skills/${skill}/references/method.md`, method);
   }
-  if (graph.manifest.initialization_state === "initialized") {
+  if (isInstanceGraph(graph)) {
     const index = generatedIndexBytes(graph);
-    if (!index) throw new Error("Initialized graph did not produce an index");
     values.set(`${packageRoot}/knowledge/index.json`, index);
     values.set(
       `${packageRoot}/knowledge/entities.yml`,
@@ -373,11 +390,7 @@ async function isOwnedCoffeeChatPackage(
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(packageName)) return false;
   const pluginPath = `plugins/${packageName}/.codex-plugin/plugin.json`;
   const knowledgePath = `plugins/${packageName}/knowledge/coffee-chat.json`;
-  if (
-    !(await snapshot.exists(pluginPath)) ||
-    !(await snapshot.exists(knowledgePath))
-  )
-    return false;
+  if (!(await snapshot.exists(pluginPath))) return false;
   try {
     const plugin = record(
       parseStrictJson(
@@ -385,6 +398,12 @@ async function isOwnedCoffeeChatPackage(
         pluginPath,
       ),
     );
+    if (!(await snapshot.exists(knowledgePath)))
+      return (
+        plugin?.name === packageName &&
+        Array.isArray(plugin?.keywords) &&
+        plugin.keywords.includes("coffee-chat")
+      );
     const knowledge = record(
       parseStrictJson(
         decodeCanonicalText(await snapshot.read(knowledgePath), knowledgePath),

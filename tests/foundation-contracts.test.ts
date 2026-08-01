@@ -36,7 +36,7 @@ async function contractValidator() {
 }
 
 describe("Coffee Chat foundation contracts", () => {
-  it("accepts the canonical pending-first-candidate manifest without inventing a profile UUID", async () => {
+  it("accepts the generic engine manifest without represented-person fields", async () => {
     const manifest = await readJson("coffee-chat.json");
     const validator = await contractValidator();
     const validate = validator.getSchema(
@@ -47,25 +47,25 @@ describe("Coffee Chat foundation contracts", () => {
     expect(validate?.(manifest)).toBe(true);
     expect(manifest).toMatchObject({
       schema_version: "1.0.0",
-      time_zone: "Asia/Seoul",
-      initialization_state: "pending_first_candidate",
-      profile: { display_name: "Sangjoon Son" },
+      repository_role: "engine",
       repository: { url: "https://github.com/SonSangjoon/coffee-chat" },
       pages_url: "https://sonsangjoon.github.io/coffee-chat/",
-      plugin: { name: "coffee-chat-sangjoon", version: "1.0.0" },
-      marketplace_name: "coffee-chat-sangjoon-marketplace",
+      plugin: { name: "coffee-chat", version: "1.0.0" },
+      marketplace_name: "coffee-chat-marketplace",
     });
-    expect(
-      (manifest as { profile: { id?: string } }).profile.id,
-    ).toBeUndefined();
+    expect(manifest).not.toHaveProperty("profile");
+    expect(manifest).not.toHaveProperty("time_zone");
   });
 
-  it("requires an approved profile UUID once initialization is complete", async () => {
-    const manifest = structuredClone(await readJson("coffee-chat.json")) as {
-      initialization_state: string;
-      profile: Record<string, string>;
+  it("rejects represented-person fields in the generic engine manifest", async () => {
+    const manifest = structuredClone(
+      await readJson("coffee-chat.json"),
+    ) as Record<string, unknown>;
+    manifest.profile = {
+      id: "69d249c9-3c4f-4e0d-b622-74b292f87e9d",
+      display_name: "Person",
+      short_name: "Person",
     };
-    manifest.initialization_state = "initialized";
     const validator = await contractValidator();
     const validate = validator.getSchema(
       "https://coffee-chat.dev/schemas/coffee-chat.schema.json",
@@ -75,8 +75,8 @@ describe("Coffee Chat foundation contracts", () => {
     expect(validate?.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          instancePath: "/profile",
-          keyword: "required",
+          instancePath: "",
+          keyword: "additionalProperties",
         }),
       ]),
     );
@@ -265,7 +265,9 @@ describe("Coffee Chat foundation contracts", () => {
 
   it("does not impose semantic minimum-length gates on present text fields", async () => {
     const validator = await contractValidator();
-    const manifest = structuredClone(await readJson("coffee-chat.json")) as {
+    const manifest = structuredClone(
+      await readJson("tests/fixtures/initialized-valid/coffee-chat.json"),
+    ) as {
       time_zone: string;
       profile: { display_name: string };
       repository: { default_branch: string };

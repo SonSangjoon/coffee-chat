@@ -45,8 +45,11 @@ import {
   type ProcessExecutor,
 } from "./hooks.ts";
 import {
+  isInstanceGraph,
+  isInstanceManifest,
   type Citation,
   type Entity,
+  type InstanceManifest,
   type KnowledgeGraph,
   type LoadedNote,
   type Manifest,
@@ -67,6 +70,7 @@ const CANDIDATE_FORMAT_VERSION = "1.0.0";
 
 type ProfileValue = {
   display_name: string;
+  short_name?: string;
   repository: { url: string; default_branch: string };
   pages_url: string;
   plugin: { name: string; version: string; description: string };
@@ -1021,7 +1025,7 @@ function manifestBytes(manifest: Manifest): Buffer {
 }
 
 type DesiredState = {
-  manifest: Manifest;
+  manifest: InstanceManifest;
   entities: Entity[];
   notes: LoadedNote[];
   sourceObservations: SourceObservation[];
@@ -1039,16 +1043,38 @@ function buildDesiredState(
   minted: Map<string, string>,
   frozenDate: string,
 ): DesiredState {
-  if (
-    request.mode !== "make-mine" &&
-    baseManifest.initialization_state !== "initialized"
-  )
+  if (request.mode !== "make-mine" && !isInstanceManifest(baseManifest))
     throw validationFailure(
       "initialized-mode-required",
       "./coffee-chat.json",
       "Contribute and update require an initialized graph.",
     );
-  const manifest = structuredClone(baseManifest);
+  const manifest: InstanceManifest = isInstanceManifest(baseManifest)
+    ? structuredClone(baseManifest)
+    : {
+        schema_url: baseManifest.schema_url,
+        schema_version: baseManifest.schema_version,
+        repository_role: "instance",
+        time_zone: "UTC",
+        profile: {
+          id: "00000000-0000-4000-8000-000000000000",
+          display_name: "",
+          short_name: "",
+        },
+        repository: structuredClone(baseManifest.repository),
+        pages_url: baseManifest.pages_url,
+        plugin: {
+          name: "coffee-chat-instance",
+          version: baseManifest.plugin.version,
+          description: baseManifest.plugin.description,
+        },
+        marketplace_name: "coffee-chat-instance-marketplace",
+        paths: {
+          knowledge_index: "./knowledge/index.json",
+          skills: baseManifest.paths.skills,
+          method: baseManifest.paths.method,
+        },
+      };
   const materializedChanges: CandidateManifest["materialized_changes"] = {
     entity_changes: [],
     note_changes: [],
@@ -1056,8 +1082,11 @@ function buildDesiredState(
   if (request.mode === "make-mine") {
     const profile = request.profile as NonNullable<CandidateRequest["profile"]>;
     const id = minted.get(profile.temporary_key) as string;
-    manifest.initialization_state = "initialized";
-    manifest.profile = { id, display_name: profile.value.display_name };
+    manifest.profile = {
+      id,
+      display_name: profile.value.display_name,
+      short_name: profile.value.short_name ?? profile.value.display_name,
+    };
     manifest.repository = structuredClone(profile.value.repository);
     manifest.pages_url = profile.value.pages_url;
     manifest.plugin = structuredClone(profile.value.plugin);
@@ -1487,7 +1516,12 @@ export async function prepareCandidate(
   const baseValidation = await validateKnowledge(snapshot, {
     validateIndex: false,
   });
-  if (!baseValidation.graph || baseValidation.diagnostics.length > 0)
+  if (
+    !baseValidation.graph ||
+    baseValidation.diagnostics.length > 0 ||
+    (parsed.request.mode !== "make-mine" &&
+      !isInstanceGraph(baseValidation.graph))
+  )
     throw validationFailure(
       "candidate-base-invalid",
       ".",
@@ -1516,7 +1550,7 @@ export async function prepareCandidate(
       );
   }
   const graphIds = new Set([
-    ...(baseValidation.graph.manifest.profile.id
+    ...(isInstanceGraph(baseValidation.graph)
       ? [baseValidation.graph.manifest.profile.id]
       : []),
     ...baseValidation.graph.entities.map((entity) => entity.id),
@@ -1525,7 +1559,9 @@ export async function prepareCandidate(
   const minted = mintIds(parsed.request, graphIds, deps.uuid);
   const frozenDate = configuredDate(
     deps.clock.now(),
-    baseValidation.graph.manifest.time_zone,
+    isInstanceGraph(baseValidation.graph)
+      ? baseValidation.graph.manifest.time_zone
+      : "UTC",
   );
   const desired = buildDesiredState(
     parsed.request,
@@ -1589,7 +1625,8 @@ export async function prepareCandidate(
     });
     if (
       !materializedValidation.graph ||
-      materializedValidation.diagnostics.length > 0
+      materializedValidation.diagnostics.length > 0 ||
+      !isInstanceGraph(materializedValidation.graph)
     )
       throw validationFailure(
         "candidate-validation-failed",
@@ -1597,12 +1634,6 @@ export async function prepareCandidate(
         "Materialized Candidate failed the shared validator.",
       );
     const indexBytes = generatedIndexBytes(materializedValidation.graph);
-    if (!indexBytes)
-      throw validationFailure(
-        "candidate-validation-failed",
-        "./knowledge/index.json",
-        "Materialized Candidate did not produce an initialized deterministic index.",
-      );
     await deps.fileSystem.writeFile(
       resolve(candidateRepository, "knowledge/index.json"),
       indexBytes,
@@ -1614,7 +1645,8 @@ export async function prepareCandidate(
     materializedValidation = await validateKnowledge(materializedSnapshot);
     if (
       !materializedValidation.graph ||
-      materializedValidation.diagnostics.length > 0
+      materializedValidation.diagnostics.length > 0 ||
+      !isInstanceGraph(materializedValidation.graph)
     )
       throw validationFailure(
         "candidate-validation-failed",
@@ -1634,7 +1666,8 @@ export async function prepareCandidate(
     materializedValidation = await validateKnowledge(materializedSnapshot);
     if (
       !materializedValidation.graph ||
-      materializedValidation.diagnostics.length > 0
+      materializedValidation.diagnostics.length > 0 ||
+      !isInstanceGraph(materializedValidation.graph)
     )
       throw validationFailure(
         "candidate-validation-failed",
@@ -2581,7 +2614,12 @@ async function validateAppliedState(
 ): Promise<boolean> {
   const snapshot = await createSnapshot(root, "worktree");
   const validation = await validateKnowledge(snapshot);
-  if (!validation.graph || validation.diagnostics.length > 0) return false;
+  if (
+    !validation.graph ||
+    validation.diagnostics.length > 0 ||
+    !isInstanceGraph(validation.graph)
+  )
+    return false;
   if ((await checkGeneratedIndex(snapshot, validation.graph)).length > 0)
     return false;
   if (
@@ -2741,10 +2779,12 @@ export async function applyCandidate(
       ),
       "coffee-chat.json",
     ) as Manifest;
+    const rootTimeZone = isInstanceManifest(rootManifest)
+      ? rootManifest.time_zone
+      : "UTC";
     if (
-      rootManifest.time_zone !== manifest.time_zone ||
-      configuredDate(deps.clock.now(), rootManifest.time_zone) !==
-        manifest.frozen_date
+      rootTimeZone !== manifest.time_zone ||
+      configuredDate(deps.clock.now(), rootTimeZone) !== manifest.frozen_date
     )
       return invalidated(options.approvedDigest, "configured-date-drift");
     for (const effect of manifest.setup_effects) {
@@ -2759,7 +2799,11 @@ export async function applyCandidate(
       "worktree",
     );
     const validation = await validateKnowledge(materializedSnapshot);
-    if (!validation.graph || validation.diagnostics.length > 0)
+    if (
+      !validation.graph ||
+      validation.diagnostics.length > 0 ||
+      !isInstanceGraph(validation.graph)
+    )
       return invalidated(options.approvedDigest, "candidate-validation-drift");
     if (!validateCandidateProjection(manifest, validation.graph))
       return invalidated(options.approvedDigest, "candidate-manifest-invalid");
@@ -2776,8 +2820,6 @@ export async function applyCandidate(
     )
       return invalidated(options.approvedDigest, "candidate-generation-drift");
     const generated = generatedIndexBytes(validation.graph);
-    if (!generated)
-      return invalidated(options.approvedDigest, "candidate-generation-drift");
     const generatedValue = parseStrictJson(
       decodeCanonicalText(generated, "knowledge/index.json"),
       "knowledge/index.json",

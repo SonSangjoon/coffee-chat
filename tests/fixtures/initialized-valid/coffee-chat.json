@@ -1,11 +1,12 @@
 {
   "schema_url": "./schemas/coffee-chat.schema.json",
   "schema_version": "1.0.0",
+  "repository_role": "instance",
   "time_zone": "Asia/Seoul",
-  "initialization_state": "initialized",
   "profile": {
     "id": "69d249c9-3c4f-4e0d-b622-74b292f87e9d",
-    "display_name": "Fixture Owner"
+    "display_name": "Example Author",
+    "short_name": "Example"
   },
   "repository": {
     "url": "https://github.com/example/coffee-chat",

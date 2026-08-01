@@ -63,18 +63,39 @@ export type Entity = {
   same_as?: string[];
 };
 
-export type Manifest = {
+export type EngineManifest = {
   schema_url: string;
   schema_version: string;
+  repository_role: "engine";
+  repository: { url: string; default_branch: string };
+  pages_url: string;
+  plugin: { name: "coffee-chat"; version: string; description: string };
+  marketplace_name: "coffee-chat-marketplace";
+  paths: { skills: string; method: string };
+};
+
+export type InstanceManifest = {
+  schema_url: string;
+  schema_version: string;
+  repository_role: "instance";
   time_zone: string;
-  initialization_state: "pending_first_candidate" | "initialized";
-  profile: { id?: string; display_name: string };
+  profile: { id: string; display_name: string; short_name: string };
   repository: { url: string; default_branch: string };
   pages_url: string;
   plugin: { name: string; version: string; description: string };
   marketplace_name: string;
   paths: { knowledge_index: string; skills: string; method: string };
 };
+
+export type Manifest = EngineManifest | InstanceManifest;
+
+export function isEngineManifest(value: Manifest): value is EngineManifest {
+  return value.repository_role === "engine";
+}
+
+export function isInstanceManifest(value: Manifest): value is InstanceManifest {
+  return value.repository_role === "instance";
+}
 
 export type LoadedNote = {
   path: string;
@@ -84,11 +105,23 @@ export type LoadedNote = {
   noteLinks: string[];
 };
 
-export type KnowledgeGraph = {
-  manifest: Manifest;
+export type EngineGraph = {
+  manifest: EngineManifest;
+  entities: [];
+  notes: [];
+};
+
+export type InstanceGraph = {
+  manifest: InstanceManifest;
   entities: Entity[];
   notes: LoadedNote[];
 };
+
+export type KnowledgeGraph = EngineGraph | InstanceGraph;
+
+export function isInstanceGraph(graph: KnowledgeGraph): graph is InstanceGraph {
+  return isInstanceManifest(graph.manifest);
+}
 
 export type ValidationResult = {
   diagnostics: Diagnostic[];
@@ -540,7 +573,8 @@ async function compareBase(
   const base = baseResult.graph;
   const diagnostics: Diagnostic[] = [];
   if (
-    base.manifest.profile.id &&
+    isInstanceGraph(base) &&
+    isInstanceGraph(selected) &&
     selected.manifest.profile.id !== base.manifest.profile.id
   ) {
     diagnostics.push({
@@ -627,7 +661,7 @@ export async function validateKnowledge(
           message: "Schema version is newer than this validator supports.",
         });
       }
-      if (!validTimeZone(manifest.time_zone)) {
+      if (isInstanceManifest(manifest) && !validTimeZone(manifest.time_zone)) {
         diagnostics.push({
           code: "invalid-time-zone",
           path: "./coffee-chat.json",
@@ -653,7 +687,9 @@ export async function validateKnowledge(
       }
       for (const declaredPath of [
         manifest.schema_url,
-        manifest.paths.knowledge_index,
+        ...(isInstanceManifest(manifest)
+          ? [manifest.paths.knowledge_index]
+          : []),
         manifest.paths.skills,
         manifest.paths.method,
       ]) {
@@ -666,6 +702,27 @@ export async function validateKnowledge(
   }
   if (!manifest || typeof manifest !== "object") {
     return { diagnostics: sortDiagnostics(diagnostics) };
+  }
+
+  if (isEngineManifest(manifest)) {
+    const knowledgePaths = await snapshot.list("knowledge");
+    if (knowledgePaths.length > 0) {
+      diagnostics.push({
+        code: "engine-has-knowledge",
+        path: "./knowledge",
+        message: "An engine repository must not track canonical knowledge.",
+      });
+    }
+    const graph: EngineGraph = { manifest, entities: [], notes: [] };
+    if (options.baseRef && diagnostics.length === 0) {
+      diagnostics.push(
+        ...(await compareBase(graph, snapshot, options.baseRef)),
+      );
+    }
+    return {
+      diagnostics: sortDiagnostics(diagnostics),
+      ...(diagnostics.length === 0 ? { graph } : {}),
+    };
   }
 
   const notePaths = new Set(
@@ -687,31 +744,6 @@ export async function validateKnowledge(
           "Canonical Note filename must be its lowercase UUIDv4 plus .md.",
       });
     }
-  }
-
-  if (manifest.initialization_state === "pending_first_candidate") {
-    if (
-      (await snapshot.exists("knowledge/entities.yml")) ||
-      notePaths.size > 0 ||
-      (await snapshot.exists("knowledge/index.json"))
-    ) {
-      diagnostics.push({
-        code: "pending-graph-has-knowledge",
-        path: "./knowledge",
-        message:
-          "Pending initialization must not contain canonical or generated knowledge.",
-      });
-    }
-    const graph = { manifest, entities: [], notes: [] };
-    if (options.baseRef && diagnostics.length === 0) {
-      diagnostics.push(
-        ...(await compareBase(graph, snapshot, options.baseRef)),
-      );
-    }
-    return {
-      diagnostics: sortDiagnostics(diagnostics),
-      graph: diagnostics.length === 0 ? graph : undefined,
-    };
   }
 
   let entities: Entity[] = [];
@@ -904,8 +936,7 @@ export async function validateKnowledge(
   }
 
   const allIds = new Map<string, string>();
-  if (manifest.profile.id)
-    allIds.set(manifest.profile.id, "./coffee-chat.json");
+  allIds.set(manifest.profile.id, "./coffee-chat.json");
   for (const entity of entities) {
     if (!validUuid(entity.id)) continue;
     if (allIds.has(entity.id))
@@ -948,7 +979,7 @@ export async function validateKnowledge(
     }
   }
 
-  const graph = { manifest, entities, notes };
+  const graph: InstanceGraph = { manifest, entities, notes };
   if (options.baseRef && diagnostics.length === 0) {
     diagnostics.push(...(await compareBase(graph, snapshot, options.baseRef)));
   }

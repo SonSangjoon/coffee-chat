@@ -8,7 +8,7 @@ import {
 } from "./contracts.ts";
 import { checkGeneratedIndex, writeGeneratedIndex } from "./generate.ts";
 import { inspectHook, installHook, uninstallHook } from "./hooks.ts";
-import { validateKnowledge } from "./knowledge.ts";
+import { isInstanceGraph, validateKnowledge } from "./knowledge.ts";
 import {
   checkGeneratedProjections,
   hasDeliveryProjectionInputs,
@@ -263,13 +263,16 @@ async function main(): Promise<void> {
     let diagnostics: Diagnostic[] = [];
     if (options.command === "check" || options.generationCheck) {
       diagnostics = [
-        ...(await checkGeneratedIndex(snapshot, validation.graph)),
+        ...(isInstanceGraph(validation.graph)
+          ? await checkGeneratedIndex(snapshot, validation.graph)
+          : []),
         ...(hasDelivery
           ? await checkGeneratedProjections(snapshot, validation.graph)
           : []),
       ];
     } else if (options.command === "generate") {
-      await writeGeneratedIndex(cwd(), validation.graph);
+      if (isInstanceGraph(validation.graph))
+        await writeGeneratedIndex(cwd(), validation.graph);
       if (hasDelivery)
         await writeGeneratedProjections(cwd(), snapshot, validation.graph);
     }
