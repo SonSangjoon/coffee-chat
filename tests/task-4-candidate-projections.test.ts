@@ -1,5 +1,14 @@
 import { execFile } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -201,6 +210,93 @@ afterEach(async () => {
 });
 
 describe("Task 4 Candidate projection transaction", () => {
+  it("ignores unrelated repository symlinks outside every bound inventory", async () => {
+    const fixture = await repositoryFixture();
+    await mkdir(resolve(fixture.root, "node_modules/.bin"), {
+      recursive: true,
+    });
+    await writeFile(resolve(fixture.root, "node_modules/tool.js"), "tool\n");
+    await symlink(
+      "../tool.js",
+      resolve(fixture.root, "node_modules/.bin/tool"),
+    );
+    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+
+    const prepared = await prepareCandidate(
+      {
+        root: fixture.root,
+        requestPath: fixture.request,
+        out: fixture.candidate,
+      },
+      fixedDependencies(true),
+    );
+
+    expect(prepared.candidateDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+    const manifest = JSON.parse(
+      await readFile(
+        resolve(fixture.candidate, "candidate-manifest.json"),
+        "utf8",
+      ),
+    ) as CandidateManifest;
+    expect(
+      manifest.canonical_inputs.some((entry) =>
+        entry.path.includes("node_modules"),
+      ),
+    ).toBe(false);
+  });
+
+  it("rejects a symlink inside a bound canonical method path", async () => {
+    const fixture = await repositoryFixture();
+    const method = resolve(fixture.root, "method/shared-method.md");
+    const target = resolve(fixture.root, "method-source.md");
+    await writeFile(target, await readFile(method));
+    await rm(method);
+    await symlink("../method-source.md", method);
+    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+
+    await expect(
+      prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.request,
+          out: fixture.candidate,
+        },
+        fixedDependencies(true),
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: {
+        code: "candidate-symlink-unsafe",
+        path: "./method/shared-method.md",
+      },
+    });
+  });
+
+  it("rejects a symlink used as a bound canonical subtree root", async () => {
+    const fixture = await repositoryFixture();
+    await rename(
+      resolve(fixture.root, "method"),
+      resolve(fixture.root, "method-source"),
+    );
+    await symlink("method-source", resolve(fixture.root, "method"));
+    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+
+    await expect(
+      prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.request,
+          out: fixture.candidate,
+        },
+        fixedDependencies(true),
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: {
+        code: "candidate-symlink-unsafe",
+        path: "./method",
+      },
+    });
+  });
+
   it("binds, previews, applies, and verifies canonical knowledge plus the complete delivery projection set", async () => {
     const fixture = await repositoryFixture();
     await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);

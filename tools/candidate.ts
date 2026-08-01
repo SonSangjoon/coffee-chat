@@ -401,8 +401,29 @@ async function pathExists(
 async function walkFiles(
   fileSystem: CandidateFileSystem,
   root: string,
+  repositoryPrefix = "",
 ): Promise<string[]> {
   const files: string[] = [];
+  let rootStatus: Stats;
+  try {
+    rootStatus = await fileSystem.lstat(root);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+  const rootPath = repositoryPrefix ? repositoryPath(repositoryPrefix) : ".";
+  if (rootStatus.isSymbolicLink())
+    throw validationFailure(
+      "candidate-symlink-unsafe",
+      rootPath,
+      "Candidate paths must not contain symbolic links.",
+    );
+  if (!rootStatus.isDirectory())
+    throw validationFailure(
+      "candidate-path-unsafe",
+      rootPath,
+      "Candidate paths must be directories.",
+    );
   async function walk(directory: string, prefix: string): Promise<void> {
     let entries;
     try {
@@ -430,7 +451,7 @@ async function walkFiles(
         );
     }
   }
-  await walk(root, "");
+  await walk(root, repositoryPrefix);
   return sortedStrings(files);
 }
 
@@ -759,15 +780,36 @@ async function canonicalPaths(
   root: string,
   fileSystem: CandidateFileSystem,
 ): Promise<string[]> {
-  const files = await walkFiles(fileSystem, root);
-  return files.filter(
-    (path) =>
-      path === "coffee-chat.json" ||
-      path === "knowledge/entities.yml" ||
-      path === "knowledge/index.json" ||
-      /^knowledge\/notes\/[^/]+\.md$/.test(path) ||
-      path.startsWith("method/"),
+  const manifestPath = resolve(root, "coffee-chat.json");
+  const manifestStatus = await fileSystem.lstat(manifestPath);
+  if (manifestStatus.isSymbolicLink())
+    throw validationFailure(
+      "candidate-symlink-unsafe",
+      "./coffee-chat.json",
+      "Candidate paths must not contain symbolic links.",
+    );
+  if (!manifestStatus.isFile())
+    throw validationFailure(
+      "candidate-path-unsafe",
+      "./coffee-chat.json",
+      "Candidate paths must be regular files.",
+    );
+  const knowledge = await walkFiles(
+    fileSystem,
+    resolve(root, "knowledge"),
+    "knowledge",
   );
+  const method = await walkFiles(fileSystem, resolve(root, "method"), "method");
+  return sortedStrings([
+    "coffee-chat.json",
+    ...knowledge.filter(
+      (path) =>
+        path === "knowledge/entities.yml" ||
+        path === "knowledge/index.json" ||
+        /^knowledge\/notes\/[^/]+\.md$/.test(path),
+    ),
+    ...method,
+  ]);
 }
 
 async function deliveryProjectionPaths(
@@ -794,8 +836,10 @@ async function supportPaths(
   root: string,
   fileSystem: CandidateFileSystem,
 ): Promise<string[]> {
-  const schemas = (await walkFiles(fileSystem, resolve(root, "schemas"))).map(
-    (path) => `schemas/${path}`,
+  const schemas = await walkFiles(
+    fileSystem,
+    resolve(root, "schemas"),
+    "schemas",
   );
   const optional = [
     "LICENSE",
@@ -814,9 +858,7 @@ async function implementationPaths(
   fileSystem: CandidateFileSystem,
 ): Promise<string[]> {
   const schemas = await supportPaths(root, fileSystem);
-  const tools = (await walkFiles(fileSystem, resolve(root, "tools"))).map(
-    (path) => `tools/${path}`,
-  );
+  const tools = await walkFiles(fileSystem, resolve(root, "tools"), "tools");
   return sortedStrings([...schemas, ...tools]);
 }
 
