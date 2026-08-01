@@ -687,6 +687,115 @@ function sameJsonOwnership(
   );
 }
 
+function sameFileFingerprint(
+  left: HookFingerprint,
+  right: Extract<HookFingerprint, { state: "file" }>,
+): left is Extract<HookFingerprint, { state: "file" }> {
+  return (
+    left.state === "file" &&
+    left.digest === right.digest &&
+    left.mode === right.mode &&
+    left.size === right.size &&
+    left.device === right.device &&
+    left.inode === right.inode &&
+    left.change_time_ms === right.change_time_ms
+  );
+}
+
+function statusMatchesFingerprint(
+  status: Stats,
+  expected: Extract<HookFingerprint, { state: "file" }>,
+): boolean {
+  return (
+    !status.isSymbolicLink() &&
+    status.isFile() &&
+    (status.mode & 0o7777) === expected.mode &&
+    status.size === expected.size &&
+    status.dev === expected.device &&
+    status.ino === expected.inode &&
+    status.ctimeMs === expected.change_time_ms
+  );
+}
+
+async function removeExactLinkedTarget(
+  targetPath: string,
+  temporaryPath: string,
+  created: Extract<HookFingerprint, { state: "file" }>,
+  fileSystem: HookFileSystem,
+): Promise<boolean> {
+  try {
+    const temporaryBefore = await fingerprint(temporaryPath, fileSystem);
+    if (temporaryBefore.state === "absent") {
+      const targetBefore = await fingerprint(targetPath, fileSystem);
+      if (!sameFileFingerprint(targetBefore, created)) return false;
+      await fileSystem.checkpoint("before-owned-hook-remove", targetPath);
+      const targetAfter = await fingerprint(targetPath, fileSystem);
+      if (!sameFileFingerprint(targetAfter, created)) return false;
+    } else {
+      const targetBefore = await fileSystem.lstat(targetPath);
+      if (
+        !sameFileFingerprint(temporaryBefore, created) ||
+        !statusMatchesFingerprint(targetBefore, created)
+      )
+        return false;
+      await fileSystem.checkpoint("before-owned-hook-remove", targetPath);
+      const [temporaryAfter, targetAfter] = await Promise.all([
+        fingerprint(temporaryPath, fileSystem),
+        fileSystem.lstat(targetPath),
+      ]);
+      if (
+        !sameFileFingerprint(temporaryAfter, created) ||
+        !statusMatchesFingerprint(targetAfter, created)
+      )
+        return false;
+    }
+    await fileSystem.unlink(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isCreatedHookFingerprint(
+  value: HookFingerprint,
+  createdStatus: Stats,
+): value is Extract<HookFingerprint, { state: "file" }> {
+  return (
+    value.state === "file" &&
+    value.device === createdStatus.dev &&
+    value.inode === createdStatus.ino &&
+    value.digest === sha256(Buffer.from(MINIMAL_FRAMEWORK_HOOK)) &&
+    value.mode === 0o755 &&
+    value.size === Buffer.byteLength(MINIMAL_FRAMEWORK_HOOK)
+  );
+}
+
+async function removeExactTemporary(
+  temporaryPath: string,
+  created: Extract<HookFingerprint, { state: "file" }>,
+  fileSystem: HookFileSystem,
+): Promise<boolean> {
+  try {
+    const before = await fingerprint(temporaryPath, fileSystem);
+    if (
+      before.state !== "file" ||
+      before.digest !== created.digest ||
+      before.mode !== created.mode ||
+      before.size !== created.size ||
+      before.device !== created.device ||
+      before.inode !== created.inode
+    )
+      return false;
+    await fileSystem.checkpoint("before-owned-hook-remove", temporaryPath);
+    const after = await fingerprint(temporaryPath, fileSystem);
+    if (!sameFileFingerprint(after, before)) return false;
+    await fileSystem.unlink(temporaryPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function installHook(
   root: string,
   overrides: HookDependencies = {},
@@ -734,9 +843,9 @@ export async function installHook(
   let createdFingerprint:
     | Extract<HookFingerprint, { state: "file" }>
     | undefined;
+  let temporaryStatus: Stats | undefined;
   try {
     const handle = await deps.fileSystem.open(temporary, "wx", 0o700);
-    let temporaryStatus: Stats;
     try {
       await handle.writeFile(MINIMAL_FRAMEWORK_HOOK);
       await handle.chmod(0o755);
@@ -766,55 +875,90 @@ export async function installHook(
         );
       throw error;
     }
+    const createdStatus = temporaryStatus as Stats;
+    const postLinkStatus = await deps.fileSystem.lstat(temporary);
+    if (
+      postLinkStatus.isSymbolicLink() ||
+      !postLinkStatus.isFile() ||
+      postLinkStatus.dev !== createdStatus.dev ||
+      postLinkStatus.ino !== createdStatus.ino ||
+      (postLinkStatus.mode & 0o7777) !== 0o755 ||
+      postLinkStatus.size !== Buffer.byteLength(MINIMAL_FRAMEWORK_HOOK)
+    )
+      throw failure(
+        "hook-install-verification-failed",
+        "The exclusively created pre-commit inode changed before content verification.",
+      );
+    createdFingerprint = {
+      state: "file",
+      digest: sha256(Buffer.from(MINIMAL_FRAMEWORK_HOOK)),
+      mode: postLinkStatus.mode & 0o7777,
+      size: postLinkStatus.size,
+      device: postLinkStatus.dev,
+      inode: postLinkStatus.ino,
+      change_time_ms: postLinkStatus.ctimeMs,
+    };
+    const linkedFingerprint = await fingerprint(temporary, deps.fileSystem);
+    if (!sameFileFingerprint(linkedFingerprint, createdFingerprint))
+      throw failure(
+        "hook-install-verification-failed",
+        "The exclusively created pre-commit inode changed before ownership could be recorded.",
+      );
     const postFingerprint = await fingerprint(
       initial.target_path,
       deps.fileSystem,
     );
-    if (
-      postFingerprint.state !== "file" ||
-      postFingerprint.device !== temporaryStatus.dev ||
-      postFingerprint.inode !== temporaryStatus.ino ||
-      postFingerprint.digest !== sha256(Buffer.from(MINIMAL_FRAMEWORK_HOOK)) ||
-      postFingerprint.mode !== 0o755
-    )
+    if (!sameFileFingerprint(postFingerprint, linkedFingerprint))
+      throw failure(
+        "hook-install-verification-failed",
+        "The exclusively created pre-commit target changed before ownership could be recorded.",
+      );
+    const ownedFingerprint = await fingerprint(
+      initial.target_path,
+      deps.fileSystem,
+    );
+    if (!sameFileFingerprint(ownedFingerprint, linkedFingerprint))
       throw failure(
         "hook-install-verification-failed",
         "The exclusively created pre-commit target changed before ownership could be recorded.",
       );
     await deps.fileSystem.unlink(temporary);
-    const ownedFingerprint = await fingerprint(
-      initial.target_path,
-      deps.fileSystem,
-    );
+    const finalStatus = await deps.fileSystem.lstat(initial.target_path);
     if (
-      ownedFingerprint.state !== "file" ||
-      ownedFingerprint.device !== temporaryStatus.dev ||
-      ownedFingerprint.inode !== temporaryStatus.ino ||
-      ownedFingerprint.digest !== sha256(Buffer.from(MINIMAL_FRAMEWORK_HOOK)) ||
-      ownedFingerprint.mode !== 0o755
+      finalStatus.isSymbolicLink() ||
+      !finalStatus.isFile() ||
+      finalStatus.dev !== linkedFingerprint.device ||
+      finalStatus.ino !== linkedFingerprint.inode ||
+      (finalStatus.mode & 0o7777) !== linkedFingerprint.mode ||
+      finalStatus.size !== linkedFingerprint.size
     )
       throw failure(
         "hook-install-verification-failed",
         "The exclusively created pre-commit target changed before ownership could be recorded.",
       );
-    createdFingerprint = ownedFingerprint;
-    await writeOwnership(initial, ownedFingerprint, deps.fileSystem);
+    const finalFingerprint = {
+      ...linkedFingerprint,
+      change_time_ms: finalStatus.ctimeMs,
+    };
+    createdFingerprint = finalFingerprint;
+    await writeOwnership(initial, finalFingerprint, deps.fileSystem);
   } catch (error) {
+    if (!createdFingerprint && linked && temporaryStatus) {
+      const recovered = await fingerprint(temporary, deps.fileSystem).catch(
+        () => ({ state: "absent" as const }),
+      );
+      if (isCreatedHookFingerprint(recovered, temporaryStatus))
+        createdFingerprint = recovered;
+    }
     if (createdFingerprint) {
-      const current = await fingerprint(
-        initial.target_path,
-        deps.fileSystem,
-      ).catch(() => ({ state: "unsafe" as const }));
       if (
-        current.state === "file" &&
-        current.digest === createdFingerprint.digest &&
-        current.device === createdFingerprint.device &&
-        current.inode === createdFingerprint.inode &&
-        current.change_time_ms === createdFingerprint.change_time_ms
+        await removeExactLinkedTarget(
+          initial.target_path,
+          temporary,
+          createdFingerprint,
+          deps.fileSystem,
+        )
       ) {
-        await deps.fileSystem
-          .unlink(initial.target_path)
-          .catch(() => undefined);
         const ownership = await readOwnership(
           initial.ownership_path,
           deps.fileSystem,
@@ -824,8 +968,16 @@ export async function installHook(
             () => undefined,
           );
       }
+      await removeExactTemporary(
+        temporary,
+        createdFingerprint,
+        deps.fileSystem,
+      );
+    } else if (!linked) {
+      await deps.fileSystem
+        .rm(temporary, { force: true })
+        .catch(() => undefined);
     }
-    await deps.fileSystem.rm(temporary, { force: true }).catch(() => undefined);
     if (error instanceof UnableToComplete) throw error;
     throw failure(
       linked ? "hook-install-verification-failed" : "hook-target-race",

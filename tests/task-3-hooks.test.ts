@@ -467,6 +467,137 @@ describe("owned exclusive pre-commit lifecycle", () => {
     );
   });
 
+  it("removes its exact linked inode when the first post-link target read fails", async () => {
+    const root = await makeRepository();
+    const initial = await inspectHook(root);
+    let failedTargetRead = false;
+    const fileSystem = {
+      ...hookNodeFileSystem,
+      readFile: async (path: string, encoding?: BufferEncoding) => {
+        if (!failedTargetRead && path === initial.target_path) {
+          failedTargetRead = true;
+          throw new Error("injected first post-link target read failure");
+        }
+        return hookNodeFileSystem.readFile(path, encoding);
+      },
+    };
+    const process = {
+      execute: async () => ({
+        exitCode: 0,
+        stdout: "pre-commit 4.0.1\n",
+        stderr: "",
+      }),
+    };
+
+    await expect(
+      installHook(root, { fileSystem, process }),
+    ).rejects.toMatchObject({ diagnostic: { code: "hook-target-unreadable" } });
+
+    expect(failedTargetRead).toBe(true);
+    expect((await inspectHook(root)).classification).toBe("absent");
+    expect(
+      (await readdir(dirname(initial.target_path))).filter((name) =>
+        name.startsWith("pre-commit.coffee-chat-"),
+      ),
+    ).toEqual([]);
+    const retried = await installHook(root, { process });
+    expect(retried.inspection.classification).toBe("managed");
+  });
+
+  it("removes its exact linked inode when the first post-link temporary read fails", async () => {
+    const root = await makeRepository();
+    const initial = await inspectHook(root);
+    let failedTemporaryRead = false;
+    const fileSystem = {
+      ...hookNodeFileSystem,
+      readFile: async (path: string, encoding?: BufferEncoding) => {
+        if (
+          !failedTemporaryRead &&
+          path.startsWith(`${initial.target_path}.coffee-chat-`) &&
+          path.endsWith(".tmp")
+        ) {
+          failedTemporaryRead = true;
+          throw new Error("injected first post-link temporary read failure");
+        }
+        return hookNodeFileSystem.readFile(path, encoding);
+      },
+    };
+    const process = {
+      execute: async () => ({
+        exitCode: 0,
+        stdout: "pre-commit 4.0.1\n",
+        stderr: "",
+      }),
+    };
+
+    await expect(
+      installHook(root, { fileSystem, process }),
+    ).rejects.toMatchObject({ diagnostic: { code: "hook-target-unreadable" } });
+
+    expect(failedTemporaryRead).toBe(true);
+    expect((await inspectHook(root)).classification).toBe("absent");
+    expect(
+      (await readdir(dirname(initial.target_path))).filter((name) =>
+        name.startsWith("pre-commit.coffee-chat-"),
+      ),
+    ).toEqual([]);
+    const retried = await installHook(root, { process });
+    expect(retried.inspection.classification).toBe("managed");
+  });
+
+  it("preserves a replacement that appears during failed-install cleanup", async () => {
+    const root = await makeRepository();
+    const initial = await inspectHook(root);
+    const replacement = "#!/bin/sh\necho cleanup-competitor\n";
+    let failedTargetRead = false;
+    let replacedAtCleanup = false;
+    const fileSystem = {
+      ...hookNodeFileSystem,
+      readFile: async (path: string, encoding?: BufferEncoding) => {
+        if (!failedTargetRead && path === initial.target_path) {
+          failedTargetRead = true;
+          throw new Error("injected first post-link target read failure");
+        }
+        return hookNodeFileSystem.readFile(path, encoding);
+      },
+      checkpoint: async (
+        point: Parameters<typeof hookNodeFileSystem.checkpoint>[0],
+        path: string,
+      ) => {
+        await hookNodeFileSystem.checkpoint(point, path);
+        if (
+          !replacedAtCleanup &&
+          point === "before-owned-hook-remove" &&
+          path === initial.target_path
+        ) {
+          replacedAtCleanup = true;
+          await unlink(initial.target_path);
+          await writeFile(initial.target_path, replacement, { mode: 0o755 });
+        }
+      },
+    };
+
+    await expect(
+      installHook(root, {
+        fileSystem,
+        process: {
+          execute: async () => ({
+            exitCode: 0,
+            stdout: "pre-commit 4.0.1\n",
+            stderr: "",
+          }),
+        },
+      }),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "hook-target-unreadable" },
+    });
+
+    expect(failedTargetRead).toBe(true);
+    expect(replacedAtCleanup).toBe(true);
+    expect(await readFile(initial.target_path, "utf8")).toBe(replacement);
+    expect((await inspectHook(root)).classification).toBe("unmanaged");
+  });
+
   it("preserves an unowned hook that appears at the exclusive-create boundary", async () => {
     const root = await makeRepository();
     const initial = await inspectHook(root);
