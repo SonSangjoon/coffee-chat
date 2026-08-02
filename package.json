@@ -12,10 +12,15 @@
     "cc": "node --experimental-strip-types tools/cc.ts",
     "test": "vitest run --maxWorkers=4",
     "test:watch": "vitest",
+    "test:site": "playwright test",
     "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "site:build": "node --experimental-strip-types tools/site-build.ts",
+    "site:check": "node --experimental-strip-types tools/site-build.ts --check"
   },
   "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/cytoscape": "3.31.0",
     "@types/node": "24.3.0",
     "astro": "7.1.6",
     "prettier": "3.6.2",
@@ -25,6 +30,7 @@
   "dependencies": {
     "ajv": "8.17.1",
     "ajv-formats": "3.0.1",
+    "cytoscape": "3.34.0",
     "mdast-util-from-markdown": "2.0.2",
     "yaml": "2.8.1"
   }

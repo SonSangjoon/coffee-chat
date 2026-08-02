@@ -1,0 +1,229 @@
+---
+import type { InstanceSiteModel } from "../lib/load-site-model.ts";
+import { entityHref, noteHref, sourceHref } from "../lib/view.ts";
+
+type Props = { graph: InstanceSiteModel };
+const { graph } = Astro.props;
+const elements = [
+  ...graph.notes.map((note) => ({
+    data: {
+      id: note.id,
+      label: note.title,
+      kind: "note",
+      href: noteHref(graph.base_path, note.id),
+      noteIds: [note.id],
+    },
+  })),
+  ...graph.entities.map((entity) => ({
+    data: {
+      id: entity.id,
+      label: entity.label,
+      kind: "entity",
+      href: entityHref(graph.base_path, entity.id),
+      noteIds: entity.note_ids,
+    },
+  })),
+  ...graph.sources.map((source) => ({
+    data: {
+      id: source.url,
+      label: source.observations[0]?.title ?? source.url,
+      kind: "source",
+      href: sourceHref(graph.base_path, source.slug),
+      noteIds: source.note_ids,
+    },
+  })),
+  ...graph.edges.map((edge, index) => ({
+    data: {
+      id: `edge-${index}`,
+      source: edge.subject,
+      target: edge.object,
+      predicate: edge.predicate,
+    },
+  })),
+];
+const serializedElements = JSON.stringify(elements);
+---
+
+<div
+  class="graph-canvas"
+  data-graph-canvas
+  data-elements={serializedElements}
+  aria-hidden="true"
+></div>
+<p class="quiet" data-graph-status>
+  Visual graph loading. The complete semantic list follows. / 시각 그래프를
+  불러오는 중입니다. 전체 의미 목록은 아래에 있습니다.
+</p>
+
+<section
+  class="semantic-graph"
+  aria-labelledby="semantic-graph-title"
+  data-graph-fallback
+>
+  <h2 id="semantic-graph-title">Semantic graph / 의미 그래프</h2>
+  <p class="quiet">
+    This list is equivalent to the visual graph and remains available without
+    JavaScript. / 시각 그래프와 동일한 목록이며 JavaScript 없이도 탐색할 수
+    있습니다.
+  </p>
+  <div class="graph-groups">
+    <section>
+      <h3>Notes / 기록</h3>
+      <ul class="plain-list">
+        {
+          graph.notes.map((note) => (
+            <li
+              data-temporal-item
+              data-note-id={note.id}
+              data-temporal-coverage={note.temporal_coverage}
+              data-recorded-on={note.recorded_on}
+            >
+              <a href={noteHref(graph.base_path, note.id)}>{note.title}</a>
+              <br />
+              <span class="quiet">
+                {note.temporal_coverage} · {note.recorded_on}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+    <section>
+      <h3>Entities / 엔티티</h3>
+      <ul class="plain-list">
+        {
+          graph.entities.map((entity) => (
+            <li>
+              <a href={entityHref(graph.base_path, entity.id)}>{entity.label}</a>
+              <span class="quiet"> · {entity.kind}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+    <section>
+      <h3>Sources / 출처</h3>
+      <ul class="plain-list">
+        {
+          graph.sources.map((source) => (
+            <li>
+              <a href={sourceHref(graph.base_path, source.slug)}>
+                {source.observations[0]?.title ?? source.url}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+  <h3>Edges / 관계</h3>
+  <ul class="plain-list" data-edge-list>
+    {
+      graph.edges.map((edge) => (
+        <li>
+          <code>{edge.subject}</code> — {edge.predicate} → <code>{edge.object}</code>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<script>
+  import cytoscape from "cytoscape";
+
+  const canvas = document.querySelector<HTMLElement>("[data-graph-canvas]");
+  const status = document.querySelector<HTMLElement>("[data-graph-status]");
+  if (canvas) {
+    try {
+      const elements = JSON.parse(canvas.dataset.elements ?? "[]");
+      const graph = cytoscape({
+        container: canvas,
+        elements,
+        layout: { name: "cose", animate: false, fit: true, padding: 36 },
+        style: [
+          {
+            selector: "node",
+            style: {
+              label: "data(label)",
+              color: "#28231f",
+              "font-family": "system-ui, sans-serif",
+              "font-size": 10,
+              "text-wrap": "ellipsis",
+              "text-max-width": 110,
+              "text-valign": "bottom",
+              "text-margin-y": 8,
+              "background-color": "#754629",
+              width: 24,
+              height: 24,
+            },
+          },
+          {
+            selector: 'node[kind = "entity"]',
+            style: { shape: "diamond", "background-color": "#126e82" },
+          },
+          {
+            selector: 'node[kind = "source"]',
+            style: { shape: "rectangle", "background-color": "#9b7a52" },
+          },
+          {
+            selector: "edge",
+            style: {
+              width: 1.5,
+              "line-color": "#b8a896",
+              "target-arrow-color": "#b8a896",
+              "target-arrow-shape": "triangle",
+              "curve-style": "bezier",
+            },
+          },
+        ],
+      });
+
+      const applyVisibleNotes = (visibleNoteIds: string[]) => {
+        const visible = new Set(visibleNoteIds);
+        graph.nodes().forEach((node) => {
+          const noteIds = (node.data("noteIds") ?? []) as string[];
+          node.style("display", noteIds.some((id) => visible.has(id)) ? "element" : "none");
+        });
+        graph.edges().forEach((edge) => {
+          edge.style(
+            "display",
+            edge.source().style("display") !== "none" &&
+              edge.target().style("display") !== "none"
+              ? "element"
+              : "none",
+          );
+        });
+        graph.fit(graph.elements(":visible"), 36);
+      };
+
+      document.addEventListener("coffee-chat:temporal-filter", (event) => {
+        const detail = (event as CustomEvent<{ visibleNoteIds: string[] }>).detail;
+        applyVisibleNotes(detail.visibleNoteIds);
+      });
+      const initiallyVisible = Array.from(
+        document.querySelectorAll<HTMLElement>(
+          "[data-temporal-item][data-filtered='visible']",
+        ),
+      )
+        .map((item) => item.dataset.noteId)
+        .filter((id): id is string => Boolean(id));
+      applyVisibleNotes(
+        initiallyVisible.length > 0
+          ? initiallyVisible
+          : elements
+              .filter((element: { data: { kind?: string } }) =>
+                element.data.kind === "note",
+              )
+              .map((element: { data: { id: string } }) => element.data.id),
+      );
+      if (status)
+        status.textContent =
+          "Visual graph available; the semantic list remains the authoritative accessible view. / 시각 그래프를 사용할 수 있으며 의미 목록이 접근 가능한 기준 보기입니다.";
+    } catch {
+      canvas.hidden = true;
+      if (status)
+        status.textContent =
+          "Visual graph unavailable; use the complete semantic list below. / 시각 그래프를 사용할 수 없어 아래 의미 목록을 표시합니다.";
+    }
+  }
+</script>

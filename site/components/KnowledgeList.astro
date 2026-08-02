@@ -1,0 +1,64 @@
+---
+import type { InstanceSiteModel, SiteNote } from "../lib/load-site-model.ts";
+import { entityHref, noteHref, sourceHref } from "../lib/view.ts";
+
+type Props = {
+  graph: InstanceSiteModel;
+  notes?: SiteNote[];
+};
+
+const { graph, notes = graph.notes } = Astro.props;
+const entities = new Map(graph.entities.map((entity) => [entity.id, entity]));
+const sources = new Map(graph.sources.map((source) => [source.url, source]));
+---
+
+<ol class="knowledge-list" data-knowledge-list>
+  {
+    notes.map((note) => (
+      <li
+        class="knowledge-item"
+        data-temporal-item
+        data-note-id={note.id}
+        data-temporal-coverage={note.temporal_coverage}
+        data-recorded-on={note.recorded_on}
+      >
+        <p class="eyebrow">Recorded / 기록 {note.recorded_on}</p>
+        <h2><a href={noteHref(graph.base_path, note.id)}>{note.title}</a></h2>
+        <p class="meta">
+          Perspective time / 관점의 시간: <time>{note.temporal_coverage}</time>
+        </p>
+        {note.entity_ids.length > 0 && (
+          <ul class="tag-list" aria-label="Entities / 엔티티">
+            {note.entity_ids.map((id) => {
+              const entity = entities.get(id);
+              return entity ? (
+                <li>
+                  <a class="tag" href={entityHref(graph.base_path, id)}>
+                    {entity.label}
+                  </a>
+                </li>
+              ) : null;
+            })}
+          </ul>
+        )}
+        {note.source_urls.length > 0 && (
+          <p class="quiet">
+            {note.source_urls.length} Source{note.source_urls.length === 1 ? "" : "s"}
+            {" / "}
+            {note.source_urls.map((url, index) => {
+              const source = sources.get(url);
+              return source ? (
+                <>
+                  {index > 0 ? ", " : ""}
+                  <a href={sourceHref(graph.base_path, source.slug)}>
+                    {source.observations[0]?.title ?? "Source"}
+                  </a>
+                </>
+              ) : null;
+            })}
+          </p>
+        )}
+      </li>
+    ))
+  }
+</ol>

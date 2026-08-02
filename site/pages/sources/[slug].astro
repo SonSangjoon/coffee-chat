@@ -1,0 +1,72 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { siteModel } from "../../lib/site-context.ts";
+import { displayDate, instanceGraph, noteHref } from "../../lib/view.ts";
+
+export function getStaticPaths() {
+  if (siteModel.role !== "instance") return [];
+  return siteModel.graph.sources.map((source) => ({
+    params: { slug: source.slug },
+    props: { sourceSlug: source.slug },
+  }));
+}
+
+type Props = { sourceSlug: string };
+const { sourceSlug } = Astro.props;
+const model = siteModel;
+const graph = instanceGraph(model);
+const source = graph.sources.find((value) => value.slug === sourceSlug);
+if (!source) throw new Error(`Unknown generated Source route: ${sourceSlug}`);
+const title = source.observations[0]?.title ?? "Source";
+---
+
+<BaseLayout
+  {model}
+  title={`${title} — Coffee Chat Source`}
+  description="An exact public Source URL and its dated Citation observations."
+>
+  <section class="hero">
+    <p class="eyebrow">Source / 출처</p>
+    <h1>{title}</h1>
+    <p class="lede">
+      The exact URL is the Source identity. Coffee Chat stores Citation metadata
+      and author Notes, not a fetched copy of the Source body. / 정확한 URL이 출처의
+      식별자입니다. Coffee Chat은 출처 본문 사본이 아니라 인용 메타데이터와
+      작성자 기록을 저장합니다.
+    </p>
+    <div class="hero-actions">
+      <a class="button" href={source.url} target="_blank" rel="noopener noreferrer">
+        Open original / 원문 열기 <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </section>
+  <section class="section">
+    <p class="eyebrow">Citation observations / 인용 관찰값</p>
+    <h2>Observed in each Note / 기록별 관찰</h2>
+    <ol class="knowledge-list">
+      {
+        source.observations.map((observation) => {
+          const note = graph.notes.find(
+            (candidate) => candidate.id === observation.note_id,
+          );
+          return (
+            <li class="knowledge-item">
+              <h3>{observation.title}</h3>
+              <p class="meta">
+                Published / 공개: {displayDate(observation.published_on)}
+                <br />
+                Accessed / 접근: {displayDate(observation.accessed_on)}
+              </p>
+              {note && (
+                <p>
+                  Cited by / 인용 기록: {" "}
+                  <a href={noteHref(graph.base_path, note.id)}>{note.title}</a>
+                </p>
+              )}
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+</BaseLayout>

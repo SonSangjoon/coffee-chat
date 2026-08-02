@@ -1,0 +1,72 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { siteModel } from "../../lib/site-context.ts";
+import { instanceGraph, noteHref } from "../../lib/view.ts";
+
+export function getStaticPaths() {
+  if (siteModel.role !== "instance") return [];
+  return siteModel.graph.entities.map((entity) => ({
+    params: { id: entity.id },
+    props: { entityId: entity.id },
+  }));
+}
+
+type Props = { entityId: string };
+const { entityId } = Astro.props;
+const model = siteModel;
+const graph = instanceGraph(model);
+const entity = graph.entities.find((value) => value.id === entityId);
+if (!entity) throw new Error(`Unknown generated Entity route: ${entityId}`);
+const notes = entity.note_ids
+  .map((id) => graph.notes.find((note) => note.id === id))
+  .filter((note) => note !== undefined);
+---
+
+<BaseLayout
+  {model}
+  title={`${entity.label} — Coffee Chat Entity`}
+  description={`A neutral ${entity.kind} entity in the public knowledge graph.`}
+>
+  <section class="hero">
+    <p class="eyebrow">Entity / 엔티티</p>
+    <h1>{entity.label}</h1>
+    <p class="lede">
+      Kind / 유형: <strong>{entity.kind}</strong>. Entities provide neutral identity
+      for mapping Notes; they do not store a derived POV. / 엔티티는 기록을 매핑하기
+      위한 중립적 식별자이며 발현된 관점을 저장하지 않습니다.
+    </p>
+  </section>
+  {
+    entity.same_as && entity.same_as.length > 0 && (
+      <section class="section">
+        <p class="eyebrow">Identity links / 식별 링크</p>
+        <h2>Same as / 동일 대상</h2>
+        <ul>
+          {entity.same_as.map((url) => (
+            <li>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                {url}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+  <section class="section">
+    <p class="eyebrow">Backlinks / 역링크</p>
+    <h2>Mentioned by Notes / 이 엔티티를 언급한 기록</h2>
+    <ul class="knowledge-list">
+      {
+        notes.map((note) => (
+          <li class="knowledge-item">
+            <a href={noteHref(graph.base_path, note.id)}>{note.title}</a>
+            <p class="meta">
+              {note.temporal_coverage} · recorded {note.recorded_on}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</BaseLayout>

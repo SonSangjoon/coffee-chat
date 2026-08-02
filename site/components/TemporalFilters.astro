@@ -1,0 +1,130 @@
+---
+import { siteHref } from "../lib/build-context.ts";
+
+type Props = {
+  basePath: string;
+  activeView: "timeline" | "graph";
+};
+
+const { basePath, activeView } = Astro.props;
+const action = siteHref(basePath, `${activeView}/`);
+const otherView = activeView === "timeline" ? "graph" : "timeline";
+const otherLabel =
+  otherView === "graph" ? "Graph / 그래프로 보기" : "Timeline / 타임라인으로 보기";
+---
+
+<section class="filter-panel" aria-labelledby="temporal-filter-title">
+  <p class="eyebrow" id="temporal-filter-title">Temporal view / 시계열 보기</p>
+  <form action={action} method="get" data-temporal-filter>
+    <label>
+      Perspective time / 관점의 시간
+      <input
+        name="perspective"
+        inputmode="numeric"
+        placeholder="2025 or 2025-01/2025-03"
+        autocomplete="off"
+      />
+    </label>
+    <label>
+      First recorded through / 최초 기록 기준일
+      <input name="recorded_through" type="date" />
+    </label>
+    <button type="submit">Apply / 적용</button>
+  </form>
+  <div class="view-switcher">
+    <a
+      class="button secondary"
+      href={siteHref(basePath, `${otherView}/`)}
+      data-shared-query-link>{otherLabel}</a
+    >
+    <a class="button secondary" href={action}>Reset / 초기화</a>
+  </div>
+  <p class="filter-disclosure">
+    The first-recorded cutoff filters the current corrected corpus; it is not a
+    historical Git snapshot. / 최초 기록 기준일은 현재 정정된 코퍼스를
+    필터링하며 과거 Git 스냅샷을 재현하지 않습니다.
+  </p>
+  <p class="filter-status" aria-live="polite" data-filter-status></p>
+  <noscript>
+    <p class="filter-disclosure" data-no-js-disclosure>
+      JavaScript is off, so all records are shown. The complete semantic graph
+      remains available below. / JavaScript가 꺼져 있어 전체 기록을 표시합니다.
+      아래의 의미론적 그래프 목록은 그대로 탐색할 수 있습니다.
+    </p>
+  </noscript>
+</section>
+
+<script>
+  import {
+    recordedOnThrough,
+    temporalCoverageOverlaps,
+  } from "../../tools/temporal.ts";
+
+  const parameters = new URLSearchParams(window.location.search);
+  const perspective = parameters.get("perspective")?.trim() ?? "";
+  const recordedThrough = parameters.get("recorded_through")?.trim() ?? "";
+  const form = document.querySelector<HTMLFormElement>("[data-temporal-filter]");
+  const status = document.querySelector<HTMLElement>("[data-filter-status]");
+
+  if (form) {
+    const perspectiveInput = form.elements.namedItem("perspective");
+    const recordedInput = form.elements.namedItem("recorded_through");
+    if (perspectiveInput instanceof HTMLInputElement)
+      perspectiveInput.value = perspective;
+    if (recordedInput instanceof HTMLInputElement)
+      recordedInput.value = recordedThrough;
+  }
+
+  for (const link of document.querySelectorAll<HTMLAnchorElement>(
+    "[data-shared-query-link]",
+  )) {
+    const target = new URL(link.href);
+    if (perspective) target.searchParams.set("perspective", perspective);
+    if (recordedThrough)
+      target.searchParams.set("recorded_through", recordedThrough);
+    link.href = target.href;
+  }
+
+  const visibleNoteIds: string[] = [];
+  let invalid = false;
+  let total = 0;
+  let visible = 0;
+  for (const item of document.querySelectorAll<HTMLElement>(
+    "[data-temporal-item]",
+  )) {
+    total += 1;
+    let matches = true;
+    try {
+      if (perspective)
+        matches &&= temporalCoverageOverlaps(
+          item.dataset.temporalCoverage ?? "",
+          perspective,
+        );
+      if (recordedThrough)
+        matches &&= recordedOnThrough(
+          item.dataset.recordedOn ?? "",
+          recordedThrough,
+        );
+    } catch {
+      invalid = true;
+      matches = true;
+    }
+    item.hidden = !matches;
+    item.dataset.filtered = matches ? "visible" : "hidden";
+    if (matches) {
+      visible += 1;
+      if (item.dataset.noteId) visibleNoteIds.push(item.dataset.noteId);
+    }
+  }
+
+  if (status) {
+    status.textContent = invalid
+      ? "Unsupported date expression; all records remain visible. / 지원하지 않는 날짜 표현이라 전체 기록을 유지합니다."
+      : `${visible} of ${total} records shown / ${total}개 중 ${visible}개 표시`;
+  }
+  document.dispatchEvent(
+    new CustomEvent("coffee-chat:temporal-filter", {
+      detail: { visibleNoteIds, invalid },
+    }),
+  );
+</script>

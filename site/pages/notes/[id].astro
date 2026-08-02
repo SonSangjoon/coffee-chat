@@ -1,0 +1,109 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { renderMarkdown } from "../../lib/render-markdown.ts";
+import { siteModel } from "../../lib/site-context.ts";
+import {
+  entityHref,
+  instanceGraph,
+  noteHref,
+  resolveNoteMarkdownLink,
+  sourceHref,
+} from "../../lib/view.ts";
+
+export function getStaticPaths() {
+  if (siteModel.role !== "instance") return [];
+  return siteModel.graph.notes.map((note) => ({
+    params: { id: note.id },
+    props: { noteId: note.id },
+  }));
+}
+
+type Props = { noteId: string };
+const { noteId } = Astro.props;
+const model = siteModel;
+const graph = instanceGraph(model);
+const note = graph.notes.find((value) => value.id === noteId);
+if (!note) throw new Error(`Unknown generated Note route: ${noteId}`);
+const sources = note.source_urls
+  .map((url) => graph.sources.find((source) => source.url === url))
+  .filter((source) => source !== undefined);
+const entities = note.entity_ids
+  .map((id) => graph.entities.find((entity) => entity.id === id))
+  .filter((entity) => entity !== undefined);
+const outgoing = note.linked_note_ids
+  .map((id) => graph.notes.find((candidate) => candidate.id === id))
+  .filter((candidate) => candidate !== undefined);
+const incoming = graph.notes.filter((candidate) =>
+  candidate.linked_note_ids.includes(note.id),
+);
+const body = renderMarkdown(note.body, {
+  resolve_internal_link: (href) => resolveNoteMarkdownLink(href, graph),
+});
+---
+
+<BaseLayout
+  {model}
+  title={`${note.title} — Coffee Chat`}
+  description={`A dated public Note recorded on ${note.recorded_on}.`}
+>
+  <article>
+    <header class="hero">
+      <p class="eyebrow">Note / 기록</p>
+      <h1>{note.title}</h1>
+      <p class="lede">
+        Perspective time / 관점의 시간: <time>{note.temporal_coverage}</time><br />
+        First recorded / 최초 기록: <time datetime={note.recorded_on}>{note.recorded_on}</time>
+      </p>
+    </header>
+    <div class="detail-grid section">
+      <div class="markdown-body" set:html={body} />
+      <aside class="provenance-panel" aria-label="Note provenance / 기록 출처">
+        <p class="eyebrow">Explicit provenance / 명시적 출처</p>
+        <h2>Sources / 출처</h2>
+        <ul class="plain-list">
+          {
+            sources.map((source) => (
+              <li>
+                <a href={sourceHref(graph.base_path, source.slug)}>
+                  {source.observations.find(
+                    (observation) => observation.note_id === note.id,
+                  )?.title ?? source.url}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <h2>Entities / 엔티티</h2>
+        <ul class="plain-list">
+          {
+            entities.map((entity) => (
+              <li>
+                <a href={entityHref(graph.base_path, entity.id)}>{entity.label}</a>
+                <span class="quiet"> · {entity.kind}</span>
+              </li>
+            ))
+          }
+        </ul>
+        {(incoming.length > 0 || outgoing.length > 0) && (
+          <>
+            <h2>Linked Notes / 연결 기록</h2>
+            <ul class="plain-list">
+              {outgoing.map((linked) => (
+                <li>
+                  Outgoing / 나가는 연결: {" "}
+                  <a href={noteHref(graph.base_path, linked.id)}>{linked.title}</a>
+                </li>
+              ))}
+              {incoming.map((linked) => (
+                <li>
+                  Backlink / 역링크: {" "}
+                  <a href={noteHref(graph.base_path, linked.id)}>{linked.title}</a>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </aside>
+    </div>
+  </article>
+</BaseLayout>

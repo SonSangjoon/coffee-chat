@@ -8,7 +8,13 @@
     "esModuleInterop": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node", "astro/client"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "vitest.config.ts"]
+  "include": [
+    "site/**/*.ts",
+    "tools/**/*.ts",
+    "tests/**/*.ts",
+    "playwright.config.ts",
+    "vitest.config.ts"
+  ]
 }
