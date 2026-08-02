@@ -1,49 +1,62 @@
+import { createHash } from "node:crypto";
 import { posix } from "node:path";
+import { fromMarkdown } from "mdast-util-from-markdown";
 import { ValidationFailure, repositoryPath } from "./contracts.ts";
 import type { Snapshot } from "./snapshot.ts";
 
 export const README_ASSET_PATHS = [
   "docs/assets/readme/coffee-chat-cover.png",
-  "docs/assets/readme/coffee-chat-flow.en.svg",
-  "docs/assets/readme/coffee-chat-flow.ko.svg",
-  "docs/assets/readme/coffee-chat-trust.en.svg",
-  "docs/assets/readme/coffee-chat-trust.ko.svg",
+  "docs/assets/readme/coffee-chat-flow.en.png",
+  "docs/assets/readme/coffee-chat-flow.ko.png",
+  "docs/assets/readme/coffee-chat-trust.en.png",
+  "docs/assets/readme/coffee-chat-trust.ko.png",
 ] as const;
 
-const COVER_PATH = README_ASSET_PATHS[0];
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-const MAX_COVER_BYTES = 1024 * 1024;
 
-type SvgPair = {
-  english: (typeof README_ASSET_PATHS)[number];
-  korean: (typeof README_ASSET_PATHS)[number];
-  viewBox: string;
-  slots: readonly string[];
+type AssetContract = {
+  path: (typeof README_ASSET_PATHS)[number];
+  width: number;
+  height: number;
+  maxBytes: number;
+  digest: string;
 };
 
-const SVG_PAIRS: readonly SvgPair[] = [
+const ASSET_CONTRACTS: readonly AssetContract[] = [
   {
-    english: "docs/assets/readme/coffee-chat-flow.en.svg",
-    korean: "docs/assets/readme/coffee-chat-flow.ko.svg",
-    viewBox: "0 0 960 720",
-    slots: [
-      "public-source",
-      "dated-judgment",
-      "approved-note",
-      "temporal-graph",
-      "owner-agent",
-      "other-agents",
-      "task-lens",
-      "grounded-chat",
-      "owner-outcome",
-      "other-outcome",
-    ],
+    path: "docs/assets/readme/coffee-chat-cover.png",
+    width: 1280,
+    height: 640,
+    maxBytes: 1024 * 1024,
+    digest: "88cf9c695c7793ef1a2ef28a1ad528c5b40ec4c6aed7e53495211d1a36ad48d9",
   },
   {
-    english: "docs/assets/readme/coffee-chat-trust.en.svg",
-    korean: "docs/assets/readme/coffee-chat-trust.ko.svg",
-    viewBox: "0 0 1200 600",
-    slots: ["authored", "sourced", "inferred", "unknown"],
+    path: "docs/assets/readme/coffee-chat-flow.en.png",
+    width: 1200,
+    height: 900,
+    maxBytes: 1.5 * 1024 * 1024,
+    digest: "399aeedde8920153d7c2fe9cc2d62d26ecc07a51d01d9f20e97ebb9ac180064c",
+  },
+  {
+    path: "docs/assets/readme/coffee-chat-flow.ko.png",
+    width: 1200,
+    height: 900,
+    maxBytes: 1.5 * 1024 * 1024,
+    digest: "cf47d3d55b62ba054b2d720f49fa4405206227fb9de9174d833277455a475bf1",
+  },
+  {
+    path: "docs/assets/readme/coffee-chat-trust.en.png",
+    width: 1200,
+    height: 600,
+    maxBytes: 1.5 * 1024 * 1024,
+    digest: "fe668c6c795baeccd1f07fa586d30b4d1d0fcaa7077bba5c47d35f0874bf8df4",
+  },
+  {
+    path: "docs/assets/readme/coffee-chat-trust.ko.png",
+    width: 1200,
+    height: 600,
+    maxBytes: 1.5 * 1024 * 1024,
+    digest: "6d65e7beff3bf96faea4b0c9ed196b176322c7ec80c23b1c880309d05114fefd",
   },
 ] as const;
 
@@ -69,33 +82,6 @@ export function readPngDimensions(bytes: Buffer): {
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 }
 
-function unsafeSvg(svg: string): boolean {
-  return [
-    /<\s*\/?\s*(?:script|image|foreignobject|animate|set)\b/i,
-    /\bon[a-z][\w:.-]*\s*=/i,
-    /\b(?:href|xlink:href)\s*=/i,
-    /url\s*\(/i,
-    /<\s*\/?\s*(?:lineargradient|radialgradient)\b/i,
-  ].some((pattern) => pattern.test(svg));
-}
-
-function viewBox(svg: string): string | undefined {
-  return /\bviewBox\s*=\s*["']([^"']+)["']/.exec(svg)?.[1];
-}
-
-function semanticSlots(svg: string): string[] {
-  return [...svg.matchAll(/\bdata-slot="([^"]+)"/g)].map(
-    (match) => match[1] as string,
-  );
-}
-
-function structuralFingerprint(svg: string): string {
-  return svg
-    .replace(/(<title\b[^>]*>)[\s\S]*?(<\/title>)/gi, "$1$2")
-    .replace(/(<desc\b[^>]*>)[\s\S]*?(<\/desc>)/gi, "$1$2")
-    .replace(/(<text\b[^>]*>)[\s\S]*?(<\/text>)/gi, "$1$2");
-}
-
 async function readRequired(snapshot: Snapshot, path: string): Promise<Buffer> {
   if (!(await snapshot.exists(path)))
     throw failure(
@@ -107,74 +93,78 @@ async function readRequired(snapshot: Snapshot, path: string): Promise<Buffer> {
 }
 
 export async function validateReadmeAssets(snapshot: Snapshot): Promise<void> {
-  const cover = await readRequired(snapshot, COVER_PATH);
-  let dimensions: { width: number; height: number };
-  try {
-    dimensions = readPngDimensions(cover);
-  } catch {
-    throw failure(
-      "invalid-readme-cover",
-      COVER_PATH,
-      "README cover must be a valid PNG with an IHDR chunk.",
-    );
-  }
-  if (
-    dimensions.width !== 1280 ||
-    dimensions.height !== 640 ||
-    cover.byteLength >= MAX_COVER_BYTES
-  )
-    throw failure(
-      "invalid-readme-cover",
-      COVER_PATH,
-      "README cover must be 1280 x 640 and smaller than 1 MiB.",
-    );
-
-  for (const pair of SVG_PAIRS) {
-    const [englishBytes, koreanBytes] = await Promise.all([
-      readRequired(snapshot, pair.english),
-      readRequired(snapshot, pair.korean),
-    ]);
-    const english = englishBytes.toString("utf8");
-    const korean = koreanBytes.toString("utf8");
-    for (const [path, svg] of [
-      [pair.english, english],
-      [pair.korean, korean],
-    ] as const) {
-      if (unsafeSvg(svg))
-        throw failure(
-          "unsafe-readme-asset",
-          path,
-          "README SVG contains unsafe or externally resolved markup.",
-        );
-      if (
-        viewBox(svg) !== pair.viewBox ||
-        semanticSlots(svg).join("\0") !== pair.slots.join("\0")
-      )
-        throw failure(
-          "readme-asset-locale-drift",
-          path,
-          "README SVG viewBox or semantic label order differs from its contract.",
-        );
-    }
-    if (structuralFingerprint(english) !== structuralFingerprint(korean))
+  for (const contract of ASSET_CONTRACTS) {
+    const bytes = await readRequired(snapshot, contract.path);
+    let dimensions: { width: number; height: number };
+    try {
+      dimensions = readPngDimensions(bytes);
+    } catch {
       throw failure(
-        "readme-asset-locale-drift",
-        pair.korean,
-        "Localized README SVG geometry or color roles have drifted.",
+        "invalid-readme-asset",
+        contract.path,
+        "README visual asset must be a valid PNG with an IHDR chunk.",
+      );
+    }
+    if (
+      dimensions.width !== contract.width ||
+      dimensions.height !== contract.height ||
+      bytes.byteLength >= contract.maxBytes
+    )
+      throw failure(
+        "invalid-readme-asset",
+        contract.path,
+        `README visual asset must be ${contract.width} x ${contract.height} and smaller than ${contract.maxBytes} bytes.`,
+      );
+
+    const digest = createHash("sha256").update(bytes).digest("hex");
+    if (digest !== contract.digest)
+      throw failure(
+        "readme-asset-drift",
+        contract.path,
+        "README visual asset differs from its approved digest.",
       );
   }
 }
 
+type MarkdownNode = {
+  type: string;
+  url?: string;
+  identifier?: string;
+  children?: MarkdownNode[];
+};
+
 function localTargets(markdown: string): string[] {
-  const targets: string[] = [];
-  for (const match of markdown.matchAll(
-    /!?\[[^\]]*\]\((\.\/[^)\s]+)[^)]*\)/g,
-  )) {
-    const raw = (match[1] as string).replace(/^<|>$/g, "");
-    const path = raw.split(/[?#]/, 1)[0] as string;
-    if (path.length > 2) targets.push(posix.normalize(path.slice(2)));
-  }
-  return targets;
+  const tree = fromMarkdown(markdown) as MarkdownNode;
+  const definitions = new Map<string, string>();
+  const collectDefinitions = (node: MarkdownNode): void => {
+    if (
+      node.type === "definition" &&
+      node.identifier &&
+      node.url &&
+      !definitions.has(node.identifier)
+    )
+      definitions.set(node.identifier, node.url);
+    for (const child of node.children ?? []) collectDefinitions(child);
+  };
+  collectDefinitions(tree);
+
+  const targets = new Set<string>();
+  const collectTarget = (url: string | undefined): void => {
+    if (!url?.startsWith("./")) return;
+    const path = url.split(/[?#]/, 1)[0] as string;
+    if (path.length > 2) targets.add(posix.normalize(path.slice(2)));
+  };
+  const walk = (node: MarkdownNode): void => {
+    if (node.type === "link" || node.type === "image") collectTarget(node.url);
+    if (
+      (node.type === "linkReference" || node.type === "imageReference") &&
+      node.identifier
+    )
+      collectTarget(definitions.get(node.identifier));
+    for (const child of node.children ?? []) walk(child);
+  };
+  walk(tree);
+  return [...targets];
 }
 
 export async function validateReadmeLinks(
@@ -186,7 +176,7 @@ export async function validateReadmeLinks(
     for (const target of localTargets(bytes.toString("utf8"))) {
       if (projected.has(target) || (await snapshot.exists(target))) continue;
       throw failure(
-        "missing-readme-asset",
+        "missing-readme-link",
         target,
         "Generated README links to a missing local repository path.",
       );

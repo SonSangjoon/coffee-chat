@@ -176,7 +176,7 @@
     },
     "support_path": {
       "type": "string",
-      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|docs/(?:testing\\.md|assets/readme/(?:coffee-chat-cover\\.png|coffee-chat-(?:flow|trust)\\.(?:en|ko)\\.svg))|LICENSE|skills/(?:coffee-chat|apply-perspective|build-kg)/SKILL\\.md)$"
+      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|docs/(?:testing\\.md|assets/readme/coffee-chat-(?:cover|(?:flow|trust)\\.(?:en|ko))\\.png)|LICENSE|skills/(?:coffee-chat|apply-perspective|build-kg)/SKILL\\.md)$"
     },
     "implementation_path": {
       "anyOf": [

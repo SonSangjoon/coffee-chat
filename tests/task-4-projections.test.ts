@@ -220,9 +220,9 @@ describe("Task 4 deterministic delivery projections", () => {
     }
     expect(readme.startsWith("![Coffee Chat — ")).toBe(true);
     expect(koreanReadme.startsWith("![Coffee Chat — ")).toBe(true);
-    expect(readme).toContain("./docs/assets/readme/coffee-chat-flow.en.svg");
+    expect(readme).toContain("./docs/assets/readme/coffee-chat-flow.en.png");
     expect(koreanReadme).toContain(
-      "./docs/assets/readme/coffee-chat-flow.ko.svg",
+      "./docs/assets/readme/coffee-chat-flow.ko.png",
     );
     expect(readme).toContain(
       "Taste here means trained judgment under uncertainty",

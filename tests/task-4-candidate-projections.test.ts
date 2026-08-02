@@ -425,10 +425,10 @@ describe("Task 4 Candidate projection transaction", () => {
     expect(supportPaths).toEqual(
       expect.arrayContaining([
         "./docs/assets/readme/coffee-chat-cover.png",
-        "./docs/assets/readme/coffee-chat-flow.en.svg",
-        "./docs/assets/readme/coffee-chat-flow.ko.svg",
-        "./docs/assets/readme/coffee-chat-trust.en.svg",
-        "./docs/assets/readme/coffee-chat-trust.ko.svg",
+        "./docs/assets/readme/coffee-chat-flow.en.png",
+        "./docs/assets/readme/coffee-chat-flow.ko.png",
+        "./docs/assets/readme/coffee-chat-trust.en.png",
+        "./docs/assets/readme/coffee-chat-trust.ko.png",
       ]),
     );
 

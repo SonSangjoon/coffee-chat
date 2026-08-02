@@ -71,16 +71,16 @@ describe("localized README projections", () => {
     expect(english).not.toContain("Coffee Chat과 대화하기");
     expect(korean).not.toContain("Talk with a Coffee Chat / ");
     expect(english).toContain(
-      "![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.svg)",
+      "![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.png)",
     );
     expect(korean).toContain(
-      "![하나의 공개 기록이 주인의 Task Lens와 다른 사람의 근거 기반 Coffee Chat으로 이어지는 흐름](./docs/assets/readme/coffee-chat-flow.ko.svg)",
+      "![하나의 공개 기록이 주인의 Task Lens와 다른 사람의 근거 기반 Coffee Chat으로 이어지는 흐름](./docs/assets/readme/coffee-chat-flow.ko.png)",
     );
     expect(english).toContain(
-      "![Four separate trust layers: Authored, Sourced, Inferred, and Unknown](./docs/assets/readme/coffee-chat-trust.en.svg)",
+      "![Four separate trust layers: Authored, Sourced, Inferred, and Unknown](./docs/assets/readme/coffee-chat-trust.en.png)",
     );
     expect(korean).toContain(
-      "![작성자 기록, 출처 내용, 제한된 추론, 기록으로 알 수 없음의 분리된 네 가지 신뢰 층](./docs/assets/readme/coffee-chat-trust.ko.svg)",
+      "![작성자 기록, 출처 내용, 제한된 추론, 기록으로 알 수 없음의 분리된 네 가지 신뢰 층](./docs/assets/readme/coffee-chat-trust.ko.png)",
     );
     for (const command of [
       "npm run cc -- hooks inspect --format json",

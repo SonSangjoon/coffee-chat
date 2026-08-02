@@ -1,4 +1,11 @@
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  cp,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -13,12 +20,6 @@ import { createSnapshot } from "../tools/snapshot.ts";
 const projectRoot = resolve(import.meta.dirname, "..");
 const assetRoot = resolve(projectRoot, "docs/assets/readme");
 const temporaryRoots: string[] = [];
-
-function semanticSlots(svg: string): string[] {
-  return [...svg.matchAll(/\bdata-slot="([^"]+)"/g)].map(
-    (match) => match[1] as string,
-  );
-}
 
 async function assetFixture(): Promise<{
   root: string;
@@ -39,54 +40,64 @@ afterEach(async () => {
 });
 
 describe("README visual asset contract", () => {
-  it("accepts the five canonical safe assets with exact dimensions and semantic order", async () => {
+  it("accepts exactly five locked PNG assets with approved dimensions and sizes", async () => {
     const cover = await readFile(resolve(assetRoot, "coffee-chat-cover.png"));
     const flowEnglish = await readFile(
-      resolve(assetRoot, "coffee-chat-flow.en.svg"),
-      "utf8",
+      resolve(assetRoot, "coffee-chat-flow.en.png"),
+    );
+    const flowKorean = await readFile(
+      resolve(assetRoot, "coffee-chat-flow.ko.png"),
     );
     const trustEnglish = await readFile(
-      resolve(assetRoot, "coffee-chat-trust.en.svg"),
-      "utf8",
+      resolve(assetRoot, "coffee-chat-trust.en.png"),
     );
-    const snapshot = await createSnapshot(projectRoot, "worktree");
+    const trustKorean = await readFile(
+      resolve(assetRoot, "coffee-chat-trust.ko.png"),
+    );
 
     expect(README_ASSET_PATHS).toEqual([
       "docs/assets/readme/coffee-chat-cover.png",
-      "docs/assets/readme/coffee-chat-flow.en.svg",
-      "docs/assets/readme/coffee-chat-flow.ko.svg",
-      "docs/assets/readme/coffee-chat-trust.en.svg",
-      "docs/assets/readme/coffee-chat-trust.ko.svg",
+      "docs/assets/readme/coffee-chat-flow.en.png",
+      "docs/assets/readme/coffee-chat-flow.ko.png",
+      "docs/assets/readme/coffee-chat-trust.en.png",
+      "docs/assets/readme/coffee-chat-trust.ko.png",
     ]);
     expect(readPngDimensions(cover)).toEqual({ width: 1280, height: 640 });
+    expect(readPngDimensions(flowEnglish)).toEqual({
+      width: 1200,
+      height: 900,
+    });
+    expect(readPngDimensions(flowKorean)).toEqual({
+      width: 1200,
+      height: 900,
+    });
+    expect(readPngDimensions(trustEnglish)).toEqual({
+      width: 1200,
+      height: 600,
+    });
+    expect(readPngDimensions(trustKorean)).toEqual({
+      width: 1200,
+      height: 600,
+    });
     expect(cover.byteLength).toBeLessThan(1024 * 1024);
-    expect(semanticSlots(flowEnglish)).toEqual([
-      "public-source",
-      "dated-judgment",
-      "approved-note",
-      "temporal-graph",
-      "owner-agent",
-      "other-agents",
-      "task-lens",
-      "grounded-chat",
-      "owner-outcome",
-      "other-outcome",
-    ]);
-    expect(semanticSlots(trustEnglish)).toEqual([
-      "authored",
-      "sourced",
-      "inferred",
-      "unknown",
-    ]);
-    await expect(validateReadmeAssets(snapshot)).resolves.toBeUndefined();
+    for (const diagram of [flowEnglish, flowKorean, trustEnglish, trustKorean])
+      expect(diagram.byteLength).toBeLessThan(1.5 * 1024 * 1024);
+    expect(await readdir(assetRoot)).not.toEqual(
+      expect.arrayContaining([expect.stringMatching(/\.svg$/)]),
+    );
+
+    await expect(
+      validateReadmeAssets(await createSnapshot(projectRoot, "worktree")),
+    ).resolves.toBeUndefined();
   });
 
   it("reports a stable diagnostic when a canonical asset is missing", async () => {
     const fixture = await assetFixture();
     await rm(resolve(fixture.root, README_ASSET_PATHS[0] as string));
-    const snapshot = await createSnapshot(fixture.root, "worktree");
 
-    await expect(validateReadmeAssets(snapshot)).rejects.toMatchObject({
+    await expect(
+      validateReadmeAssets(await createSnapshot(fixture.root, "worktree")),
+    ).rejects.toMatchObject({
       diagnostic: {
         code: "missing-readme-asset",
         path: "./docs/assets/readme/coffee-chat-cover.png",
@@ -94,82 +105,64 @@ describe("README visual asset contract", () => {
     });
   });
 
-  it("rejects a malformed or oversized cover before projection", async () => {
+  it("rejects a changed PNG dimension with a stable diagnostic", async () => {
     const fixture = await assetFixture();
-    const coverPath = resolve(
+    const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-cover.png",
+      "docs/assets/readme/coffee-chat-flow.en.png",
     );
-    const wrongDimensions = Buffer.from(await readFile(coverPath));
-    wrongDimensions.writeUInt32BE(1279, 16);
-    await writeFile(coverPath, wrongDimensions);
-    await expect(
-      validateReadmeAssets(await createSnapshot(fixture.root, "worktree")),
-    ).rejects.toMatchObject({
-      diagnostic: expect.objectContaining({ code: "invalid-readme-cover" }),
-    });
+    const bytes = Buffer.from(await readFile(path));
+    bytes.writeUInt32BE(1199, 16);
+    await writeFile(path, bytes);
 
-    const original = await readFile(
-      resolve(assetRoot, "coffee-chat-cover.png"),
-    );
-    await writeFile(
-      coverPath,
-      Buffer.concat([original, Buffer.alloc(1024 * 1024 - original.length)]),
-    );
     await expect(
       validateReadmeAssets(await createSnapshot(fixture.root, "worktree")),
     ).rejects.toMatchObject({
-      diagnostic: expect.objectContaining({ code: "invalid-readme-cover" }),
+      diagnostic: {
+        code: "invalid-readme-asset",
+        path: "./docs/assets/readme/coffee-chat-flow.en.png",
+      },
     });
   });
 
-  it.each([
-    "<script>alert(1)</script>",
-    '<image href="data:image/png;base64,AA=="/>',
-    "<foreignObject><div/></foreignObject>",
-    '<animate attributeName="x"/>',
-    '<set attributeName="fill"/>',
-    '<rect onclick="alert(1)"/>',
-    '<use href="#node"/>',
-    '<use xlink:href="#node"/>',
-    '<rect fill="url(#paint)"/>',
-    "<linearGradient/>",
-    "<radialGradient/>",
-  ])("rejects unsafe SVG markup: %s", async (unsafeMarkup) => {
+  it("rejects an appended byte as approved asset drift", async () => {
     const fixture = await assetFixture();
-    const flowEnglish = resolve(
+    const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-flow.en.svg",
+      "docs/assets/readme/coffee-chat-trust.ko.png",
     );
     await writeFile(
-      flowEnglish,
-      `<svg viewBox="0 0 960 720">${unsafeMarkup}</svg>`,
+      path,
+      Buffer.concat([await readFile(path), Buffer.from([0])]),
     );
 
     await expect(
       validateReadmeAssets(await createSnapshot(fixture.root, "worktree")),
     ).rejects.toMatchObject({
-      diagnostic: expect.objectContaining({ code: "unsafe-readme-asset" }),
+      diagnostic: {
+        code: "readme-asset-drift",
+        path: "./docs/assets/readme/coffee-chat-trust.ko.png",
+      },
     });
   });
 
-  it("rejects locale geometry drift while allowing localized text", async () => {
+  it("rejects content whose digest differs from the approved digest", async () => {
     const fixture = await assetFixture();
-    const koreanPath = resolve(
+    const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-flow.ko.svg",
+      "docs/assets/readme/coffee-chat-flow.ko.png",
     );
-    const korean = await readFile(koreanPath, "utf8");
-    expect(korean).toContain('cx="170"');
-    await writeFile(koreanPath, korean.replace('cx="170"', 'cx="171"'));
+    const bytes = Buffer.from(await readFile(path));
+    bytes[bytes.length - 13] = (bytes[bytes.length - 13] as number) ^ 1;
+    await writeFile(path, bytes);
 
     await expect(
       validateReadmeAssets(await createSnapshot(fixture.root, "worktree")),
     ).rejects.toMatchObject({
-      diagnostic: expect.objectContaining({
-        code: "readme-asset-locale-drift",
-        path: "./docs/assets/readme/coffee-chat-flow.ko.svg",
-      }),
+      diagnostic: {
+        code: "readme-asset-drift",
+        path: "./docs/assets/readme/coffee-chat-flow.ko.png",
+      },
     });
   });
 });
@@ -187,10 +180,10 @@ describe("README local-link validation", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("rejects any other missing local Markdown image or link target", async () => {
+  it("rejects a missing inline local target", async () => {
     const fixture = await assetFixture();
     const readmes = new Map([
-      ["README.md", Buffer.from("![Missing](./docs/missing.svg)\n")],
+      ["README.md", Buffer.from("![Missing](./docs/missing.png)\n")],
       ["README.ko.md", Buffer.from("[English](./README.md)\n")],
     ]);
 
@@ -198,8 +191,50 @@ describe("README local-link validation", () => {
       validateReadmeLinks(fixture.snapshot, readmes),
     ).rejects.toMatchObject({
       diagnostic: {
-        code: "missing-readme-asset",
-        path: "./docs/missing.svg",
+        code: "missing-readme-link",
+        path: "./docs/missing.png",
+      },
+    });
+  });
+
+  it("rejects a missing reference-definition local target", async () => {
+    const fixture = await assetFixture();
+    const readmes = new Map([
+      [
+        "README.md",
+        Buffer.from(
+          "![Missing diagram][diagram]\n\n[diagram]: ./docs/missing-reference.png\n",
+        ),
+      ],
+      ["README.ko.md", Buffer.from("[English](./README.md)\n")],
+    ]);
+
+    await expect(
+      validateReadmeLinks(fixture.snapshot, readmes),
+    ).rejects.toMatchObject({
+      diagnostic: {
+        code: "missing-readme-link",
+        path: "./docs/missing-reference.png",
+      },
+    });
+  });
+
+  it("rejects a missing angle-bracket local target containing spaces", async () => {
+    const fixture = await assetFixture();
+    const readmes = new Map([
+      [
+        "README.md",
+        Buffer.from("[Missing diagram](<./docs/missing diagram.png>)\n"),
+      ],
+      ["README.ko.md", Buffer.from("[English](./README.md)\n")],
+    ]);
+
+    await expect(
+      validateReadmeLinks(fixture.snapshot, readmes),
+    ).rejects.toMatchObject({
+      diagnostic: {
+        code: "missing-readme-link",
+        path: "./docs/missing diagram.png",
       },
     });
   });
