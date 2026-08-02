@@ -7,9 +7,7 @@ import type { Snapshot } from "./snapshot.ts";
 export const README_ASSET_PATHS = [
   "docs/assets/readme/coffee-chat-cover.png",
   "docs/assets/readme/coffee-chat-flow.en.png",
-  "docs/assets/readme/coffee-chat-flow.ko.png",
   "docs/assets/readme/coffee-chat-trust.en.png",
-  "docs/assets/readme/coffee-chat-trust.ko.png",
 ] as const;
 
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -38,25 +36,11 @@ const ASSET_CONTRACTS: readonly AssetContract[] = [
     digest: "399aeedde8920153d7c2fe9cc2d62d26ecc07a51d01d9f20e97ebb9ac180064c",
   },
   {
-    path: "docs/assets/readme/coffee-chat-flow.ko.png",
-    width: 1200,
-    height: 900,
-    maxBytes: 1.5 * 1024 * 1024,
-    digest: "cf47d3d55b62ba054b2d720f49fa4405206227fb9de9174d833277455a475bf1",
-  },
-  {
     path: "docs/assets/readme/coffee-chat-trust.en.png",
     width: 1200,
     height: 600,
     maxBytes: 1.5 * 1024 * 1024,
     digest: "fe668c6c795baeccd1f07fa586d30b4d1d0fcaa7077bba5c47d35f0874bf8df4",
-  },
-  {
-    path: "docs/assets/readme/coffee-chat-trust.ko.png",
-    width: 1200,
-    height: 600,
-    maxBytes: 1.5 * 1024 * 1024,
-    digest: "6d65e7beff3bf96faea4b0c9ed196b176322c7ec80c23b1c880309d05114fefd",
   },
 ] as const;
 

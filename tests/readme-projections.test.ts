@@ -46,12 +46,12 @@ describe("localized README projections", () => {
 
     expect(
       english?.startsWith(
-        "![Coffee Chat — a cup, orbit, and dated points forming a point of view with a history](./docs/assets/readme/coffee-chat-cover.png)\n\n[한국어](./README.ko.md)\n",
+        "![Coffee Chat cover showing a coffee cup, orbit lines, and four colored nodes](./docs/assets/readme/coffee-chat-cover.png)\n\n[한국어](./README.ko.md)\n",
       ),
     ).toBe(true);
     expect(
       korean?.startsWith(
-        "![Coffee Chat — 한 잔의 커피와 궤도, 날짜별 지점이 만드는 시간성을 지닌 관점](./docs/assets/readme/coffee-chat-cover.png)\n\n[English](./README.md)\n",
+        "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)\n\n[English](./README.md)\n",
       ),
     ).toBe(true);
     expect(english).toContain(
@@ -74,13 +74,13 @@ describe("localized README projections", () => {
       "![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.png)",
     );
     expect(korean).toContain(
-      "![하나의 공개 기록이 주인의 Task Lens와 다른 사람의 근거 기반 Coffee Chat으로 이어지는 흐름](./docs/assets/readme/coffee-chat-flow.ko.png)",
+      "![하나의 공개 기록이 주인의 Task Lens와 다른 사람의 근거 기반 Coffee Chat으로 이어지는 흐름](./docs/assets/readme/coffee-chat-flow.en.png)",
     );
     expect(english).toContain(
       "![Four separate trust layers: Authored, Sourced, Inferred, and Unknown](./docs/assets/readme/coffee-chat-trust.en.png)",
     );
     expect(korean).toContain(
-      "![작성자 기록, 출처 내용, 제한된 추론, 기록으로 알 수 없음의 분리된 네 가지 신뢰 층](./docs/assets/readme/coffee-chat-trust.ko.png)",
+      "![작성자 기록, 출처 내용, 제한된 추론, 기록으로 알 수 없음의 분리된 네 가지 신뢰 층](./docs/assets/readme/coffee-chat-trust.en.png)",
     );
     for (const command of [
       "npm run cc -- hooks inspect --format json",

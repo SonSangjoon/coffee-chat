@@ -218,11 +218,19 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(next).toBeGreaterThan(offset);
       offset = next;
     }
-    expect(readme.startsWith("![Coffee Chat — ")).toBe(true);
-    expect(koreanReadme.startsWith("![Coffee Chat — ")).toBe(true);
+    expect(
+      readme.startsWith(
+        "![Coffee Chat cover showing a coffee cup, orbit lines, and four colored nodes](./docs/assets/readme/coffee-chat-cover.png)",
+      ),
+    ).toBe(true);
+    expect(
+      koreanReadme.startsWith(
+        "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)",
+      ),
+    ).toBe(true);
     expect(readme).toContain("./docs/assets/readme/coffee-chat-flow.en.png");
     expect(koreanReadme).toContain(
-      "./docs/assets/readme/coffee-chat-flow.ko.png",
+      "./docs/assets/readme/coffee-chat-flow.en.png",
     );
     expect(readme).toContain(
       "Taste here means trained judgment under uncertainty",

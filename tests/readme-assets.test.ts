@@ -40,34 +40,22 @@ afterEach(async () => {
 });
 
 describe("README visual asset contract", () => {
-  it("accepts exactly five locked PNG assets with approved dimensions and sizes", async () => {
+  it("accepts exactly three locked PNG assets without localized duplicates", async () => {
     const cover = await readFile(resolve(assetRoot, "coffee-chat-cover.png"));
     const flowEnglish = await readFile(
       resolve(assetRoot, "coffee-chat-flow.en.png"),
     );
-    const flowKorean = await readFile(
-      resolve(assetRoot, "coffee-chat-flow.ko.png"),
-    );
     const trustEnglish = await readFile(
       resolve(assetRoot, "coffee-chat-trust.en.png"),
-    );
-    const trustKorean = await readFile(
-      resolve(assetRoot, "coffee-chat-trust.ko.png"),
     );
 
     expect(README_ASSET_PATHS).toEqual([
       "docs/assets/readme/coffee-chat-cover.png",
       "docs/assets/readme/coffee-chat-flow.en.png",
-      "docs/assets/readme/coffee-chat-flow.ko.png",
       "docs/assets/readme/coffee-chat-trust.en.png",
-      "docs/assets/readme/coffee-chat-trust.ko.png",
     ]);
     expect(readPngDimensions(cover)).toEqual({ width: 1280, height: 640 });
     expect(readPngDimensions(flowEnglish)).toEqual({
-      width: 1200,
-      height: 900,
-    });
-    expect(readPngDimensions(flowKorean)).toEqual({
       width: 1200,
       height: 900,
     });
@@ -75,14 +63,16 @@ describe("README visual asset contract", () => {
       width: 1200,
       height: 600,
     });
-    expect(readPngDimensions(trustKorean)).toEqual({
-      width: 1200,
-      height: 600,
-    });
     expect(cover.byteLength).toBeLessThan(1024 * 1024);
-    for (const diagram of [flowEnglish, flowKorean, trustEnglish, trustKorean])
+    for (const diagram of [flowEnglish, trustEnglish])
       expect(diagram.byteLength).toBeLessThan(1.5 * 1024 * 1024);
-    expect(await readdir(assetRoot)).not.toEqual(
+    const assetNames = (await readdir(assetRoot)).sort();
+    expect(assetNames).toEqual([
+      "coffee-chat-cover.png",
+      "coffee-chat-flow.en.png",
+      "coffee-chat-trust.en.png",
+    ]);
+    expect(assetNames).not.toEqual(
       expect.arrayContaining([expect.stringMatching(/\.svg$/)]),
     );
 
@@ -129,7 +119,7 @@ describe("README visual asset contract", () => {
     const fixture = await assetFixture();
     const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-trust.ko.png",
+      "docs/assets/readme/coffee-chat-trust.en.png",
     );
     await writeFile(
       path,
@@ -141,7 +131,7 @@ describe("README visual asset contract", () => {
     ).rejects.toMatchObject({
       diagnostic: {
         code: "readme-asset-drift",
-        path: "./docs/assets/readme/coffee-chat-trust.ko.png",
+        path: "./docs/assets/readme/coffee-chat-trust.en.png",
       },
     });
   });
@@ -150,7 +140,7 @@ describe("README visual asset contract", () => {
     const fixture = await assetFixture();
     const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-flow.ko.png",
+      "docs/assets/readme/coffee-chat-flow.en.png",
     );
     const bytes = Buffer.from(await readFile(path));
     bytes[bytes.length - 13] = (bytes[bytes.length - 13] as number) ^ 1;
@@ -161,7 +151,7 @@ describe("README visual asset contract", () => {
     ).rejects.toMatchObject({
       diagnostic: {
         code: "readme-asset-drift",
-        path: "./docs/assets/readme/coffee-chat-flow.ko.png",
+        path: "./docs/assets/readme/coffee-chat-flow.en.png",
       },
     });
   });

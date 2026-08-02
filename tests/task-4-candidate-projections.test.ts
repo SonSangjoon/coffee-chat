@@ -422,15 +422,13 @@ describe("Task 4 Candidate projection transaction", () => {
     const outputPaths = manifest.outputs.map((entry) => entry.path);
     const supportPaths = manifest.support_files.map((entry) => entry.path);
 
-    expect(supportPaths).toEqual(
-      expect.arrayContaining([
-        "./docs/assets/readme/coffee-chat-cover.png",
-        "./docs/assets/readme/coffee-chat-flow.en.png",
-        "./docs/assets/readme/coffee-chat-flow.ko.png",
-        "./docs/assets/readme/coffee-chat-trust.en.png",
-        "./docs/assets/readme/coffee-chat-trust.ko.png",
-      ]),
-    );
+    expect(
+      supportPaths.filter((path) => path.startsWith("./docs/assets/readme/")),
+    ).toEqual([
+      "./docs/assets/readme/coffee-chat-cover.png",
+      "./docs/assets/readme/coffee-chat-flow.en.png",
+      "./docs/assets/readme/coffee-chat-trust.en.png",
+    ]);
 
     expect(outputPaths).toEqual(
       expect.arrayContaining([
