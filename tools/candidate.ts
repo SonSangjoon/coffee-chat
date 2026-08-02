@@ -306,6 +306,7 @@ export type MutationPoint =
   | "before-candidate-manifest-read"
   | "before-candidate-inventory"
   | "before-candidate-transaction"
+  | "before-transaction-journal"
   | "temp-write"
   | "temp-fsync"
   | "backup"
@@ -608,21 +609,14 @@ async function parseRequest(
   }
   if (pathWithin(root, realPath)) throw insideRepository();
   let bytes: Buffer;
+  let afterRealPath: string;
+  let after: Stats;
   try {
     bytes = await fileSystem.readFile(observedPath);
-    const [afterRealPath, after] = await Promise.all([
+    [afterRealPath, after] = await Promise.all([
       fileSystem.realpath(observedPath),
       fileSystem.lstat(observedPath),
     ]);
-    if (
-      afterRealPath !== realPath ||
-      pathWithin(root, afterRealPath) ||
-      !after.isFile() ||
-      after.isSymbolicLink() ||
-      before.dev !== after.dev ||
-      before.ino !== after.ino
-    )
-      throw new Error("request changed");
   } catch {
     throw unable(
       "candidate-request-unavailable",
@@ -630,6 +624,19 @@ async function parseRequest(
       "Candidate request could not be read safely.",
     );
   }
+  if (pathWithin(root, afterRealPath)) throw insideRepository();
+  if (
+    afterRealPath !== realPath ||
+    !after.isFile() ||
+    after.isSymbolicLink() ||
+    before.dev !== after.dev ||
+    before.ino !== after.ino
+  )
+    throw unable(
+      "candidate-request-unavailable",
+      ".",
+      "Candidate request could not be read safely.",
+    );
   let value: unknown;
   try {
     value = parseStrictJson(
@@ -2772,17 +2779,21 @@ async function implementationDigestsEqual(
   }
 }
 
-async function finalApprovalInvalidationCode(
+type FinalApprovalBinding =
+  | { invalidationCode: string }
+  | { transaction: TransactionBinding };
+
+async function finalApprovalBinding(
   root: string,
   candidateRoot: string,
   manifest: CandidateManifest,
   baseGraph: KnowledgeGraph,
   deps: RequiredDependencies,
-): Promise<string | undefined> {
+): Promise<FinalApprovalBinding> {
   if (
     !(await verifyCandidateInventory(candidateRoot, manifest, deps.fileSystem))
   )
-    return "candidate-artifact-drift";
+    return { invalidationCode: "candidate-artifact-drift" };
 
   let parsedRequest: Awaited<ReturnType<typeof parseRequest>>;
   try {
@@ -2793,24 +2804,24 @@ async function finalApprovalInvalidationCode(
     );
     validateRequestSemantics(parsedRequest.request);
   } catch {
-    return "source-observation-drift";
+    return { invalidationCode: "source-observation-drift" };
   }
   if (sha256(parsedRequest.bytes) !== manifest.request_binding.digest)
-    return "source-observation-drift";
+    return { invalidationCode: "source-observation-drift" };
 
   let repository: Awaited<ReturnType<typeof repositoryBinding>>;
   try {
     repository = await repositoryBinding(root, deps.git, deps.fileSystem);
   } catch {
-    return "target-fingerprint-drift";
+    return { invalidationCode: "target-fingerprint-drift" };
   }
   if (
     repository.head !== manifest.base_commit ||
     !sameJson(repository.identity, manifest.repository_identity)
   )
-    return "base-head-drift";
+    return { invalidationCode: "base-head-drift" };
   if (!sameJson(repository.targetFingerprint, manifest.target_fingerprint))
-    return "target-fingerprint-drift";
+    return { invalidationCode: "target-fingerprint-drift" };
   if (
     !(await currentDigestsEqual(
       root,
@@ -2819,7 +2830,7 @@ async function finalApprovalInvalidationCode(
       manifest,
     ))
   )
-    return "canonical-input-drift";
+    return { invalidationCode: "canonical-input-drift" };
   if (
     !(await implementationDigestsEqual(
       root,
@@ -2827,14 +2838,15 @@ async function finalApprovalInvalidationCode(
       deps.fileSystem,
     ))
   )
-    return "implementation-drift";
+    return { invalidationCode: "implementation-drift" };
 
   const currentWorktree = await worktreeBinding(
     root,
     manifest.worktree.paths,
     deps.git,
   );
-  if (!sameJson(currentWorktree, manifest.worktree)) return "worktree-drift";
+  if (!sameJson(currentWorktree, manifest.worktree))
+    return { invalidationCode: "worktree-drift" };
   try {
     validateRepositoryTarget(
       parsedRequest.request,
@@ -2842,7 +2854,7 @@ async function finalApprovalInvalidationCode(
       repository.targetFingerprint,
     );
   } catch {
-    return "target-fingerprint-drift";
+    return { invalidationCode: "target-fingerprint-drift" };
   }
   if (
     !validateMaterializedRequestBinding(
@@ -2851,18 +2863,18 @@ async function finalApprovalInvalidationCode(
       baseGraph,
     )
   )
-    return "candidate-manifest-invalid";
+    return { invalidationCode: "candidate-manifest-invalid" };
   if (
     configuredDate(deps.clock.now(), manifest.time_zone) !==
     manifest.frozen_date
   )
-    return "configured-date-drift";
+    return { invalidationCode: "configured-date-drift" };
   for (const effect of manifest.setup_effects) {
     const current = await inspectHook(root, { git: deps.git });
     if (!sameJson(current, effect.target_fingerprint))
-      return "hook-target-drift";
+      return { invalidationCode: "hook-target-drift" };
   }
-  return undefined;
+  return bindTransaction(root, candidateRoot, manifest, deps.fileSystem);
 }
 
 type TransactionEntry = {
@@ -2871,11 +2883,190 @@ type TransactionEntry = {
   expected?: Buffer;
   before?: Buffer;
   beforeMode?: number;
+  beforeDevice?: number;
+  beforeInode?: number;
+  beforeSize?: number;
+  beforeChangeTimeMs?: number;
   temporary?: string;
   backup?: string;
   deletion: boolean;
   mutated: boolean;
 };
+
+type TransactionBinding = {
+  transactionRoot: string;
+  entries: TransactionEntry[];
+};
+
+class TransactionApprovalInvalidated extends Error {
+  readonly invalidationCode: string;
+
+  constructor(invalidationCode: string) {
+    super(invalidationCode);
+    this.invalidationCode = invalidationCode;
+  }
+}
+
+async function readStableRegularFile(
+  path: string,
+  fileSystem: CandidateFileSystem,
+): Promise<{ bytes: Buffer; status: Stats }> {
+  const before = await fileSystem.lstat(path);
+  if (before.isSymbolicLink() || !before.isFile())
+    throw new Error("unsafe file");
+  const bytes = await fileSystem.readFile(path);
+  const after = await fileSystem.lstat(path);
+  if (
+    after.isSymbolicLink() ||
+    !after.isFile() ||
+    before.dev !== after.dev ||
+    before.ino !== after.ino ||
+    before.mode !== after.mode ||
+    before.size !== after.size ||
+    before.ctimeMs !== after.ctimeMs ||
+    after.size !== bytes.byteLength
+  )
+    throw new Error("file changed");
+  return { bytes: Buffer.from(bytes), status: after };
+}
+
+async function bindTransaction(
+  root: string,
+  candidateDir: string,
+  manifest: CandidateManifest,
+  fileSystem: CandidateFileSystem,
+): Promise<FinalApprovalBinding> {
+  const inputs = new Map(
+    manifest.canonical_inputs.map((entry) => [entry.path, entry.digest]),
+  );
+  const outputs = new Map(
+    manifest.outputs.map((entry) => [entry.path, entry.digest]),
+  );
+  const entries: TransactionEntry[] = [];
+  const suffix = manifest.candidate_digest.slice(
+    "sha256:".length,
+    "sha256:".length + 12,
+  );
+  const transactionRoot = dirname(candidateDir);
+  for (const [index, path] of manifest.changed_paths.entries()) {
+    const target = resolve(root, logicalPath(path));
+    const inputDigest = inputs.get(path);
+    const outputDigest = outputs.get(path);
+    let before: Buffer | undefined;
+    let beforeStatus: Stats | undefined;
+    if (inputDigest) {
+      try {
+        const bound = await readStableRegularFile(target, fileSystem);
+        before = bound.bytes;
+        beforeStatus = bound.status;
+      } catch {
+        return { invalidationCode: "canonical-input-drift" };
+      }
+      if (sha256(before) !== inputDigest)
+        return { invalidationCode: "canonical-input-drift" };
+    } else if (await pathExists(fileSystem, target))
+      return { invalidationCode: "canonical-input-drift" };
+
+    let expected: Buffer | undefined;
+    if (outputDigest) {
+      try {
+        expected = (
+          await readStableRegularFile(
+            resolve(candidateDir, "repository", logicalPath(path)),
+            fileSystem,
+          )
+        ).bytes;
+      } catch {
+        return { invalidationCode: "candidate-artifact-drift" };
+      }
+      if (sha256(expected) !== outputDigest)
+        return { invalidationCode: "candidate-artifact-drift" };
+    }
+    entries.push({
+      path,
+      target,
+      ...(expected
+        ? {
+            expected,
+            temporary: `${target}.coffee-chat-${suffix}-${index}.tmp`,
+          }
+        : {}),
+      ...(before && beforeStatus
+        ? {
+            before,
+            beforeMode: beforeStatus.mode & 0o7777,
+            beforeDevice: beforeStatus.dev,
+            beforeInode: beforeStatus.ino,
+            beforeSize: beforeStatus.size,
+            beforeChangeTimeMs: beforeStatus.ctimeMs,
+            backup: resolve(
+              transactionRoot,
+              `.coffee-chat-${suffix}-${index}.bak`,
+            ),
+          }
+        : {}),
+      deletion: !outputDigest,
+      mutated: false,
+    });
+  }
+  return { transaction: { transactionRoot, entries } };
+}
+
+function transactionBindingMatchesManifest(
+  binding: TransactionBinding,
+  manifest: CandidateManifest,
+): boolean {
+  if (
+    !sameJson(
+      binding.entries.map((entry) => entry.path),
+      manifest.changed_paths,
+    )
+  )
+    return false;
+  const inputs = new Map(
+    manifest.canonical_inputs.map((entry) => [entry.path, entry.digest]),
+  );
+  const outputs = new Map(
+    manifest.outputs.map((entry) => [entry.path, entry.digest]),
+  );
+  return binding.entries.every((entry) => {
+    const inputDigest = inputs.get(entry.path);
+    const outputDigest = outputs.get(entry.path);
+    return (
+      (entry.before
+        ? inputDigest === sha256(entry.before) &&
+          entry.beforeMode !== undefined &&
+          entry.beforeDevice !== undefined &&
+          entry.beforeInode !== undefined &&
+          entry.beforeSize === entry.before.byteLength &&
+          entry.beforeChangeTimeMs !== undefined
+        : inputDigest === undefined) &&
+      (entry.expected
+        ? outputDigest === sha256(entry.expected) && !entry.deletion
+        : outputDigest === undefined && entry.deletion)
+    );
+  });
+}
+
+async function targetMatchesPreimage(
+  entry: TransactionEntry,
+  fileSystem: CandidateFileSystem,
+): Promise<boolean> {
+  if (!entry.before) return !(await pathExists(fileSystem, entry.target));
+  try {
+    const current = await readStableRegularFile(entry.target, fileSystem);
+    return (
+      current.bytes.equals(entry.before) &&
+      (current.status.mode & 0o7777) === entry.beforeMode &&
+      current.status.dev === entry.beforeDevice &&
+      current.status.ino === entry.beforeInode &&
+      current.status.size === entry.beforeSize &&
+      current.status.ctimeMs === entry.beforeChangeTimeMs
+    );
+  } catch {
+    return false;
+  }
+}
 
 function transactionJournalBytes(
   manifest: CandidateManifest,
@@ -2970,67 +3161,24 @@ async function rollbackTransaction(
 }
 
 async function applyTransaction(
-  root: string,
-  candidateDir: string,
+  binding: TransactionBinding,
   manifest: CandidateManifest,
   fileSystem: CandidateFileSystem,
   postApplyValidation: () => Promise<boolean>,
 ): Promise<void> {
-  const outputMap = new Map(
-    manifest.outputs.map((entry) => [entry.path, entry]),
-  );
-  const entries: TransactionEntry[] = [];
+  const entries = binding.entries;
   let journalPath: string | undefined;
   let journalCreated = false;
-  const suffix = manifest.candidate_digest.slice(
-    "sha256:".length,
-    "sha256:".length + 12,
-  );
-  const transactionRoot = dirname(candidateDir);
-  for (const [index, path] of manifest.changed_paths.entries()) {
-    const target = resolve(root, logicalPath(path));
-    const output = outputMap.get(path);
-    let before: Buffer | undefined;
-    let beforeMode: number | undefined;
-    try {
-      const status = await fileSystem.lstat(target);
-      if (status.isSymbolicLink() || !status.isFile())
-        throw new Error("unsafe canonical target");
-      before = await fileSystem.readFile(target);
-      beforeMode = status.mode & 0o7777;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-    const entry: TransactionEntry = {
-      path,
-      target,
-      ...(output
-        ? {
-            expected: await fileSystem.readFile(
-              resolve(candidateDir, "repository", logicalPath(path)),
-            ),
-            temporary: `${target}.coffee-chat-${suffix}-${index}.tmp`,
-          }
-        : {}),
-      ...(before ? { before, beforeMode } : {}),
-      ...(before
-        ? {
-            backup: resolve(
-              transactionRoot,
-              `.coffee-chat-${suffix}-${index}.bak`,
-            ),
-          }
-        : {}),
-      deletion: !output,
-      mutated: false,
-    };
-    entries.push(entry);
-  }
   try {
+    if (!transactionBindingMatchesManifest(binding, manifest))
+      throw new TransactionApprovalInvalidated("candidate-artifact-drift");
+    for (const entry of entries)
+      if (!(await targetMatchesPreimage(entry, fileSystem)))
+        throw new TransactionApprovalInvalidated("canonical-input-drift");
     const journalName = `.coffee-chat-${manifest.candidate_digest.slice(
       "sha256:".length,
     )}.transaction.json`;
-    journalPath = resolve(transactionRoot, journalName);
+    journalPath = resolve(binding.transactionRoot, journalName);
     const journal = await fileSystem.open(journalPath, "wx", 0o600);
     journalCreated = true;
     try {
@@ -3084,9 +3232,13 @@ async function applyTransaction(
     for (const entry of entries) {
       if (entry.deletion) {
         await fileSystem.checkpoint("delete", entry.path);
+        if (!(await targetMatchesPreimage(entry, fileSystem)))
+          throw new TransactionApprovalInvalidated("canonical-input-drift");
         await fileSystem.unlink(entry.target);
       } else {
         await fileSystem.checkpoint("swap", entry.path);
+        if (!(await targetMatchesPreimage(entry, fileSystem)))
+          throw new TransactionApprovalInvalidated("canonical-input-drift");
         await fileSystem.rename(entry.temporary as string, entry.target);
       }
       entry.mutated = true;
@@ -3104,10 +3256,12 @@ async function applyTransaction(
     if (!(await postApplyValidation()))
       throw new Error("applied shared validation failed");
     await removeTransactionArtifacts(entries, journalPath, fileSystem);
-  } catch {
+  } catch (error) {
     const rollbackVerified = journalCreated
       ? await rollbackTransaction(entries, journalPath, fileSystem)
       : true;
+    if (error instanceof TransactionApprovalInvalidated && rollbackVerified)
+      throw error;
     throw new CandidateTransactionFailure(
       {
         code: rollbackVerified
@@ -3394,21 +3548,47 @@ export async function applyCandidate(
     } catch {
       return invalidate("candidate-location-drift");
     }
-    const finalInvalidation = await finalApprovalInvalidationCode(
+    const finalApproval = await finalApprovalBinding(
       repository.root,
       candidateRoot,
       manifest,
       baseValidation.graph,
       deps,
     );
-    if (finalInvalidation) return invalidate(finalInvalidation);
-    await applyTransaction(
-      repository.root,
-      candidateRoot,
-      manifest,
-      deps.fileSystem,
-      () => validateAppliedState(repository.root, manifest),
-    );
+    if ("invalidationCode" in finalApproval)
+      return invalidate(finalApproval.invalidationCode);
+    try {
+      await requireCandidateLocation(
+        candidateLocation,
+        "before-transaction-journal",
+        deps.fileSystem,
+      );
+    } catch {
+      return invalidate("candidate-location-drift");
+    }
+    if (
+      !(await verifyCandidateInventory(
+        candidateRoot,
+        manifest,
+        deps.fileSystem,
+      ))
+    )
+      return invalidate("candidate-artifact-drift");
+    for (const entry of finalApproval.transaction.entries)
+      if (!(await targetMatchesPreimage(entry, deps.fileSystem)))
+        return invalidate("canonical-input-drift");
+    try {
+      await applyTransaction(
+        finalApproval.transaction,
+        manifest,
+        deps.fileSystem,
+        () => validateAppliedState(repository.root, manifest),
+      );
+    } catch (error) {
+      if (error instanceof TransactionApprovalInvalidated)
+        return invalidate(error.invalidationCode);
+      throw error;
+    }
     if (manifest.setup_effects.length === 0) {
       return {
         schema_version: "1.0.0",

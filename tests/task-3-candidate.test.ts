@@ -20,6 +20,7 @@ import {
   nodeFileSystem,
   prepareCandidate,
   type CandidateDependencies,
+  type CandidateFileSystem,
   type CandidateManifest,
   type MutationPoint,
 } from "../tools/candidate.ts";
@@ -297,6 +298,54 @@ async function canonicalBytes(root: string): Promise<Record<string, string>> {
   );
 }
 
+function mutationSpyingFileSystem(
+  repositoryRoot: string,
+  mutations: string[],
+  checkpoint: CandidateFileSystem["checkpoint"],
+): CandidateFileSystem {
+  const record = (operation: string, path: string): void => {
+    const pathFromRoot = relative(repositoryRoot, resolve(path));
+    if (
+      pathFromRoot === "" ||
+      (pathFromRoot !== ".." && !pathFromRoot.startsWith("../"))
+    )
+      mutations.push(`${operation}:${pathFromRoot || "."}`);
+  };
+  return {
+    ...nodeFileSystem,
+    checkpoint,
+    writeFile: async (path, bytes, options) => {
+      record("writeFile", path);
+      await nodeFileSystem.writeFile(path, bytes, options);
+    },
+    open: async (path, flags, mode) => {
+      record("open", path);
+      return nodeFileSystem.open(path, flags, mode);
+    },
+    mkdir: async (path, options) => {
+      record("mkdir", path);
+      return nodeFileSystem.mkdir(path, options);
+    },
+    rename: async (from, to) => {
+      record("rename-from", from);
+      record("rename-to", to);
+      await nodeFileSystem.rename(from, to);
+    },
+    unlink: async (path) => {
+      record("unlink", path);
+      await nodeFileSystem.unlink(path);
+    },
+    rm: async (path, options) => {
+      record("rm", path);
+      await nodeFileSystem.rm(path, options);
+    },
+    chmod: async (path, mode) => {
+      record("chmod", path);
+      await nodeFileSystem.chmod(path, mode);
+    },
+  };
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryRoots
@@ -544,6 +593,41 @@ describe("external-only complete Candidate materialization", () => {
       await expect(lstat(fixture.out)).rejects.toThrow();
     },
   );
+
+  it("preserves the inside-repository diagnostic when the request realpath moves inside after its read", async () => {
+    const fixture = await makeRepository();
+    await writeRequest(fixture, makeMineRequest());
+    const authoritativeRoot = await nodeFileSystem.realpath(fixture.root);
+    let requestRealpathCalls = 0;
+
+    await expect(
+      prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        {
+          ...fixedDependencies(),
+          fileSystem: {
+            ...nodeFileSystem,
+            realpath: async (path) => {
+              const actual = await nodeFileSystem.realpath(path);
+              if (resolve(path) !== fixture.requestPath) return actual;
+              requestRealpathCalls += 1;
+              return requestRealpathCalls === 2
+                ? resolve(authoritativeRoot, "raced-request.json")
+                : actual;
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "candidate-request-inside-repository" },
+    });
+    expect(requestRealpathCalls).toBe(2);
+    await expect(lstat(fixture.out)).rejects.toThrow();
+  });
 
   it("rejects external-parent substitution before root creation without writing or unsafe cleanup", async () => {
     const fixture = await makeRepository();
@@ -1363,6 +1447,20 @@ describe("exact approval preflight invalidation", () => {
       let instant = "2026-08-01T03:00:00.000Z";
       let raced = false;
       let racedCanonical: Record<string, string> | undefined;
+      const repositoryMutations: string[] = [];
+      const checkpoint: CandidateFileSystem["checkpoint"] = async (
+        point,
+        path,
+      ) => {
+        await nodeFileSystem.checkpoint(point, path);
+        if (!raced && point === "before-candidate-transaction") {
+          raced = true;
+          await race(fixture, manifest, (value) => {
+            instant = value;
+          });
+          racedCanonical = await canonicalBytes(fixture.root);
+        }
+      };
 
       const receipt = await applyCandidate(
         {
@@ -1373,16 +1471,90 @@ describe("exact approval preflight invalidation", () => {
         {
           ...fixedDependencies([]),
           clock: { now: () => new Date(instant) },
+          fileSystem: mutationSpyingFileSystem(
+            fixture.root,
+            repositoryMutations,
+            checkpoint,
+          ),
+        },
+      );
+
+      expect(raced).toBe(true);
+      expect(receipt).toMatchObject({
+        status: "approval_invalidated",
+        invalidation_code: invalidationCode,
+        changed_paths: [],
+        validation: { status: "not_run" },
+      });
+      expect(repositoryMutations).toEqual([]);
+      expect(await canonicalBytes(fixture.root)).toEqual(racedCanonical);
+      expect(
+        (await readdir(fixture.base)).some((name) =>
+          name.endsWith(".transaction.json"),
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it.each(["Candidate output", "canonical target"] as const)(
+    "binds immutable transaction bytes when the %s changes after final approval checks",
+    async (raceTarget) => {
+      const fixture = await makeRepository("initialized");
+      await writeRequest(fixture, updateRequest());
+      await prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        fixedDependencies([]),
+      );
+      const manifest = await readJson<CandidateManifest>(
+        resolve(fixture.out, "candidate-manifest.json"),
+      );
+      const entityOutput = manifest.outputs.find(
+        (entry) => entry.path === "./knowledge/entities.yml",
+      );
+      expect(entityOutput).toBeDefined();
+      const candidatePath = resolve(
+        fixture.out,
+        "repository",
+        (entityOutput as { path: string }).path,
+      );
+      const canonicalPath = resolve(
+        fixture.root,
+        (entityOutput as { path: string }).path,
+      );
+      const before = await canonicalBytes(fixture.root);
+      let raced = false;
+      let racedCanonical = before;
+
+      const receipt = await applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir: fixture.out,
+          approvedDigest: manifest.candidate_digest,
+        },
+        {
+          ...fixedDependencies([]),
           fileSystem: {
             ...nodeFileSystem,
             checkpoint: async (point, path) => {
               await nodeFileSystem.checkpoint(point, path);
-              if (!raced && point === "before-candidate-transaction") {
+              if (
+                !raced &&
+                (point as string) === "before-transaction-journal"
+              ) {
                 raced = true;
-                await race(fixture, manifest, (value) => {
-                  instant = value;
-                });
-                racedCanonical = await canonicalBytes(fixture.root);
+                if (raceTarget === "Candidate output")
+                  await writeFile(candidatePath, "raced candidate bytes\n");
+                else {
+                  await writeFile(
+                    canonicalPath,
+                    `${await readFile(canonicalPath, "utf8")}# raced target\n`,
+                  );
+                  racedCanonical = await canonicalBytes(fixture.root);
+                }
               }
             },
           },
@@ -1392,7 +1564,10 @@ describe("exact approval preflight invalidation", () => {
       expect(raced).toBe(true);
       expect(receipt).toMatchObject({
         status: "approval_invalidated",
-        invalidation_code: invalidationCode,
+        invalidation_code:
+          raceTarget === "Candidate output"
+            ? "candidate-artifact-drift"
+            : "canonical-input-drift",
         changed_paths: [],
         validation: { status: "not_run" },
       });
@@ -1404,6 +1579,73 @@ describe("exact approval preflight invalidation", () => {
       ).toBe(false);
     },
   );
+
+  it("rechecks a canonical preimage after the swap checkpoint without overwriting external drift", async () => {
+    const fixture = await makeRepository("initialized");
+    await writeRequest(fixture, updateRequest());
+    await prepareCandidate(
+      {
+        root: fixture.root,
+        requestPath: fixture.requestPath,
+        out: fixture.out,
+      },
+      fixedDependencies([]),
+    );
+    const manifest = await readJson<CandidateManifest>(
+      resolve(fixture.out, "candidate-manifest.json"),
+    );
+    const target = resolve(fixture.root, "knowledge/entities.yml");
+    let raced = false;
+    let racedCanonical: Record<string, string> | undefined;
+
+    const receipt = await applyCandidate(
+      {
+        root: fixture.root,
+        candidateDir: fixture.out,
+        approvedDigest: manifest.candidate_digest,
+      },
+      {
+        ...fixedDependencies([]),
+        fileSystem: {
+          ...nodeFileSystem,
+          checkpoint: async (point, path) => {
+            await nodeFileSystem.checkpoint(point, path);
+            if (!raced && point === "swap" && path.endsWith("entities.yml")) {
+              raced = true;
+              await writeFile(
+                target,
+                `${await readFile(target, "utf8")}# raced at swap\n`,
+              );
+              racedCanonical = Object.fromEntries(
+                Object.entries(await canonicalBytes(fixture.root)).filter(
+                  ([path]) => !path.includes(".coffee-chat-"),
+                ),
+              );
+            }
+          },
+        },
+      },
+    );
+
+    expect(raced).toBe(true);
+    expect(receipt).toMatchObject({
+      status: "approval_invalidated",
+      invalidation_code: "canonical-input-drift",
+      changed_paths: [],
+      validation: { status: "not_run" },
+    });
+    expect(await canonicalBytes(fixture.root)).toEqual(racedCanonical);
+    expect(
+      (await recursiveFiles(fixture.root)).some((path) =>
+        path.includes(".coffee-chat-"),
+      ),
+    ).toBe(false);
+    expect(
+      (await readdir(fixture.base)).some((name) =>
+        name.endsWith(".transaction.json"),
+      ),
+    ).toBe(false);
+  });
 
   it.each([
     {
