@@ -75,6 +75,18 @@ async function mutate(
   await writeFile(absolute, replacement(await readFile(absolute, "utf8")));
 }
 
+function syntheticGithubToken(): string {
+  return [
+    "ghp_",
+    "123456",
+    "789012",
+    "345678",
+    "901234",
+    "567890",
+    "123456",
+  ].join("");
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryRoots.splice(0).map((root) =>
@@ -396,7 +408,7 @@ describe("strict authored parsing and repository integrity", () => {
 
   it("redacts secret-like content and credential-bearing URLs", async () => {
     const secretRoot = await makeRepository();
-    const secret = "ghp_123456789012345678901234567890123456";
+    const secret = syntheticGithubToken();
     await mutate(
       secretRoot,
       "knowledge/notes/a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61.md",
@@ -490,7 +502,7 @@ describe("strict authored parsing and repository integrity", () => {
 
   it("redacts secret-like authored values from diagnostic paths", async () => {
     const root = await makeRepository();
-    const secret = "ghp_123456789012345678901234567890123456";
+    const secret = syntheticGithubToken();
     await mutate(root, "coffee-chat.json", (text) =>
       text.replace('"skills": "./skills/"', `"skills": "./skills/${secret}/"`),
     );

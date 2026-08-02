@@ -1,0 +1,4 @@
+title = "Coffee Chat public-content secret guard"
+
+[extend]
+useDefault = true

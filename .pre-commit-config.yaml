@@ -1,0 +1,22 @@
+fail_fast: true
+
+repos:
+  # Gitleaks v8.30.1
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: 83d9cd684c87d95d656c1458ef04895a7f1cbd8e
+    hooks:
+      - id: gitleaks
+        args:
+          - --config=.gitleaks.toml
+          - --redact=100
+          - --no-banner
+          - --no-color
+        pass_filenames: false
+
+  - repo: local
+    hooks:
+      - id: coffee-chat-staged
+        name: Validate staged Coffee Chat graph and projections
+        entry: npm run cc -- check --snapshot staged --format human
+        language: system
+        pass_filenames: false

@@ -15,6 +15,7 @@
     "test:site": "playwright test",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
+    "gitleaks:scan": "node --experimental-strip-types tools/gitleaks.ts scan --mode repository",
     "site:build": "node --experimental-strip-types tools/site-build.ts",
     "site:check": "node --experimental-strip-types tools/site-build.ts --check"
   },
