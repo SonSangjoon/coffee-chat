@@ -111,6 +111,10 @@ describe("localized README projections", () => {
 
     expect(english).toContain("Open https://github.com/example/coffee-chat");
     expect(korean).toContain("https://github.com/example/coffee-chat");
+    expect(english).toContain("Example Author");
+    expect(korean).toContain("Example Author");
+    expect(english).toContain("https://example.github.io/coffee-chat/");
+    expect(korean).toContain("https://example.github.io/coffee-chat/");
     expect(english).toContain(
       "coffee-chat-example@coffee-chat-example-marketplace",
     );

@@ -453,6 +453,7 @@ describe("Task 4 Candidate projection transaction", () => {
       fixedDependencies(false),
     );
     expect(receipt).toEqual(expect.objectContaining({ status: "applied" }));
+    expect(receipt.changed_paths).toContain("./README.ko.md");
     expect(
       await readFile(resolve(fixture.root, "README.ko.md"), "utf8"),
     ).toContain("[English](./README.md)");
