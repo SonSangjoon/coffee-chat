@@ -511,6 +511,40 @@ describe("Candidate request, mode, action, and temporary-key contracts", () => {
 });
 
 describe("external-only complete Candidate materialization", () => {
+  it.each(["direct", "symlink-parent"] as const)(
+    "rejects a %s request inside the authoritative repository without creating Candidate output",
+    async (kind) => {
+      const fixture = await makeRepository();
+      const requestDirectory = resolve(fixture.root, "authoring");
+      const requestInsideRepository = resolve(requestDirectory, "request.json");
+      await mkdir(requestDirectory);
+      await writeFile(
+        requestInsideRepository,
+        `${JSON.stringify(makeMineRequest(), null, 2)}\n`,
+      );
+      let observedRequestPath = requestInsideRepository;
+      if (kind === "symlink-parent") {
+        const linkedParent = resolve(fixture.base, "linked-authoring");
+        await symlink(requestDirectory, linkedParent);
+        observedRequestPath = resolve(linkedParent, "request.json");
+      }
+
+      await expect(
+        prepareCandidate(
+          {
+            root: fixture.root,
+            requestPath: observedRequestPath,
+            out: fixture.out,
+          },
+          fixedDependencies(),
+        ),
+      ).rejects.toMatchObject({
+        diagnostic: { code: "candidate-request-inside-repository" },
+      });
+      await expect(lstat(fixture.out)).rejects.toThrow();
+    },
+  );
+
   it("rejects external-parent substitution before root creation without writing or unsafe cleanup", async () => {
     const fixture = await makeRepository();
     const parent = resolve(fixture.base, "candidate-parent");
@@ -1212,6 +1246,164 @@ describe("exact approval preflight invalidation", () => {
       await readFile(resolve(relocated, "candidate-manifest.json"), "utf8"),
     ).toContain(manifest.candidate_digest);
   });
+
+  const finalBoundaryRaces: Array<{
+    name: string;
+    invalidationCode: string;
+    setupEffect?: boolean;
+    race: (
+      fixture: RepositoryFixture,
+      manifest: CandidateManifest,
+      setInstant: (value: string) => void,
+    ) => Promise<void>;
+  }> = [
+    {
+      name: "Candidate artifact inventory",
+      invalidationCode: "candidate-artifact-drift",
+      race: async (fixture) => {
+        await writeFile(resolve(fixture.out, "preview.json"), "{}\n");
+      },
+    },
+    {
+      name: "bound request bytes",
+      invalidationCode: "source-observation-drift",
+      race: async (fixture) => {
+        const request = await readJson<Record<string, unknown>>(
+          fixture.requestPath,
+        );
+        const change = (
+          request.entity_changes as Array<Record<string, unknown>>
+        )[0] as Record<string, unknown>;
+        (change.value as Record<string, unknown>).label = "Raced request";
+        await writeRequest(fixture, request);
+      },
+    },
+    {
+      name: "base HEAD",
+      invalidationCode: "base-head-drift",
+      race: async (fixture) => {
+        await writeFile(resolve(fixture.root, "raced-head.txt"), "race\n");
+        await git(fixture.root, "add", "raced-head.txt");
+        await git(fixture.root, "commit", "-qm", "race head");
+      },
+    },
+    {
+      name: "repository identity",
+      invalidationCode: "base-head-drift",
+      race: async (fixture) => {
+        await git(fixture.root, "checkout", "-qb", "raced-branch");
+      },
+    },
+    {
+      name: "canonical input",
+      invalidationCode: "canonical-input-drift",
+      race: async (fixture) => {
+        const path = resolve(fixture.root, "knowledge/entities.yml");
+        await writeFile(path, `${await readFile(path, "utf8")}# raced\n`);
+      },
+    },
+    {
+      name: "implementation input",
+      invalidationCode: "implementation-drift",
+      race: async (fixture) => {
+        const path = resolve(fixture.root, "tools/generate.ts");
+        await writeFile(path, `${await readFile(path, "utf8")}\n// raced\n`);
+      },
+    },
+    {
+      name: "worktree index",
+      invalidationCode: "worktree-drift",
+      race: async (fixture) => {
+        await git(
+          fixture.root,
+          "update-index",
+          "--chmod=+x",
+          "knowledge/entities.yml",
+        );
+      },
+    },
+    {
+      name: "configured date",
+      invalidationCode: "configured-date-drift",
+      race: async (_fixture, _manifest, setInstant) => {
+        setInstant("2026-08-02T03:00:00.000Z");
+      },
+    },
+    {
+      name: "setup hook target",
+      invalidationCode: "hook-target-drift",
+      setupEffect: true,
+      race: async (_fixture, manifest) => {
+        const effect = manifest.setup_effects[0] as { target_path: string };
+        await mkdir(dirname(effect.target_path), { recursive: true });
+        await writeFile(effect.target_path, "#!/bin/sh\necho raced\n");
+      },
+    },
+  ];
+
+  it.each(finalBoundaryRaces)(
+    "revalidates raced $name immediately before the transaction with zero engine writes",
+    async ({ invalidationCode, setupEffect, race }) => {
+      const fixture = await makeRepository("initialized");
+      await writeRequest(fixture, {
+        ...updateRequest(),
+        setup_effects: setupEffect ? ["install-pre-commit"] : [],
+      });
+      await prepareCandidate(
+        {
+          root: fixture.root,
+          requestPath: fixture.requestPath,
+          out: fixture.out,
+        },
+        fixedDependencies([]),
+      );
+      const manifest = await readJson<CandidateManifest>(
+        resolve(fixture.out, "candidate-manifest.json"),
+      );
+      let instant = "2026-08-01T03:00:00.000Z";
+      let raced = false;
+      let racedCanonical: Record<string, string> | undefined;
+
+      const receipt = await applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir: fixture.out,
+          approvedDigest: manifest.candidate_digest,
+        },
+        {
+          ...fixedDependencies([]),
+          clock: { now: () => new Date(instant) },
+          fileSystem: {
+            ...nodeFileSystem,
+            checkpoint: async (point, path) => {
+              await nodeFileSystem.checkpoint(point, path);
+              if (!raced && point === "before-candidate-transaction") {
+                raced = true;
+                await race(fixture, manifest, (value) => {
+                  instant = value;
+                });
+                racedCanonical = await canonicalBytes(fixture.root);
+              }
+            },
+          },
+        },
+      );
+
+      expect(raced).toBe(true);
+      expect(receipt).toMatchObject({
+        status: "approval_invalidated",
+        invalidation_code: invalidationCode,
+        changed_paths: [],
+        validation: { status: "not_run" },
+      });
+      expect(await canonicalBytes(fixture.root)).toEqual(racedCanonical);
+      expect(
+        (await readdir(fixture.base)).some((name) =>
+          name.endsWith(".transaction.json"),
+        ),
+      ).toBe(false);
+    },
+  );
 
   it.each([
     {

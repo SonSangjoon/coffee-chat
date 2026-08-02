@@ -585,10 +585,20 @@ async function parseRequest(
   requestPath: string,
   fileSystem: CandidateFileSystem,
 ): Promise<{ request: CandidateRequest; bytes: Buffer; realPath: string }> {
-  let status;
+  const observedPath = resolve(requestPath);
+  const insideRepository = () =>
+    validationFailure(
+      "candidate-request-inside-repository",
+      ".",
+      "Candidate request must stay outside the authoritative repository.",
+    );
+  if (pathWithin(root, observedPath)) throw insideRepository();
+  let before: Stats;
+  let realPath: string;
   try {
-    status = await fileSystem.lstat(requestPath);
-    if (!status.isFile() || status.isSymbolicLink()) throw new Error("unsafe");
+    before = await fileSystem.lstat(observedPath);
+    realPath = await fileSystem.realpath(observedPath);
+    if (!before.isFile() || before.isSymbolicLink()) throw new Error("unsafe");
   } catch {
     throw unable(
       "candidate-request-unavailable",
@@ -596,13 +606,23 @@ async function parseRequest(
       "Candidate request could not be read safely.",
     );
   }
+  if (pathWithin(root, realPath)) throw insideRepository();
   let bytes: Buffer;
-  let realPath: string;
   try {
-    [bytes, realPath] = await Promise.all([
-      fileSystem.readFile(requestPath),
-      fileSystem.realpath(requestPath),
+    bytes = await fileSystem.readFile(observedPath);
+    const [afterRealPath, after] = await Promise.all([
+      fileSystem.realpath(observedPath),
+      fileSystem.lstat(observedPath),
     ]);
+    if (
+      afterRealPath !== realPath ||
+      pathWithin(root, afterRealPath) ||
+      !after.isFile() ||
+      after.isSymbolicLink() ||
+      before.dev !== after.dev ||
+      before.ino !== after.ino
+    )
+      throw new Error("request changed");
   } catch {
     throw unable(
       "candidate-request-unavailable",
@@ -613,8 +633,8 @@ async function parseRequest(
   let value: unknown;
   try {
     value = parseStrictJson(
-      decodeCanonicalText(bytes, requestPath),
-      requestPath,
+      decodeCanonicalText(bytes, observedPath),
+      observedPath,
     );
   } catch {
     throw validationFailure(
@@ -1779,6 +1799,10 @@ function withoutCandidateDigest(
   return copy;
 }
 
+function candidateManifestBytes(manifest: CandidateManifest): Buffer {
+  return Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`);
+}
+
 export async function prepareCandidate(
   options: { root: string; requestPath: string; out: string },
   overrides: CandidateDependencies = {},
@@ -2185,7 +2209,7 @@ export async function prepareCandidate(
     );
     await deps.fileSystem.writeFile(
       resolve(candidateRoot, "candidate-manifest.json"),
-      `${JSON.stringify(manifest, null, 2)}\n`,
+      candidateManifestBytes(manifest),
     );
     await deps.fileSystem.writeFile(
       resolve(candidateRoot, "preview.json"),
@@ -2669,6 +2693,14 @@ async function verifyCandidateInventory(
   }
   if (!sameJson(expected, actual)) return false;
   try {
+    if (
+      !(
+        await fileSystem.readFile(
+          resolve(candidateDir, "candidate-manifest.json"),
+        )
+      ).equals(candidateManifestBytes(manifest))
+    )
+      return false;
     for (const entry of [...manifest.outputs, ...manifest.support_files]) {
       if (
         sha256(
@@ -2738,6 +2770,99 @@ async function implementationDigestsEqual(
   } catch {
     return false;
   }
+}
+
+async function finalApprovalInvalidationCode(
+  root: string,
+  candidateRoot: string,
+  manifest: CandidateManifest,
+  baseGraph: KnowledgeGraph,
+  deps: RequiredDependencies,
+): Promise<string | undefined> {
+  if (
+    !(await verifyCandidateInventory(candidateRoot, manifest, deps.fileSystem))
+  )
+    return "candidate-artifact-drift";
+
+  let parsedRequest: Awaited<ReturnType<typeof parseRequest>>;
+  try {
+    parsedRequest = await parseRequest(
+      root,
+      manifest.request_binding.path,
+      deps.fileSystem,
+    );
+    validateRequestSemantics(parsedRequest.request);
+  } catch {
+    return "source-observation-drift";
+  }
+  if (sha256(parsedRequest.bytes) !== manifest.request_binding.digest)
+    return "source-observation-drift";
+
+  let repository: Awaited<ReturnType<typeof repositoryBinding>>;
+  try {
+    repository = await repositoryBinding(root, deps.git, deps.fileSystem);
+  } catch {
+    return "target-fingerprint-drift";
+  }
+  if (
+    repository.head !== manifest.base_commit ||
+    !sameJson(repository.identity, manifest.repository_identity)
+  )
+    return "base-head-drift";
+  if (!sameJson(repository.targetFingerprint, manifest.target_fingerprint))
+    return "target-fingerprint-drift";
+  if (
+    !(await currentDigestsEqual(
+      root,
+      manifest.canonical_inputs,
+      deps.fileSystem,
+      manifest,
+    ))
+  )
+    return "canonical-input-drift";
+  if (
+    !(await implementationDigestsEqual(
+      root,
+      manifest.implementation_inputs,
+      deps.fileSystem,
+    ))
+  )
+    return "implementation-drift";
+
+  const currentWorktree = await worktreeBinding(
+    root,
+    manifest.worktree.paths,
+    deps.git,
+  );
+  if (!sameJson(currentWorktree, manifest.worktree)) return "worktree-drift";
+  try {
+    validateRepositoryTarget(
+      parsedRequest.request,
+      baseGraph.manifest,
+      repository.targetFingerprint,
+    );
+  } catch {
+    return "target-fingerprint-drift";
+  }
+  if (
+    !validateMaterializedRequestBinding(
+      manifest,
+      parsedRequest.request,
+      baseGraph,
+    )
+  )
+    return "candidate-manifest-invalid";
+  if (
+    configuredDate(deps.clock.now(), manifest.time_zone) !==
+    manifest.frozen_date
+  )
+    return "configured-date-drift";
+  for (const effect of manifest.setup_effects) {
+    const current = await inspectHook(root, { git: deps.git });
+    if (!sameJson(current, effect.target_fingerprint))
+      return "hook-target-drift";
+  }
+  return undefined;
 }
 
 type TransactionEntry = {
@@ -3269,20 +3394,14 @@ export async function applyCandidate(
     } catch {
       return invalidate("candidate-location-drift");
     }
-    let finalRepository: Awaited<ReturnType<typeof repositoryBinding>>;
-    try {
-      finalRepository = await repositoryBinding(
-        repository.root,
-        deps.git,
-        deps.fileSystem,
-      );
-    } catch {
-      return invalidate("target-fingerprint-drift");
-    }
-    if (
-      !sameJson(finalRepository.targetFingerprint, manifest.target_fingerprint)
-    )
-      return invalidate("target-fingerprint-drift");
+    const finalInvalidation = await finalApprovalInvalidationCode(
+      repository.root,
+      candidateRoot,
+      manifest,
+      baseValidation.graph,
+      deps,
+    );
+    if (finalInvalidation) return invalidate(finalInvalidation);
     await applyTransaction(
       repository.root,
       candidateRoot,
