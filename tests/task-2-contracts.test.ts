@@ -650,7 +650,7 @@ describe("strict authored parsing and repository integrity", () => {
         );
       }
     }
-  });
+  }, 15_000);
 
   it("rejects remote HTML embeds", async () => {
     const root = await makeRepository();

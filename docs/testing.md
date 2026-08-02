@@ -22,6 +22,8 @@ npm run test:site
 
 `npm test` caps Vitest at two workers because Candidate fixtures materialize and hash the shared README PNG support files. Higher local concurrency can turn filesystem contention into unrelated per-test timeouts.
 
+The two integration cases that repeatedly spawn the CLI or copy the complete engine checkout declare explicit 15-second and 30-second budgets. The assertions remain unchanged; the larger budgets absorb filesystem variance on GitHub-hosted runners without weakening the default timeout for unit-scale tests.
+
 ## Acceptance map
 
 | Flow                                                                | Evidence                                                        |

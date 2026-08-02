@@ -325,5 +325,5 @@ describe("Task 5 disposable Make mine acceptance", () => {
       });
       expect(await engineState()).toEqual(before);
     }
-  }, 15_000);
+  }, 30_000);
 });
