@@ -1,7 +1,9 @@
 # Coffee Chat README Redesign
 
-**Status:** Approved direction; written specification awaiting final review  
-**Date:** 2026-08-02  
+**Status:** Revised after visual-system approval; awaiting final review
+
+**Date:** 2026-08-02
+
 **Scope:** Engine and generated instance README files, plus the minimum visual assets they require
 
 This specification supersedes the README language-layout and section-order requirements in section 9.1 of the approved v1 design. All knowledge, Candidate, agent-behavior, plugin, safety, and Pages contracts remain unchanged.
@@ -173,11 +175,15 @@ The surrounding Markdown explains:
 
 Use a concise Markdown comparison rather than another image. The graph is described as the trust substrate, not the headline feature.
 
+The comparison remains a native Markdown table. Semantic tables are not rasterized because readers must be able to copy, translate, navigate, and diff their contents.
+
 The section leads with:
 
 > Other systems make information retrievable or teach an AI to remember or represent a user. Coffee Chat makes documented judgment inspectable by other people and selectively usable by agents.
 
 ### 4.5 How it earns trust
+
+The section begins with the localized trust-layer SVG defined in section 5.4. Its meaning is repeated in Markdown immediately below it.
 
 Keep six compact bullets:
 
@@ -233,9 +239,27 @@ Commands are role-aware projections from canonical metadata.
 
 ## 5. Visual assets
 
-Only two first-class README assets are introduced.
+The README uses one shared cover and two localized explanatory visuals. This creates five tracked files: one raster cover, two English SVGs, and two Korean SVGs. Every asset has one named position in the README; unused decorative variants are not tracked.
 
-### 5.1 Cover
+### 5.1 Design inheritance
+
+Every visual inherits the approved cover rather than starting from a new style prompt:
+
+- warm off-white: #EEE9DF;
+- charcoal: #25221F;
+- coffee brown: #75503D;
+- muted clay: #9A7059;
+- restrained sage accent: #697166;
+- realistic matte ceramic and paper texture for raster artwork;
+- thin imperfect orbit curves, small asymmetric nodes, and one partial coffee-stain ring;
+- quiet negative space, no gradients, no neon, no glossy 3D, and no AI iconography;
+- pixel influence limited to isolated non-glyph dither details visible only on close inspection.
+
+The approved cover is always supplied as the visual reference for additional raster generation or refinement. Each size or crop is derived from the same approved master; independently regenerating each ratio is forbidden because it would introduce visual drift.
+
+Image generation supplies raster illustration and texture only. It never supplies final typography, diagram labels, table content, or other semantic text. Exact text is composed deterministically after generation. Diagrams use deterministic SVG and comparisons use native Markdown while inheriting the approved palette, orbit motif, spacing, and matte restraint.
+
+### 5.2 Cover
 
 Path:
 
@@ -267,11 +291,12 @@ Typography occupies the left negative space and remains readable at social-previ
 
 The same PNG is referenced from both README languages and is suitable for manual upload to GitHub's repository Social Preview setting. Repository files alone cannot activate that setting.
 
-### 5.2 Product-flow diagram
+### 5.3 Product-flow diagram
 
-Path:
+Paths:
 
-docs/assets/readme/coffee-chat-flow.svg
+- docs/assets/readme/coffee-chat-flow.en.svg
+- docs/assets/readme/coffee-chat-flow.ko.svg
 
 Contract:
 
@@ -279,14 +304,35 @@ Contract:
 - no scripts, remote fonts, embedded raster images, animation, or external references;
 - same off-white, charcoal, coffee-brown, clay, and muted-sage palette as the cover;
 - matte flat shapes, thin curved connectors, generous spacing;
-- exact labels: Public Source, Dated Thought, Approved Record, Temporal Graph, Question by URL, Named Task, Grounded Answer, Temporary Task Lens, Better Questions, and Relevant Work;
-- the same meaning is repeated in localized Markdown so the image is never the only explanation;
+- viewBox 0 0 960 720, a 4:3 stacked layout rather than a desktop-only ultra-wide flow;
+- English labels: Public Source, Dated Thought, Approved Record, Temporal Graph, Question by URL, Named Task, Grounded Answer, Temporary Task Lens, Better Questions, and Relevant Work;
+- Korean labels: 공개 Source, 날짜가 있는 생각, 승인된 공개 기록, 시계열 그래프, URL 질문, 명시된 작업, 근거 기반 답변, 임시 Task Lens, 더 나은 질문, and 관련 업무;
+- matching geometry, reading order, color roles, and semantics across locales;
+- the same meaning repeated in localized Markdown so the image is never the only explanation;
 - responsive viewBox, readable at narrow GitHub widths;
 - useful alt text in each README.
 
-Generated-image tooling is not used for diagrams because exact terminology, accessibility, and deterministic diffs are more important than illustrative texture.
+### 5.4 Trust-layer diagram
 
-No additional decorative image is added to v1.
+Paths:
+
+- docs/assets/readme/coffee-chat-trust.en.svg
+- docs/assets/readme/coffee-chat-trust.ko.svg
+
+Contract:
+
+- viewBox 0 0 1200 600, a compact 2:1 layout suited to a mid-README section;
+- four clearly separated layers: Authored, Sourced, Inferred, and Unknown;
+- Korean layer labels: 작성자 기록, 출처 내용, 제한된 추론, and 기록으로 알 수 없음;
+- no hierarchy implying that inference is authored truth;
+- one subtle orbit line connecting the layers without merging their boundaries;
+- one short localized definition per layer;
+- matching geometry and semantics across locales;
+- all safety, accessibility, and palette constraints from the product-flow SVG.
+
+Generated-image tooling is not used for semantic diagrams because exact terminology, accessibility, and deterministic diffs are more important than illustrative texture. The diagrams still visibly inherit the image-generated cover through their palette, orbit geometry, node proportions, negative space, and restrained dither accents.
+
+No additional asset is added unless it has a named README section and materially improves understanding.
 
 ## 6. Generation and file ownership
 
@@ -298,6 +344,8 @@ The implementation updates:
 - generated-file drift checks;
 - formatting ignore or include configuration as required;
 - README link and asset validation;
+- locale-aware selection of the two diagram pairs;
+- raster dimension and size validation plus deterministic SVG safety validation;
 - the prior README contract documentation that currently requires paired bilingual lines.
 
 Canonical Coffee Chat knowledge and schema behavior do not change.
@@ -312,12 +360,13 @@ Generation fails without modifying tracked outputs when:
 - a role-specific URL, plugin identity, or author field is missing;
 - a local README asset is missing;
 - the cover is not 1280 × 640, exceeds 1 MB, or is not a PNG;
-- the SVG contains scripts, event handlers, remote references, animation, or embedded raster data;
+- any SVG contains scripts, event handlers, remote references, animation, or embedded raster data;
+- the English and Korean SVG pairs differ in geometry, semantic order, or color roles;
 - a generated README links to a missing local path;
 - engine copy implies that the engine represents a person;
 - instance copy leaves engine placeholders in public actions.
 
-generate --check and check must detect byte drift for both README files and both assets where generated or copied deterministically.
+generate --check and check must detect byte drift for both README files and all tracked README assets where generated or copied deterministically.
 
 ## 8. Tests and acceptance
 
@@ -329,12 +378,12 @@ The change is complete when:
 4. recruiter and collaborator copy permits alignment, tension, and Unknown but forbids scores and hiring decisions;
 5. the comparison section distinguishes Coffee Chat from a generic KB without claiming that graph or temporal storage is unique;
 6. the cover renders in GitHub Markdown, is 1280 × 640, and remains below 1 MB;
-7. the SVG remains legible at narrow and wide widths and contains no unsafe or remote content;
+7. both localized SVG pairs remain legible at narrow and wide widths, contain no unsafe or remote content, and preserve matching semantics and geometry;
 8. all local Markdown links and image paths resolve;
 9. generation is byte-identical on two consecutive runs;
 10. existing engine, instance, Candidate, validation, plugin, and Pages tests continue to pass.
 
-Visual review covers GitHub-like light and dark surroundings at desktop and mobile content widths. The solid cover background must remain intentional on both.
+Visual review covers GitHub-like light and dark surroundings at desktop and mobile content widths. The solid cover background must remain intentional on both. Review also confirms that every visual inherits the approved cover and that no generated glyph artifact can be mistaken for text.
 
 ## 9. Out of scope
 
@@ -344,7 +393,8 @@ Visual review covers GitHub-like light and dark surroundings at desktop and mobi
 - private-source ingestion;
 - an automatic GitHub Social Preview upload;
 - redesigning GitHub Pages;
-- adding more diagrams, badges, or decorative imagery;
+- badges or visual assets without a named explanatory role;
+- more than the approved cover, product-flow pair, and trust-layer pair;
 - creating the separate personal flagship instance.
 
 The separate personal instance remains the eventual proof surface, but this change keeps the engine neutral and knowledge-free.
