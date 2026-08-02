@@ -19,6 +19,17 @@ const schemaNames = [
   "preview.schema.json",
   "receipt.schema.json",
 ] as const;
+const targetFingerprint = {
+  git_common_dir: {
+    real_path: "/tmp/repository/.git",
+    device: "16777232",
+    inode: "123456",
+  },
+  origin_url: "https://github.com/example/downstream",
+  base_commit: "583ba3e583ba3e583ba3e583ba3e583ba3e583ba",
+  pre_conversion_manifest_digest:
+    "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
+};
 
 async function readJson<T = unknown>(path: string): Promise<T> {
   return JSON.parse(await readFile(resolve(root, path), "utf8")) as T;
@@ -106,21 +117,24 @@ describe("Coffee Chat foundation contracts", () => {
       "https://coffee-chat.dev/schemas/candidate-request.schema.json": {
         schema_version: "1.0.0",
         mode: "make-mine",
-        profile: {
-          temporary_key: "owner_profile",
-          value: {
+        instance_configuration: {
+          profile: {
+            temporary_key: "owner_profile",
             display_name: "Sangjoon Son",
-            repository: {
-              url: "https://github.com/SonSangjoon/coffee-chat",
-              default_branch: "main",
-            },
-            pages_url: "https://sonsangjoon.github.io/coffee-chat/",
-            plugin: {
-              name: "coffee-chat-sangjoon",
-              version: "1.0.0",
-              description: "A public perspective graph.",
-            },
+            short_name: "Sangjoon",
           },
+          time_zone: "Asia/Seoul",
+          repository: {
+            url: "https://github.com/example/downstream",
+            default_branch: "main",
+          },
+          pages_url: "https://example.github.io/downstream/",
+          plugin: {
+            name: "coffee-chat-sangjoon",
+            version: "1.0.0",
+            description: "A public perspective graph.",
+          },
+          content_notice: "# Content Notice\n",
         },
         entity_changes: [
           {
@@ -157,6 +171,12 @@ describe("Coffee Chat foundation contracts", () => {
         candidate_directory: ".",
         mode: "update",
         base_commit: "583ba3e583ba3e583ba3e583ba3e583ba3e583ba",
+        target_fingerprint: targetFingerprint,
+        current_repository_role: "instance",
+        proposed_repository_role: "instance",
+        actual_origin_url: "https://github.com/example/downstream",
+        proposed_time_zone: "Asia/Seoul",
+        marketplace_name: "coffee-chat-example-marketplace",
         time_zone: "Asia/Seoul",
         frozen_date: "2026-08-01",
         affected_paths: ["./coffee-chat.json"],
@@ -197,6 +217,7 @@ describe("Coffee Chat foundation contracts", () => {
         status: "applied",
         changed_paths: ["./coffee-chat.json"],
         validation: { status: "passed" },
+        target_fingerprint: targetFingerprint,
       },
     };
 
@@ -346,6 +367,12 @@ describe("Coffee Chat foundation contracts", () => {
         candidate_directory: ".",
         mode: "update",
         base_commit: "583ba3e583ba3e583ba3e583ba3e583ba3e583ba",
+        target_fingerprint: targetFingerprint,
+        current_repository_role: "instance",
+        proposed_repository_role: "instance",
+        actual_origin_url: "https://github.com/example/downstream",
+        proposed_time_zone: "Asia/Seoul",
+        marketplace_name: "coffee-chat-example-marketplace",
         time_zone: "Asia/Seoul",
         frozen_date: "2026-08-01",
         affected_paths: ["./coffee-chat.json"],
@@ -389,6 +416,7 @@ describe("Coffee Chat foundation contracts", () => {
           },
         ],
         setup_failure: "",
+        target_fingerprint: targetFingerprint,
       }),
     ).toBe(true);
   });
@@ -422,6 +450,7 @@ describe("Coffee Chat foundation contracts", () => {
         changed_paths: [],
         validation: { status: "not_run" },
         invalidation_code: "base-head-drift",
+        target_fingerprint: targetFingerprint,
       }),
     ).toBe(true);
     expect(
@@ -432,6 +461,7 @@ describe("Coffee Chat foundation contracts", () => {
         changed_paths: ["./coffee-chat.json"],
         validation: { status: "not_run" },
         invalidation_code: "base-head-drift",
+        target_fingerprint: targetFingerprint,
       }),
     ).toBe(false);
     expect(
@@ -442,6 +472,7 @@ describe("Coffee Chat foundation contracts", () => {
         changed_paths: ["./coffee-chat.json"],
         validation: { status: "passed" },
         setup_failure: "failed",
+        target_fingerprint: targetFingerprint,
       }),
     ).toBe(false);
     expect(
@@ -451,6 +482,7 @@ describe("Coffee Chat foundation contracts", () => {
         status: "partial_local_result",
         changed_paths: ["./coffee-chat.json"],
         validation: { status: "passed" },
+        target_fingerprint: targetFingerprint,
       }),
     ).toBe(false);
   });

@@ -12,6 +12,7 @@
     "mode",
     "base_commit",
     "repository_identity",
+    "target_fingerprint",
     "time_zone",
     "frozen_date",
     "canonical_inputs",
@@ -53,6 +54,7 @@
         "branch": { "type": "string", "minLength": 1 }
       }
     },
+    "target_fingerprint": { "$ref": "#/$defs/target_fingerprint" },
     "time_zone": { "type": "string", "minLength": 1 },
     "frozen_date": { "$ref": "#/$defs/date" },
     "canonical_inputs": {
@@ -114,6 +116,39 @@
     "absolute_path": {
       "type": "string",
       "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))/(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "decimal_integer": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$"
+    },
+    "target_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "git_common_dir",
+        "origin_url",
+        "base_commit",
+        "pre_conversion_manifest_digest"
+      ],
+      "properties": {
+        "git_common_dir": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["real_path", "device", "inode"],
+          "properties": {
+            "real_path": { "$ref": "#/$defs/absolute_path" },
+            "device": { "$ref": "#/$defs/decimal_integer" },
+            "inode": { "$ref": "#/$defs/decimal_integer" }
+          }
+        },
+        "origin_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://github\\.com/[a-z0-9.-]+/[a-z0-9._-]+$"
+        },
+        "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+        "pre_conversion_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
     },
     "canonical_knowledge_path": {
       "type": "string",
@@ -249,9 +284,35 @@
     "profile_value": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["display_name", "repository", "pages_url", "plugin"],
+      "required": ["display_name", "short_name"],
       "properties": {
         "display_name": { "type": "string" },
+        "short_name": { "type": "string" }
+      }
+    },
+    "instance_configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "time_zone",
+        "repository",
+        "pages_url",
+        "plugin",
+        "marketplace_name",
+        "content_notice"
+      ],
+      "properties": {
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "value"],
+          "properties": {
+            "id": { "$ref": "#/$defs/uuid_v4" },
+            "value": { "$ref": "#/$defs/profile_value" }
+          }
+        },
+        "time_zone": { "type": "string", "minLength": 1 },
         "repository": {
           "type": "object",
           "additionalProperties": false,
@@ -279,7 +340,9 @@
             "version": { "type": "string" },
             "description": { "type": "string" }
           }
-        }
+        },
+        "marketplace_name": { "type": "string" },
+        "content_notice": { "type": "string", "minLength": 1 }
       }
     },
     "entity_value": {
@@ -335,15 +398,7 @@
       "additionalProperties": false,
       "required": ["entity_changes", "note_changes"],
       "properties": {
-        "profile": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["id", "value"],
-          "properties": {
-            "id": { "$ref": "#/$defs/uuid_v4" },
-            "value": { "$ref": "#/$defs/profile_value" }
-          }
-        },
+        "instance_configuration": { "$ref": "#/$defs/instance_configuration" },
         "entity_changes": {
           "type": "array",
           "items": {

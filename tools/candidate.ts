@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import type { Dirent, Stats } from "node:fs";
+import type { BigIntStats, Dirent, Stats } from "node:fs";
 import {
   chmod,
   lstat,
@@ -68,12 +68,68 @@ const UUID_V4 =
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const CANDIDATE_FORMAT_VERSION = "1.0.0";
 
+export function normalizeGitHubRepositoryUrl(raw: string): string {
+  if (raw.length === 0 || raw !== raw.trim())
+    throw new Error("GitHub repository URL must be unambiguous.");
+
+  let owner: string;
+  let repository: string;
+  const scp = /^git@github\.com:([^/]+)\/([^/]+)\/?$/i.exec(raw);
+  if (scp) {
+    owner = scp[1] as string;
+    repository = scp[2] as string;
+  } else {
+    let parsed: URL;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      throw new Error("GitHub repository URL must be unambiguous.");
+    }
+    if (
+      parsed.protocol !== "https:" ||
+      parsed.hostname.toLowerCase() !== "github.com" ||
+      parsed.username !== "" ||
+      parsed.password !== "" ||
+      parsed.port !== "" ||
+      parsed.search !== "" ||
+      parsed.hash !== "" ||
+      parsed.pathname.includes("%")
+    )
+      throw new Error("GitHub repository URL must be unambiguous.");
+    const match = /^\/([^/]+)\/([^/]+)\/?$/.exec(parsed.pathname);
+    if (!match) throw new Error("GitHub repository URL must be unambiguous.");
+    owner = match[1] as string;
+    repository = match[2] as string;
+  }
+  repository = repository.replace(/\.git$/i, "");
+  if (
+    !/^[A-Za-z0-9.-]+$/.test(owner) ||
+    !/^[A-Za-z0-9._-]+$/.test(repository) ||
+    owner === "." ||
+    owner === ".." ||
+    repository === "." ||
+    repository === ".."
+  )
+    throw new Error("GitHub repository URL must be unambiguous.");
+  return `https://github.com/${owner.toLowerCase()}/${repository.toLowerCase()}`;
+}
+
 type ProfileValue = {
   display_name: string;
-  short_name?: string;
+  short_name: string;
+};
+
+export type InstanceConfiguration = {
+  profile: {
+    temporary_key: string;
+    display_name: string;
+    short_name: string;
+  };
+  time_zone: string;
   repository: { url: string; default_branch: string };
   pages_url: string;
   plugin: { name: string; version: string; description: string };
+  content_notice: string;
 };
 
 type EntityValue = Omit<Entity, "id">;
@@ -100,10 +156,10 @@ type EntityChange =
 type NoteChange =
   | { action: "create"; temporary_key: string; value: NoteValue }
   | { action: "correct"; target_id: string; value: NoteValue };
-type CandidateRequest = {
+export type CandidateRequest = {
   schema_version: string;
   mode: "make-mine" | "contribute" | "update";
-  profile?: { temporary_key: string; value: ProfileValue };
+  instance_configuration?: InstanceConfiguration;
   entity_changes: EntityChange[];
   note_changes: NoteChange[];
   setup_effects: Array<"install-pre-commit">;
@@ -115,6 +171,16 @@ type RepositoryIdentity = {
   top_level: string;
   git_common_dir: string;
   branch: string;
+};
+export type TargetFingerprint = {
+  git_common_dir: {
+    real_path: string;
+    device: string;
+    inode: string;
+  };
+  origin_url: string;
+  base_commit: string;
+  pre_conversion_manifest_digest: string;
 };
 type WorktreeBinding = {
   paths: string[];
@@ -157,6 +223,13 @@ type PreviewData = {
   candidate_directory: ".";
   mode: CandidateRequest["mode"];
   base_commit: string;
+  target_fingerprint: TargetFingerprint;
+  current_repository_role: "engine" | "instance";
+  proposed_repository_role: "instance";
+  actual_origin_url: string;
+  proposed_time_zone: string;
+  marketplace_name: string;
+  content_notice?: string;
   time_zone: string;
   frozen_date: string;
   affected_paths: string[];
@@ -181,6 +254,7 @@ export type CandidateManifest = {
   mode: CandidateRequest["mode"];
   base_commit: string;
   repository_identity: RepositoryIdentity;
+  target_fingerprint: TargetFingerprint;
   time_zone: string;
   frozen_date: string;
   canonical_inputs: PathDigest[];
@@ -189,7 +263,15 @@ export type CandidateManifest = {
   worktree: WorktreeBinding;
   source_observations: SourceObservation[];
   materialized_changes: {
-    profile?: { id: string; value: ProfileValue };
+    instance_configuration?: {
+      profile: { id: string; value: ProfileValue };
+      time_zone: string;
+      repository: InstanceConfiguration["repository"];
+      pages_url: string;
+      plugin: InstanceConfiguration["plugin"];
+      marketplace_name: string;
+      content_notice: string;
+    };
     entity_changes: MaterializedEntityChange[];
     note_changes: MaterializedNoteChange[];
   };
@@ -209,6 +291,7 @@ export type CandidateReceipt = {
   changed_paths: string[];
   validation: { status: "passed" | "not_run" };
   invalidation_code?: string;
+  target_fingerprint: TargetFingerprint;
   setup_effects?: Array<{
     effect: "install-pre-commit";
     target_path: string;
@@ -255,6 +338,7 @@ export type CandidateFileSystem = {
     options: { withFileTypes: true },
   ): Promise<Dirent<string>[]>;
   lstat(path: string): Promise<Stats>;
+  lstatBigInt(path: string): Promise<BigIntStats>;
   realpath(path: string): Promise<string>;
   rename(from: string, to: string): Promise<void>;
   unlink(path: string): Promise<void>;
@@ -277,6 +361,7 @@ export const nodeFileSystem: CandidateFileSystem = {
   mkdir,
   readdir,
   lstat,
+  lstatBigInt: async (path) => lstat(path, { bigint: true }),
   realpath,
   rename,
   unlink,
@@ -554,7 +639,8 @@ function validateRequestSemantics(request: CandidateRequest): void {
       "Make mine requires an approved first public Note.",
     );
   const temporaryKeys: string[] = [];
-  if (request.profile) temporaryKeys.push(request.profile.temporary_key);
+  if (request.instance_configuration)
+    temporaryKeys.push(request.instance_configuration.profile.temporary_key);
   for (const change of request.entity_changes)
     if (change.action === "create") temporaryKeys.push(change.temporary_key);
   for (const change of request.note_changes)
@@ -639,13 +725,28 @@ async function repositoryBinding(
   root: string,
   git: GitExecutor,
   fileSystem: CandidateFileSystem,
-): Promise<{ root: string; head: string; identity: RepositoryIdentity }> {
-  const [realRoot, topRaw, commonRaw, head, branch] = await Promise.all([
+): Promise<{
+  root: string;
+  head: string;
+  identity: RepositoryIdentity;
+  targetFingerprint: TargetFingerprint;
+}> {
+  const [
+    realRoot,
+    topRaw,
+    commonRaw,
+    head,
+    branch,
+    manifestBytes,
+    originResult,
+  ] = await Promise.all([
     fileSystem.realpath(root),
     requiredGit(git, root, ["rev-parse", "--show-toplevel"]),
     requiredGit(git, root, ["rev-parse", "--git-common-dir"]),
     requiredGit(git, root, ["rev-parse", "--verify", "HEAD^{commit}"]),
     requiredGit(git, root, ["rev-parse", "--abbrev-ref", "HEAD"]),
+    fileSystem.readFile(resolve(root, "coffee-chat.json")),
+    git.execute(root, ["config", "--get-all", "remote.origin.url"]),
   ]);
   const topLevel = await fileSystem.realpath(resolve(root, topRaw));
   if (topLevel !== realRoot)
@@ -655,11 +756,126 @@ async function repositoryBinding(
       "Candidate commands must run at the authoritative repository root.",
     );
   const commonDir = await fileSystem.realpath(resolve(root, commonRaw));
+  const commonBefore = await fileSystem.lstatBigInt(commonDir);
+  const commonAfterPath = await fileSystem.realpath(resolve(root, commonRaw));
+  const commonAfter = await fileSystem.lstatBigInt(commonAfterPath);
+  if (
+    commonDir !== commonAfterPath ||
+    !commonBefore.isDirectory() ||
+    !commonAfter.isDirectory() ||
+    commonBefore.dev !== commonAfter.dev ||
+    commonBefore.ino !== commonAfter.ino
+  )
+    throw unable(
+      "candidate-git-unavailable",
+      ".",
+      "Required Git repository state could not be resolved.",
+    );
+  if (originResult.exitCode !== 0)
+    throw validationFailure(
+      "candidate-origin-invalid",
+      ".",
+      "The Git origin must name exactly one GitHub repository identity.",
+    );
+  const originValues = originResult.stdout
+    .split(/\r?\n/)
+    .filter((value) => value.length > 0);
+  let normalizedOrigins: string[];
+  try {
+    normalizedOrigins = originValues.map(normalizeGitHubRepositoryUrl);
+  } catch {
+    throw validationFailure(
+      "candidate-origin-invalid",
+      ".",
+      "The Git origin must name exactly one GitHub repository identity.",
+    );
+  }
+  if (normalizedOrigins.length === 0 || new Set(normalizedOrigins).size !== 1)
+    throw validationFailure(
+      "candidate-origin-invalid",
+      ".",
+      "The Git origin must name exactly one GitHub repository identity.",
+    );
+  const originUrl = normalizedOrigins[0] as string;
   return {
     root: realRoot,
     head,
     identity: { top_level: topLevel, git_common_dir: commonDir, branch },
+    targetFingerprint: {
+      git_common_dir: {
+        real_path: commonDir,
+        device: commonAfter.dev.toString(10),
+        inode: commonAfter.ino.toString(10),
+      },
+      origin_url: originUrl,
+      base_commit: head,
+      pre_conversion_manifest_digest: sha256(manifestBytes),
+    },
   };
+}
+
+function validateRepositoryTarget(
+  request: CandidateRequest,
+  baseManifest: Manifest,
+  target: TargetFingerprint,
+): void {
+  if (request.mode === "make-mine") {
+    if (isInstanceManifest(baseManifest))
+      throw validationFailure(
+        "make-mine-engine-required",
+        "./coffee-chat.json",
+        "Make mine requires an engine base.",
+      );
+    const configuration =
+      request.instance_configuration as InstanceConfiguration;
+    let engineUrl: string;
+    let proposedUrl: string;
+    try {
+      engineUrl = normalizeGitHubRepositoryUrl(baseManifest.repository.url);
+      proposedUrl = normalizeGitHubRepositoryUrl(configuration.repository.url);
+    } catch {
+      throw validationFailure(
+        "candidate-instance-repository-invalid",
+        ".",
+        "The proposed instance repository must be an unambiguous GitHub repository URL.",
+      );
+    }
+    if (target.origin_url === engineUrl)
+      throw validationFailure(
+        "make-mine-target-not-downstream",
+        ".",
+        "Make mine may convert only a downstream checkout, never the engine repository itself.",
+      );
+    if (target.origin_url !== proposedUrl)
+      throw validationFailure(
+        "make-mine-target-mismatch",
+        ".",
+        "The actual Git origin must equal the proposed instance repository.",
+      );
+    return;
+  }
+  if (!isInstanceManifest(baseManifest))
+    throw validationFailure(
+      "initialized-mode-required",
+      "./coffee-chat.json",
+      "Contribute and update require an initialized graph.",
+    );
+  let expected: string;
+  try {
+    expected = normalizeGitHubRepositoryUrl(baseManifest.repository.url);
+  } catch {
+    throw validationFailure(
+      "candidate-base-invalid",
+      "./coffee-chat.json",
+      "The instance repository identity must be an unambiguous GitHub repository URL.",
+    );
+  }
+  if (target.origin_url !== expected)
+    throw validationFailure(
+      "candidate-target-mismatch",
+      ".",
+      "The actual Git origin must equal the instance manifest repository.",
+    );
 }
 
 type DirectoryIdentity = {
@@ -804,8 +1020,15 @@ async function canonicalPaths(
     "knowledge",
   );
   const method = await walkFiles(fileSystem, resolve(root, "method"), "method");
+  const contentNotice = (await pathExists(
+    fileSystem,
+    resolve(root, "CONTENT_LICENSE.md"),
+  ))
+    ? ["CONTENT_LICENSE.md"]
+    : [];
   return sortedStrings([
     "coffee-chat.json",
+    ...contentNotice,
     ...knowledge.filter(
       (path) =>
         path === "knowledge/entities.yml" ||
@@ -831,8 +1054,10 @@ async function repositoryStatePaths(
 ): Promise<string[]> {
   const snapshot = await createSnapshot(root, "worktree");
   return sortedStrings([
-    ...(await canonicalPaths(root, fileSystem)),
-    ...(await deliveryProjectionPaths(snapshot, graph)),
+    ...new Set([
+      ...(await canonicalPaths(root, fileSystem)),
+      ...(await deliveryProjectionPaths(snapshot, graph)),
+    ]),
   ]);
 }
 
@@ -893,7 +1118,8 @@ function mintIds(
   uuid: { next(): string },
 ): Map<string, string> {
   const keys: string[] = [];
-  if (request.profile) keys.push(request.profile.temporary_key);
+  if (request.instance_configuration)
+    keys.push(request.instance_configuration.profile.temporary_key);
   for (const change of request.entity_changes)
     if (change.action === "create") keys.push(change.temporary_key);
   for (const change of request.note_changes)
@@ -1049,13 +1275,14 @@ function buildDesiredState(
       "./coffee-chat.json",
       "Contribute and update require an initialized graph.",
     );
+  const configuration = request.instance_configuration;
   const manifest: InstanceManifest = isInstanceManifest(baseManifest)
     ? structuredClone(baseManifest)
     : {
         schema_url: baseManifest.schema_url,
         schema_version: baseManifest.schema_version,
         repository_role: "instance",
-        time_zone: "UTC",
+        time_zone: (configuration as InstanceConfiguration).time_zone,
         profile: {
           id: "00000000-0000-4000-8000-000000000000",
           display_name: "",
@@ -1080,18 +1307,33 @@ function buildDesiredState(
     note_changes: [],
   };
   if (request.mode === "make-mine") {
-    const profile = request.profile as NonNullable<CandidateRequest["profile"]>;
-    const id = minted.get(profile.temporary_key) as string;
+    const instance = configuration as InstanceConfiguration;
+    const id = minted.get(instance.profile.temporary_key) as string;
     manifest.profile = {
       id,
-      display_name: profile.value.display_name,
-      short_name: profile.value.short_name ?? profile.value.display_name,
+      display_name: instance.profile.display_name,
+      short_name: instance.profile.short_name,
     };
-    manifest.repository = structuredClone(profile.value.repository);
-    manifest.pages_url = profile.value.pages_url;
-    manifest.plugin = structuredClone(profile.value.plugin);
-    manifest.marketplace_name = `${profile.value.plugin.name}-marketplace`;
-    materializedChanges.profile = { id, value: structuredClone(profile.value) };
+    manifest.time_zone = instance.time_zone;
+    manifest.repository = structuredClone(instance.repository);
+    manifest.pages_url = instance.pages_url;
+    manifest.plugin = structuredClone(instance.plugin);
+    manifest.marketplace_name = `${instance.plugin.name}-marketplace`;
+    materializedChanges.instance_configuration = {
+      profile: {
+        id,
+        value: {
+          display_name: instance.profile.display_name,
+          short_name: instance.profile.short_name,
+        },
+      },
+      time_zone: instance.time_zone,
+      repository: structuredClone(instance.repository),
+      pages_url: instance.pages_url,
+      plugin: structuredClone(instance.plugin),
+      marketplace_name: `${instance.plugin.name}-marketplace`,
+      content_notice: instance.content_notice,
+    };
   }
 
   const baseEntityById = new Map(
@@ -1340,8 +1582,8 @@ async function writeMaterializedRepository(
       await fileSystem.readFile(resolve(root, path)),
     );
   }
-  for (const path of currentCanonical.filter((path) =>
-    path.startsWith("method/"),
+  for (const path of currentCanonical.filter(
+    (path) => path.startsWith("method/") || path === "CONTENT_LICENSE.md",
   )) {
     const target = resolve(candidateRepository, path);
     await fileSystem.mkdir(dirname(target), { recursive: true });
@@ -1354,6 +1596,14 @@ async function writeMaterializedRepository(
     resolve(candidateRepository, "coffee-chat.json"),
     manifestBytes(state.manifest),
   );
+  if (state.materializedChanges.instance_configuration)
+    await fileSystem.writeFile(
+      resolve(candidateRepository, "CONTENT_LICENSE.md"),
+      Buffer.from(
+        state.materializedChanges.instance_configuration.content_notice,
+        "utf8",
+      ),
+    );
   await fileSystem.mkdir(resolve(candidateRepository, "knowledge/notes"), {
     recursive: true,
   });
@@ -1415,6 +1665,12 @@ function previewMarkdownBytes(manifest: CandidateManifest): Buffer {
     "",
     `Candidate digest: \`${manifest.candidate_digest}\``,
     `Base commit: \`${preview.base_commit}\``,
+    `Target origin: \`${preview.actual_origin_url}\``,
+    `Repository role: \`${preview.current_repository_role}\` → \`${preview.proposed_repository_role}\``,
+    `Proposed time zone: \`${preview.proposed_time_zone}\``,
+    `Marketplace: \`${preview.marketplace_name}\``,
+    `Git common dir: \`${preview.target_fingerprint.git_common_dir.real_path}\` (device \`${preview.target_fingerprint.git_common_dir.device}\`, inode \`${preview.target_fingerprint.git_common_dir.inode}\`)`,
+    `Pre-conversion manifest: \`${preview.target_fingerprint.pre_conversion_manifest_digest}\``,
     `Frozen date (${preview.time_zone}): \`${preview.frozen_date}\``,
     `Knowledge digest: \`${preview.knowledge_digest}\``,
     "",
@@ -1427,6 +1683,8 @@ function previewMarkdownBytes(manifest: CandidateManifest): Buffer {
     "## Public Notes",
     "",
   ];
+  if (preview.content_notice !== undefined)
+    lines.push("## Approved content notice", "", preview.content_notice, "");
   for (const note of preview.notes) {
     lines.push(
       `### ${note.title}`,
@@ -1527,6 +1785,11 @@ export async function prepareCandidate(
       ".",
       "Existing canonical graph must pass the shared validator before preparation.",
     );
+  validateRepositoryTarget(
+    parsed.request,
+    baseValidation.graph.manifest,
+    repository.targetFingerprint,
+  );
   const baseProjectionPaths = await deliveryProjectionPaths(
     snapshot,
     baseValidation.graph,
@@ -1559,9 +1822,10 @@ export async function prepareCandidate(
   const minted = mintIds(parsed.request, graphIds, deps.uuid);
   const frozenDate = configuredDate(
     deps.clock.now(),
-    isInstanceGraph(baseValidation.graph)
-      ? baseValidation.graph.manifest.time_zone
-      : "UTC",
+    parsed.request.instance_configuration?.time_zone ??
+      (isInstanceGraph(baseValidation.graph)
+        ? baseValidation.graph.manifest.time_zone
+        : "UTC"),
   );
   const desired = buildDesiredState(
     parsed.request,
@@ -1576,8 +1840,7 @@ export async function prepareCandidate(
     deps.fileSystem,
   );
   const currentState = sortedStrings([
-    ...currentCanonical,
-    ...baseProjectionPaths,
+    ...new Set([...currentCanonical, ...baseProjectionPaths]),
   ]);
   const support = await supportPaths(repository.root, deps.fileSystem);
   const implementation = await implementationPaths(
@@ -1791,6 +2054,18 @@ export async function prepareCandidate(
       candidate_directory: ".",
       mode: parsed.request.mode,
       base_commit: repository.head,
+      target_fingerprint: repository.targetFingerprint,
+      current_repository_role: baseValidation.graph.manifest.repository_role,
+      proposed_repository_role: "instance",
+      actual_origin_url: repository.targetFingerprint.origin_url,
+      proposed_time_zone: desired.manifest.time_zone,
+      marketplace_name: desired.manifest.marketplace_name,
+      ...(parsed.request.instance_configuration
+        ? {
+            content_notice:
+              parsed.request.instance_configuration.content_notice,
+          }
+        : {}),
       time_zone: desired.manifest.time_zone,
       frozen_date: frozenDate,
       affected_paths: changedPaths,
@@ -1818,6 +2093,7 @@ export async function prepareCandidate(
       mode: parsed.request.mode,
       base_commit: repository.head,
       repository_identity: repository.identity,
+      target_fingerprint: repository.targetFingerprint,
       time_zone: desired.manifest.time_zone,
       frozen_date: frozenDate,
       canonical_inputs: currentInputs,
@@ -1898,7 +2174,11 @@ export async function prepareCandidate(
   }
 }
 
-function invalidated(candidateDigest: string, code: string): CandidateReceipt {
+function invalidated(
+  candidateDigest: string,
+  code: string,
+  targetFingerprint: TargetFingerprint,
+): CandidateReceipt {
   return {
     schema_version: "1.0.0",
     candidate_digest: candidateDigest,
@@ -1906,6 +2186,7 @@ function invalidated(candidateDigest: string, code: string): CandidateReceipt {
     changed_paths: [],
     validation: { status: "not_run" },
     invalidation_code: code,
+    target_fingerprint: targetFingerprint,
   };
 }
 
@@ -2041,6 +2322,10 @@ function validateManifestSemantics(manifest: CandidateManifest): void {
     !sameJson(preview.canonical_diff, canonicalDiff) ||
     preview.mode !== manifest.mode ||
     preview.base_commit !== manifest.base_commit ||
+    manifest.target_fingerprint.base_commit !== manifest.base_commit ||
+    !sameJson(preview.target_fingerprint, manifest.target_fingerprint) ||
+    preview.actual_origin_url !== manifest.target_fingerprint.origin_url ||
+    preview.proposed_time_zone !== manifest.time_zone ||
     preview.time_zone !== manifest.time_zone ||
     preview.frozen_date !== manifest.frozen_date ||
     preview.knowledge_digest !== manifest.knowledge_digest ||
@@ -2056,6 +2341,41 @@ function validateManifestSemantics(manifest: CandidateManifest): void {
     )
   )
     throw new Error("manifest cross-field mismatch");
+  if (
+    manifest.target_fingerprint.pre_conversion_manifest_digest !==
+    inputs.get("./coffee-chat.json")
+  )
+    throw new Error("target manifest digest mismatch");
+  const configuration = manifest.materialized_changes.instance_configuration;
+  if (manifest.mode === "make-mine") {
+    if (
+      !configuration ||
+      preview.current_repository_role !== "engine" ||
+      preview.proposed_repository_role !== "instance" ||
+      preview.content_notice !== configuration.content_notice ||
+      preview.marketplace_name !== configuration.marketplace_name ||
+      configuration.marketplace_name !==
+        `${configuration.plugin.name}-marketplace` ||
+      manifest.time_zone !== configuration.time_zone
+    )
+      throw new Error("instance configuration mismatch");
+    let proposedRepository: string;
+    try {
+      proposedRepository = normalizeGitHubRepositoryUrl(
+        configuration.repository.url,
+      );
+    } catch {
+      throw new Error("instance repository mismatch");
+    }
+    if (proposedRepository !== manifest.target_fingerprint.origin_url)
+      throw new Error("instance repository mismatch");
+  } else if (
+    configuration ||
+    preview.current_repository_role !== "instance" ||
+    preview.proposed_repository_role !== "instance" ||
+    preview.content_notice !== undefined
+  )
+    throw new Error("unexpected instance configuration");
 }
 
 function validateMaterializedRequestBinding(
@@ -2072,12 +2392,26 @@ function validateMaterializedRequestBinding(
   )
     return false;
   const temporaryIds = new Map<string, string>();
-  if (request.profile) {
-    const profile = manifest.materialized_changes.profile;
-    if (!profile || !sameJson(profile.value, request.profile.value))
+  if (request.instance_configuration) {
+    const configuration = manifest.materialized_changes.instance_configuration;
+    const requested = request.instance_configuration;
+    if (
+      !configuration ||
+      !sameJson(configuration.profile.value, {
+        display_name: requested.profile.display_name,
+        short_name: requested.profile.short_name,
+      }) ||
+      configuration.time_zone !== requested.time_zone ||
+      !sameJson(configuration.repository, requested.repository) ||
+      configuration.pages_url !== requested.pages_url ||
+      !sameJson(configuration.plugin, requested.plugin) ||
+      configuration.marketplace_name !==
+        `${requested.plugin.name}-marketplace` ||
+      configuration.content_notice !== requested.content_notice
+    )
       return false;
-    temporaryIds.set(request.profile.temporary_key, profile.id);
-  } else if (manifest.materialized_changes.profile) return false;
+    temporaryIds.set(requested.profile.temporary_key, configuration.profile.id);
+  } else if (manifest.materialized_changes.instance_configuration) return false;
 
   if (
     request.entity_changes.length !==
@@ -2641,8 +2975,6 @@ export async function applyCandidate(
   overrides: CandidateDependencies = {},
 ): Promise<CandidateReceipt> {
   const deps = dependencies(overrides);
-  if (!DIGEST.test(options.approvedDigest))
-    return invalidated(options.approvedDigest, "approved-digest-invalid");
   let repository: Awaited<ReturnType<typeof repositoryBinding>>;
   let candidateLocation: CandidateLocationBinding;
   try {
@@ -2652,8 +2984,16 @@ export async function applyCandidate(
       deps.fileSystem,
     );
   } catch {
-    return invalidated(options.approvedDigest, "candidate-location-invalid");
+    throw unable(
+      "candidate-git-unavailable",
+      ".",
+      "Required Git repository state could not be resolved.",
+    );
   }
+  const invalidateRepository = (code: string) =>
+    invalidated(options.approvedDigest, code, repository.targetFingerprint);
+  if (!DIGEST.test(options.approvedDigest))
+    return invalidateRepository("approved-digest-invalid");
   try {
     candidateLocation = await bindExternalCandidateLocation(
       repository.root,
@@ -2662,7 +3002,7 @@ export async function applyCandidate(
       { requireExisting: false, requireEmpty: false },
     );
   } catch {
-    return invalidated(options.approvedDigest, "candidate-location-invalid");
+    return invalidateRepository("candidate-location-invalid");
   }
   if (!candidateLocation.root)
     throw unable(
@@ -2677,7 +3017,7 @@ export async function applyCandidate(
       deps.fileSystem,
     );
   } catch {
-    return invalidated(options.approvedDigest, "candidate-location-drift");
+    return invalidateRepository("candidate-location-drift");
   }
   const candidateRoot = candidateLocation.root?.real_path as string;
   let manifest: CandidateManifest;
@@ -2689,18 +3029,20 @@ export async function applyCandidate(
     );
   } catch (error) {
     if (error instanceof ValidationFailure)
-      return invalidated(options.approvedDigest, "candidate-manifest-invalid");
+      return invalidateRepository("candidate-manifest-invalid");
     throw error;
   }
+  const invalidate = (code: string) =>
+    invalidated(options.approvedDigest, code, manifest.target_fingerprint);
   if (manifest.candidate_digest !== options.approvedDigest)
-    return invalidated(options.approvedDigest, "approved-digest-mismatch");
+    return invalidate("approved-digest-mismatch");
   try {
     if (
       !DIGEST.test(manifest.candidate_digest) ||
       sha256(canonicalizeJson(withoutCandidateDigest(manifest) as never)) !==
         manifest.candidate_digest
     )
-      return invalidated(options.approvedDigest, "candidate-digest-mismatch");
+      return invalidate("candidate-digest-mismatch");
     if (
       !(await requireCandidateLocation(
         candidateLocation,
@@ -2711,7 +3053,7 @@ export async function applyCandidate(
         () => false,
       ))
     )
-      return invalidated(options.approvedDigest, "candidate-location-drift");
+      return invalidate("candidate-location-drift");
     if (
       !(await verifyCandidateInventory(
         candidateRoot,
@@ -2719,20 +3061,22 @@ export async function applyCandidate(
         deps.fileSystem,
       ))
     )
-      return invalidated(options.approvedDigest, "candidate-artifact-drift");
+      return invalidate("candidate-artifact-drift");
     const parsedRequest = await parseRequest(
       repository.root,
       manifest.request_binding.path,
       deps.fileSystem,
     );
     if (sha256(parsedRequest.bytes) !== manifest.request_binding.digest)
-      return invalidated(options.approvedDigest, "source-observation-drift");
+      return invalidate("source-observation-drift");
     validateRequestSemantics(parsedRequest.request);
     if (
       repository.head !== manifest.base_commit ||
       !sameJson(repository.identity, manifest.repository_identity)
     )
-      return invalidated(options.approvedDigest, "base-head-drift");
+      return invalidate("base-head-drift");
+    if (!sameJson(repository.targetFingerprint, manifest.target_fingerprint))
+      return invalidate("target-fingerprint-drift");
     if (
       !(await currentDigestsEqual(
         repository.root,
@@ -2740,7 +3084,7 @@ export async function applyCandidate(
         deps.fileSystem,
       ))
     )
-      return invalidated(options.approvedDigest, "canonical-input-drift");
+      return invalidate("canonical-input-drift");
     if (
       !(await implementationDigestsEqual(
         repository.root,
@@ -2748,20 +3092,29 @@ export async function applyCandidate(
         deps.fileSystem,
       ))
     )
-      return invalidated(options.approvedDigest, "implementation-drift");
+      return invalidate("implementation-drift");
     const currentWorktree = await worktreeBinding(
       repository.root,
       manifest.worktree.paths,
       deps.git,
     );
     if (!sameJson(currentWorktree, manifest.worktree))
-      return invalidated(options.approvedDigest, "worktree-drift");
+      return invalidate("worktree-drift");
     const baseSnapshot = await createSnapshot(repository.root, "worktree");
     const baseValidation = await validateKnowledge(baseSnapshot, {
       validateIndex: false,
     });
     if (!baseValidation.graph || baseValidation.diagnostics.length > 0)
-      return invalidated(options.approvedDigest, "candidate-base-drift");
+      return invalidate("candidate-base-drift");
+    try {
+      validateRepositoryTarget(
+        parsedRequest.request,
+        baseValidation.graph.manifest,
+        repository.targetFingerprint,
+      );
+    } catch {
+      return invalidate("target-fingerprint-drift");
+    }
     if (
       !validateMaterializedRequestBinding(
         manifest,
@@ -2769,7 +3122,7 @@ export async function applyCandidate(
         baseValidation.graph,
       )
     )
-      return invalidated(options.approvedDigest, "candidate-manifest-invalid");
+      return invalidate("candidate-manifest-invalid");
     const rootManifest = parseStrictJson(
       decodeCanonicalText(
         await deps.fileSystem.readFile(
@@ -2779,18 +3132,18 @@ export async function applyCandidate(
       ),
       "coffee-chat.json",
     ) as Manifest;
-    const rootTimeZone = isInstanceManifest(rootManifest)
-      ? rootManifest.time_zone
-      : "UTC";
+    const rootTimeZone =
+      parsedRequest.request.instance_configuration?.time_zone ??
+      (isInstanceManifest(rootManifest) ? rootManifest.time_zone : "UTC");
     if (
       rootTimeZone !== manifest.time_zone ||
       configuredDate(deps.clock.now(), rootTimeZone) !== manifest.frozen_date
     )
-      return invalidated(options.approvedDigest, "configured-date-drift");
+      return invalidate("configured-date-drift");
     for (const effect of manifest.setup_effects) {
       const current = await inspectHook(repository.root, { git: deps.git });
       if (!sameJson(current, effect.target_fingerprint))
-        return invalidated(options.approvedDigest, "hook-target-drift");
+        return invalidate("hook-target-drift");
     }
     await deps.preflight.checkpoint("before-shared-validation");
     const materializedRoot = resolve(candidateRoot, "repository");
@@ -2804,28 +3157,28 @@ export async function applyCandidate(
       validation.diagnostics.length > 0 ||
       !isInstanceGraph(validation.graph)
     )
-      return invalidated(options.approvedDigest, "candidate-validation-drift");
+      return invalidate("candidate-validation-drift");
     if (!validateCandidateProjection(manifest, validation.graph))
-      return invalidated(options.approvedDigest, "candidate-manifest-invalid");
+      return invalidate("candidate-manifest-invalid");
     if (
       (await checkGeneratedIndex(materializedSnapshot, validation.graph))
         .length > 0
     )
-      return invalidated(options.approvedDigest, "candidate-generation-drift");
+      return invalidate("candidate-generation-drift");
     if (
       (await deliveryProjectionPaths(materializedSnapshot, validation.graph))
         .length > 0 &&
       (await checkGeneratedProjections(materializedSnapshot, validation.graph))
         .length > 0
     )
-      return invalidated(options.approvedDigest, "candidate-generation-drift");
+      return invalidate("candidate-generation-drift");
     const generated = generatedIndexBytes(validation.graph);
     const generatedValue = parseStrictJson(
       decodeCanonicalText(generated, "knowledge/index.json"),
       "knowledge/index.json",
     ) as { knowledge_digest: string };
     if (generatedValue.knowledge_digest !== manifest.knowledge_digest)
-      return invalidated(options.approvedDigest, "candidate-generation-drift");
+      return invalidate("candidate-generation-drift");
 
     try {
       await requireCandidateLocation(
@@ -2834,8 +3187,17 @@ export async function applyCandidate(
         deps.fileSystem,
       );
     } catch {
-      return invalidated(options.approvedDigest, "candidate-location-drift");
+      return invalidate("candidate-location-drift");
     }
+    const finalRepository = await repositoryBinding(
+      repository.root,
+      deps.git,
+      deps.fileSystem,
+    );
+    if (
+      !sameJson(finalRepository.targetFingerprint, manifest.target_fingerprint)
+    )
+      return invalidate("target-fingerprint-drift");
     await applyTransaction(
       repository.root,
       candidateRoot,
@@ -2850,6 +3212,7 @@ export async function applyCandidate(
         status: "applied",
         changed_paths: manifest.changed_paths,
         validation: { status: "passed" },
+        target_fingerprint: manifest.target_fingerprint,
       };
     }
     const effect = manifest.setup_effects[0] as SetupBinding;
@@ -2864,6 +3227,7 @@ export async function applyCandidate(
         status: "applied",
         changed_paths: manifest.changed_paths,
         validation: { status: "passed" },
+        target_fingerprint: manifest.target_fingerprint,
         setup_effects: [
           {
             effect: effect.effect,
@@ -2879,6 +3243,7 @@ export async function applyCandidate(
         status: "partial_local_result",
         changed_paths: manifest.changed_paths,
         validation: { status: "passed" },
+        target_fingerprint: manifest.target_fingerprint,
         setup_effects: [
           {
             effect: effect.effect,
@@ -2892,6 +3257,6 @@ export async function applyCandidate(
     }
   } catch (error) {
     if (error instanceof CandidateTransactionFailure) throw error;
-    return invalidated(options.approvedDigest, "preflight-unavailable");
+    return invalidate("preflight-unavailable");
   }
 }

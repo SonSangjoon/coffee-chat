@@ -257,7 +257,13 @@ describe("Task 4 deterministic delivery projections", () => {
   it("regenerates all public identity strings from a fork manifest", async () => {
     const root = await mkdtemp(resolve(tmpdir(), "coffee-chat-task-4-fork-"));
     temporaryRoots.push(root);
-    for (const path of ["coffee-chat.json", "schemas", "method", "skills"])
+    for (const path of [
+      "coffee-chat.json",
+      "schemas",
+      "method",
+      "skills",
+      "CONTENT_LICENSE.md",
+    ])
       await cp(resolve(projectRoot, path), resolve(root, path), {
         recursive: true,
       });

@@ -151,6 +151,15 @@ async function repositoryFixture(
   await git(root, "init", "-q");
   await git(root, "config", "user.email", "task4@example.com");
   await git(root, "config", "user.name", "Task 4");
+  await git(
+    root,
+    "remote",
+    "add",
+    "origin",
+    options.upstreamIdentity
+      ? "https://github.com/example/coffee-chat-upstream"
+      : "git@github.com:example/coffee-chat-downstream.git",
+  );
   await git(root, "add", ".");
   await git(root, "commit", "-qm", "fixture");
   return {
@@ -164,22 +173,26 @@ function request() {
   return {
     schema_version: "1.0.0",
     mode: "make-mine",
-    profile: {
-      temporary_key: "profile",
-      value: {
+    instance_configuration: {
+      profile: {
+        temporary_key: "profile",
         display_name: "Sangjoon Son",
-        repository: {
-          url: "https://github.com/SonSangjoon/coffee-chat",
-          default_branch: "main",
-        },
-        pages_url: "https://sonsangjoon.github.io/coffee-chat/",
-        plugin: {
-          name: "coffee-chat-sangjoon",
-          version: "1.0.0",
-          description:
-            "Converse with and apply a public, dated perspective graph.",
-        },
+        short_name: "Sangjoon",
       },
+      time_zone: "Asia/Seoul",
+      repository: {
+        url: "https://github.com/example/coffee-chat-downstream",
+        default_branch: "main",
+      },
+      pages_url: "https://example.github.io/coffee-chat-downstream/",
+      plugin: {
+        name: "coffee-chat-sangjoon",
+        version: "1.0.0",
+        description:
+          "Converse with and apply a public, dated perspective graph.",
+      },
+      content_notice:
+        "# Sangjoon Content Notice\n\nSangjoon Son retains ownership of the authored public Notes.\n",
     },
     entity_changes: [
       {
@@ -403,8 +416,12 @@ describe("Task 4 Candidate projection transaction", () => {
     );
   });
 
-  it("removes only the previous generated namespace when Make mine changes identity", async () => {
-    const fixture = await repositoryFixture({ upstreamIdentity: true });
+  it("removes only the marker-owned engine namespace when Make mine creates the instance", async () => {
+    const fixture = await repositoryFixture();
+    await writeFile(
+      resolve(fixture.root, "unrelated-sentinel.txt"),
+      "keep me\n",
+    );
     await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
 
     const prepared = await prepareCandidate(
@@ -423,9 +440,9 @@ describe("Task 4 Candidate projection transaction", () => {
     ) as CandidateManifest;
 
     expect(manifest.deletions).toContain(
-      "./plugins/coffee-chat-upstream/.codex-plugin/plugin.json",
+      "./plugins/coffee-chat/.codex-plugin/plugin.json",
     );
-    expect(manifest.changed_paths).not.toContain("./CONTENT_LICENSE.md");
+    expect(manifest.changed_paths).toContain("./CONTENT_LICENSE.md");
     expect(
       manifest.deletions.some((path) => path.includes("unrelated-sentinel")),
     ).toBe(false);
@@ -446,10 +463,7 @@ describe("Task 4 Candidate projection transaction", () => {
     expect(receipt.status).toBe("applied");
     await expect(
       readFile(
-        resolve(
-          fixture.root,
-          "plugins/coffee-chat-upstream/.codex-plugin/plugin.json",
-        ),
+        resolve(fixture.root, "plugins/coffee-chat/.codex-plugin/plugin.json"),
       ),
     ).rejects.toMatchObject({ code: "ENOENT" });
     expect(
@@ -463,7 +477,9 @@ describe("Task 4 Candidate projection transaction", () => {
     ).toContain('"name": "coffee-chat-sangjoon"');
     expect(
       await readFile(resolve(fixture.root, "CONTENT_LICENSE.md"), "utf8"),
-    ).toContain("Downstream authors retain ownership of the Notes");
+    ).toBe(
+      "# Sangjoon Content Notice\n\nSangjoon Son retains ownership of the authored public Notes.\n",
+    );
     expect(
       await readFile(resolve(fixture.root, "unrelated-sentinel.txt"), "utf8"),
     ).toBe("keep me\n");

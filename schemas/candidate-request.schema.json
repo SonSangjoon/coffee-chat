@@ -14,7 +14,7 @@
   "properties": {
     "schema_version": { "$ref": "#/$defs/semver" },
     "mode": { "enum": ["make-mine", "contribute", "update"] },
-    "profile": { "$ref": "#/$defs/profile_change" },
+    "instance_configuration": { "$ref": "#/$defs/instance_configuration" },
     "entity_changes": {
       "type": "array",
       "items": { "$ref": "#/$defs/entity_change" }
@@ -33,10 +33,10 @@
     {
       "if": { "properties": { "mode": { "const": "make-mine" } } },
       "then": {
-        "properties": { "profile": true },
-        "required": ["profile"]
+        "properties": { "instance_configuration": true },
+        "required": ["instance_configuration"]
       },
-      "else": { "properties": { "profile": false } }
+      "else": { "properties": { "instance_configuration": false } }
     }
   ],
   "$defs": {
@@ -75,43 +75,53 @@
       "type": "string",
       "pattern": "^[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?(?:/[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?)?$"
     },
-    "profile_change": {
+    "instance_configuration": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["temporary_key", "value"],
+      "required": [
+        "profile",
+        "time_zone",
+        "repository",
+        "pages_url",
+        "plugin",
+        "content_notice"
+      ],
       "properties": {
-        "temporary_key": { "$ref": "#/$defs/temporary_key" },
-        "value": {
+        "profile": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["display_name", "repository", "pages_url", "plugin"],
+          "required": ["temporary_key", "display_name", "short_name"],
           "properties": {
+            "temporary_key": { "$ref": "#/$defs/temporary_key" },
             "display_name": { "type": "string" },
-            "repository": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["url", "default_branch"],
-              "properties": {
-                "url": { "$ref": "#/$defs/http_url" },
-                "default_branch": { "type": "string" }
-              }
-            },
-            "pages_url": { "$ref": "#/$defs/http_url" },
-            "plugin": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["name", "version", "description"],
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-                },
-                "version": { "$ref": "#/$defs/semver" },
-                "description": { "type": "string" }
-              }
-            }
+            "short_name": { "type": "string" }
           }
-        }
+        },
+        "time_zone": { "type": "string", "minLength": 1 },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url", "default_branch"],
+          "properties": {
+            "url": { "$ref": "#/$defs/http_url" },
+            "default_branch": { "type": "string" }
+          }
+        },
+        "pages_url": { "$ref": "#/$defs/http_url" },
+        "plugin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+            },
+            "version": { "$ref": "#/$defs/semver" },
+            "description": { "type": "string" }
+          }
+        },
+        "content_notice": { "type": "string", "minLength": 1 }
       }
     },
     "entity_value": {

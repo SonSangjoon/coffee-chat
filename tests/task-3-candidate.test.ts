@@ -21,7 +21,6 @@ import {
   prepareCandidate,
   type CandidateDependencies,
   type CandidateManifest,
-  type CandidateReceipt,
   type MutationPoint,
 } from "../tools/candidate.ts";
 import {
@@ -90,6 +89,15 @@ async function makeRepository(
   await git(root, "init", "-q");
   await git(root, "config", "user.email", "candidate@example.com");
   await git(root, "config", "user.name", "Candidate Test");
+  await git(
+    root,
+    "remote",
+    "add",
+    "origin",
+    state === "initialized"
+      ? "https://github.com/example/coffee-chat.git"
+      : "git@github.com:example/candidate.git",
+  );
   await git(root, "add", ".");
   await git(root, "commit", "-qm", "fixture");
   return {
@@ -104,21 +112,25 @@ function makeMineRequest(setupEffects: string[] = []): Record<string, unknown> {
   return {
     schema_version: "1.0.0",
     mode: "make-mine",
-    profile: {
-      temporary_key: "owner_profile",
-      value: {
+    instance_configuration: {
+      profile: {
+        temporary_key: "owner_profile",
         display_name: "Candidate Owner",
-        repository: {
-          url: "https://github.com/example/candidate",
-          default_branch: "main",
-        },
-        pages_url: "https://example.github.io/candidate/",
-        plugin: {
-          name: "coffee-chat-candidate",
-          version: "1.0.0",
-          description: "Candidate fixture.",
-        },
+        short_name: "Candidate",
       },
+      time_zone: "Asia/Seoul",
+      repository: {
+        url: "https://github.com/example/candidate",
+        default_branch: "main",
+      },
+      pages_url: "https://example.github.io/candidate/",
+      plugin: {
+        name: "coffee-chat-candidate",
+        version: "1.0.0",
+        description: "Candidate fixture.",
+      },
+      content_notice:
+        "# Candidate Content Notice\n\nCandidate Owner retains ownership of the authored public Notes.\n",
     },
     entity_changes: [
       {
@@ -271,6 +283,7 @@ async function canonicalBytes(root: string): Promise<Record<string, string>> {
   const paths = (await recursiveFiles(root)).filter(
     (path) =>
       path === "coffee-chat.json" ||
+      path === "CONTENT_LICENSE.md" ||
       path.startsWith("knowledge/") ||
       path.startsWith("method/"),
   );
@@ -593,7 +606,7 @@ describe("external-only complete Candidate materialization", () => {
       schema_version: "1.0.0",
       candidate_format_version: "1.0.0",
       mode: "make-mine",
-      time_zone: "UTC",
+      time_zone: "Asia/Seoul",
       frozen_date: "2026-08-01",
       validation: { status: "passed" },
       source_observations: expect.arrayContaining([
@@ -626,7 +639,7 @@ describe("external-only complete Candidate materialization", () => {
       candidate_directory: ".",
       base_commit: manifest.base_commit,
       frozen_date: "2026-08-01",
-      time_zone: "UTC",
+      time_zone: "Asia/Seoul",
       knowledge_digest: manifest.knowledge_digest,
       validation: { status: "passed" },
       notes: [
@@ -710,8 +723,23 @@ describe("external-only complete Candidate materialization", () => {
     },
   );
 
-  it("make-mine removes upstream knowledge while contribute preserves upstream identity and graph", async () => {
-    const makeMine = await makeRepository("initialized");
+  it("make-mine requires an engine while contribute preserves instance identity and graph", async () => {
+    const initialized = await makeRepository("initialized");
+    await writeRequest(initialized, makeMineRequest());
+    await expect(
+      prepareCandidate(
+        {
+          root: initialized.root,
+          requestPath: initialized.requestPath,
+          out: initialized.out,
+        },
+        fixedDependencies(),
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "make-mine-engine-required" },
+    });
+
+    const makeMine = await makeRepository();
     await writeRequest(makeMine, makeMineRequest());
     await prepareCandidate(
       {
@@ -1825,8 +1853,8 @@ describe("transaction rollback and setup receipt semantics", () => {
     },
   );
 
-  it("restores deleted Notes and removes newly added Notes after a mid-transaction make-mine fault", async () => {
-    const fixture = await makeRepository("initialized");
+  it("removes newly added canonical state after a mid-transaction make-mine fault", async () => {
+    const fixture = await makeRepository();
     await writeRequest(fixture, makeMineRequest());
     await prepareCandidate(
       {
@@ -1840,7 +1868,7 @@ describe("transaction rollback and setup receipt semantics", () => {
       resolve(fixture.out, "candidate-manifest.json"),
     );
     const before = await canonicalBytes(fixture.root);
-    let deletes = 0;
+    let swaps = 0;
     await expect(
       applyCandidate(
         {
@@ -1854,9 +1882,9 @@ describe("transaction rollback and setup receipt semantics", () => {
             ...nodeFileSystem,
             checkpoint: async (point, path) => {
               await nodeFileSystem.checkpoint(point, path);
-              if (point === "delete") {
-                deletes += 1;
-                if (deletes === 2) throw new Error("mid-delete fault");
+              if (point === "swap") {
+                swaps += 1;
+                if (swaps === 2) throw new Error("mid-swap fault");
               }
             },
           },
@@ -1866,23 +1894,11 @@ describe("transaction rollback and setup receipt semantics", () => {
       diagnostic: { code: "candidate-transaction-failed" },
       rollbackVerified: true,
     });
-    expect(deletes).toBe(2);
+    expect(swaps).toBe(2);
     expect(await canonicalBytes(fixture.root)).toEqual(before);
     await expect(
       lstat(resolve(fixture.root, `knowledge/notes/${NOTE_ID}.md`)),
     ).rejects.toThrow();
-    expect(
-      await readFile(
-        resolve(fixture.root, `knowledge/notes/${EXISTING_NOTE_ID}.md`),
-        "utf8",
-      ),
-    ).toContain("Several sources");
-    expect(
-      await readFile(
-        resolve(fixture.root, `knowledge/notes/${OTHER_NOTE_ID}.md`),
-        "utf8",
-      ),
-    ).toContain("Reused source");
   });
 
   it("rolls back when applied shared validation fails after all swaps", async () => {
@@ -2055,7 +2071,7 @@ describe("transaction rollback and setup receipt semantics", () => {
       schema,
     );
     const digest = `sha256:${"a".repeat(64)}`;
-    const invalid: CandidateReceipt[] = [
+    const invalid: Array<Record<string, unknown>> = [
       {
         schema_version: "1.0.0",
         candidate_digest: digest,

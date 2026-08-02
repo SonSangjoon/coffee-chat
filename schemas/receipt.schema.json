@@ -9,7 +9,8 @@
     "candidate_digest",
     "status",
     "changed_paths",
-    "validation"
+    "validation",
+    "target_fingerprint"
   ],
   "properties": {
     "schema_version": { "$ref": "#/$defs/semver" },
@@ -23,6 +24,7 @@
       "uniqueItems": true
     },
     "validation": { "$ref": "#/$defs/validation" },
+    "target_fingerprint": { "$ref": "#/$defs/target_fingerprint" },
     "invalidation_code": {
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -125,6 +127,42 @@
       "additionalProperties": false,
       "required": ["status"],
       "properties": { "status": { "enum": ["passed", "not_run"] } }
+    },
+    "absolute_path": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))/(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "decimal_integer": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)$"
+    },
+    "target_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "git_common_dir",
+        "origin_url",
+        "base_commit",
+        "pre_conversion_manifest_digest"
+      ],
+      "properties": {
+        "git_common_dir": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["real_path", "device", "inode"],
+          "properties": {
+            "real_path": { "$ref": "#/$defs/absolute_path" },
+            "device": { "$ref": "#/$defs/decimal_integer" },
+            "inode": { "$ref": "#/$defs/decimal_integer" }
+          }
+        },
+        "origin_url": {
+          "type": "string",
+          "pattern": "^https://github\\.com/[a-z0-9.-]+/[a-z0-9._-]+$"
+        },
+        "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40,64}$" },
+        "pre_conversion_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
     },
     "setup_result": {
       "type": "object",

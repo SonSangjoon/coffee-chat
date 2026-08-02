@@ -383,7 +383,12 @@ export async function generatedProjectionBytes(
   const codex = jsonBytes(codexManifest(manifest));
   const claude = jsonBytes(claudeManifest(manifest));
   values.set("README.md", readme(manifest));
-  values.set("CONTENT_LICENSE.md", contentLicense());
+  values.set(
+    "CONTENT_LICENSE.md",
+    isInstanceManifest(manifest)
+      ? await snapshot.read("CONTENT_LICENSE.md")
+      : contentLicense(),
+  );
   values.set(
     "AGENTS.md",
     textBytes(

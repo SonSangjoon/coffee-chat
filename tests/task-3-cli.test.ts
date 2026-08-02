@@ -156,6 +156,7 @@ describe("Task 3 exact public CLI grammar", () => {
       ["init", "-q"],
       ["config", "user.email", "cli@example.com"],
       ["config", "user.name", "CLI Test"],
+      ["remote", "add", "origin", "https://github.com/example/coffee-chat"],
       ["add", "."],
       ["commit", "-qm", "fixture"],
     ])
