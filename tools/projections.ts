@@ -522,7 +522,13 @@ function record(value: unknown): Record<string, unknown> | undefined {
 async function ownedCoffeeChatPackagePaths(
   snapshot: Snapshot,
   packageName: string,
-): Promise<Set<string> | undefined> {
+): Promise<
+  | {
+      repositoryRole: "engine" | "instance";
+      paths: Set<string>;
+    }
+  | undefined
+> {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(packageName)) return undefined;
   const markerPath = `plugins/${packageName}/${GENERATED_OWNERSHIP_MARKER}`;
   if (!(await snapshot.exists(markerPath))) return undefined;
@@ -564,7 +570,10 @@ async function ownedCoffeeChatPackagePaths(
       ownedPaths.every(validPath) &&
       new Set(ownedPaths).size === ownedPaths.length
     )
-      return new Set([...ownedPaths, markerPath]);
+      return {
+        repositoryRole: marker.repository_role as "engine" | "instance",
+        paths: new Set([...ownedPaths, markerPath]),
+      };
     return undefined;
   } catch {
     return undefined;
@@ -573,8 +582,13 @@ async function ownedCoffeeChatPackagePaths(
 
 async function ownedPackagePaths(
   snapshot: Snapshot,
-): Promise<Map<string, Set<string>>> {
-  const packages = new Map<string, Set<string>>();
+): Promise<
+  Map<string, { repositoryRole: "engine" | "instance"; paths: Set<string> }>
+> {
+  const packages = new Map<
+    string,
+    { repositoryRole: "engine" | "instance"; paths: Set<string> }
+  >();
   const packageNames = new Set(
     (await snapshot.list("plugins"))
       .map((path) => path.split("/")[1])
@@ -606,6 +620,13 @@ async function stalePathIsSafe(
 export async function inspectGeneratedProjections(
   snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
+  ownershipTarget: {
+    repositoryRole: "engine" | "instance";
+    packageName: string;
+  } = {
+    repositoryRole: graph.manifest.repository_role,
+    packageName: graph.manifest.plugin.name,
+  },
 ): Promise<GeneratedProjectionInspection> {
   const expected = (
     await buildProjectionBundle(snapshot, graph, {
@@ -662,7 +683,14 @@ export async function inspectGeneratedProjections(
     }
   }
 
-  for (const [packageName, ownedPaths] of ownedPackages) {
+  for (const [packageName, ownedPackage] of ownedPackages) {
+    if (
+      ownershipTarget.repositoryRole === "instance" &&
+      packageName !== ownershipTarget.packageName &&
+      ownedPackage.repositoryRole !== "engine"
+    )
+      continue;
+    const ownedPaths = ownedPackage.paths;
     const packageRoot = `plugins/${packageName}`;
     for (const path of await snapshot.list(packageRoot)) {
       if (expected.has(path)) continue;
@@ -703,8 +731,13 @@ export async function inspectGeneratedProjections(
 export async function generatedProjectionStatePaths(
   snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
+  ownershipTarget?: {
+    repositoryRole: "engine" | "instance";
+    packageName: string;
+  },
 ): Promise<string[]> {
-  return (await inspectGeneratedProjections(snapshot, graph)).statePaths;
+  return (await inspectGeneratedProjections(snapshot, graph, ownershipTarget))
+    .statePaths;
 }
 
 export async function checkGeneratedProjections(

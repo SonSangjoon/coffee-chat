@@ -563,6 +563,17 @@ async function schemaValidator(
 ): Promise<ValidateFunction> {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
+  if (name === "candidate-manifest.schema.json") {
+    const previewPath = resolve(root, "schemas", "preview.schema.json");
+    const previewBytes = await readFile(previewPath);
+    const previewText = decodeCanonicalText(
+      previewBytes,
+      "schemas/preview.schema.json",
+    );
+    ajv.addSchema(
+      parseStrictJson(previewText, "schemas/preview.schema.json") as object,
+    );
+  }
   const path = resolve(root, "schemas", name);
   const bytes = await readFile(path);
   const text = decodeCanonicalText(bytes, `schemas/${name}`);
@@ -814,6 +825,25 @@ async function repositoryBinding(
   };
 }
 
+async function authoritativeRepositoryRoot(
+  root: string,
+  git: GitExecutor,
+  fileSystem: CandidateFileSystem,
+): Promise<string> {
+  const [realRoot, topRaw] = await Promise.all([
+    fileSystem.realpath(root),
+    requiredGit(git, root, ["rev-parse", "--show-toplevel"]),
+  ]);
+  const topLevel = await fileSystem.realpath(resolve(root, topRaw));
+  if (topLevel !== realRoot)
+    throw unable(
+      "candidate-repository-mismatch",
+      ".",
+      "Candidate commands must run at the authoritative repository root.",
+    );
+  return realRoot;
+}
+
 function validateRepositoryTarget(
   request: CandidateRequest,
   baseManifest: Manifest,
@@ -1042,21 +1072,29 @@ async function canonicalPaths(
 async function deliveryProjectionPaths(
   snapshot: Awaited<ReturnType<typeof createSnapshot>>,
   graph: KnowledgeGraph,
+  ownershipTarget?: {
+    repositoryRole: "engine" | "instance";
+    packageName: string;
+  },
 ): Promise<string[]> {
   if (!(await hasDeliveryProjectionInputs(snapshot))) return [];
-  return generatedProjectionStatePaths(snapshot, graph);
+  return generatedProjectionStatePaths(snapshot, graph, ownershipTarget);
 }
 
 async function repositoryStatePaths(
   root: string,
   graph: KnowledgeGraph,
   fileSystem: CandidateFileSystem,
+  ownershipTarget?: {
+    repositoryRole: "engine" | "instance";
+    packageName: string;
+  },
 ): Promise<string[]> {
   const snapshot = await createSnapshot(root, "worktree");
   return sortedStrings([
     ...new Set([
       ...(await canonicalPaths(root, fileSystem)),
-      ...(await deliveryProjectionPaths(snapshot, graph)),
+      ...(await deliveryProjectionPaths(snapshot, graph, ownershipTarget)),
     ]),
   ]);
 }
@@ -1790,14 +1828,22 @@ export async function prepareCandidate(
     baseValidation.graph.manifest,
     repository.targetFingerprint,
   );
+  const projectionOwnershipTarget = {
+    repositoryRole: "instance" as const,
+    packageName:
+      parsed.request.instance_configuration?.plugin.name ??
+      baseValidation.graph.manifest.plugin.name,
+  };
   const baseProjectionPaths = await deliveryProjectionPaths(
     snapshot,
     baseValidation.graph,
+    projectionOwnershipTarget,
   );
   if (baseProjectionPaths.length > 0) {
     const inspection = await inspectGeneratedProjections(
       snapshot,
       baseValidation.graph,
+      projectionOwnershipTarget,
     );
     const ownedStale = new Set(inspection.ownedStalePaths.map(repositoryPath));
     if (
@@ -2241,9 +2287,6 @@ async function validateCandidateManifestValue(
   );
   if (!validateManifest(value)) throw new Error("manifest schema");
   const manifest = value as CandidateManifest;
-  const validatePreview = await schemaValidator(root, "preview.schema.json");
-  if (!validatePreview(previewObject(manifest)))
-    throw new Error("preview schema");
   validateManifestSemantics(manifest);
   return manifest;
 }
@@ -2652,6 +2695,7 @@ async function currentDigestsEqual(
   root: string,
   expected: PathDigest[],
   fileSystem: CandidateFileSystem,
+  manifest: CandidateManifest,
 ): Promise<boolean> {
   try {
     const snapshot = await createSnapshot(root, "worktree");
@@ -2663,6 +2707,12 @@ async function currentDigestsEqual(
       root,
       validation.graph,
       fileSystem,
+      {
+        repositoryRole: "instance",
+        packageName:
+          manifest.materialized_changes.instance_configuration?.plugin.name ??
+          validation.graph.manifest.plugin.name,
+      },
     );
     const actual = await pathDigests(fileSystem, root, paths);
     return sameJson(actual, expected);
@@ -2975,10 +3025,15 @@ export async function applyCandidate(
   overrides: CandidateDependencies = {},
 ): Promise<CandidateReceipt> {
   const deps = dependencies(overrides);
-  let repository: Awaited<ReturnType<typeof repositoryBinding>>;
-  let candidateLocation: CandidateLocationBinding;
+  if (!DIGEST.test(options.approvedDigest))
+    throw validationFailure(
+      "approved-digest-invalid",
+      ".",
+      "The approved Candidate digest must be a canonical SHA-256 digest.",
+    );
+  let root: string;
   try {
-    repository = await repositoryBinding(
+    root = await authoritativeRepositoryRoot(
       options.root,
       deps.git,
       deps.fileSystem,
@@ -2990,19 +3045,33 @@ export async function applyCandidate(
       "Required Git repository state could not be resolved.",
     );
   }
-  const invalidateRepository = (code: string) =>
-    invalidated(options.approvedDigest, code, repository.targetFingerprint);
-  if (!DIGEST.test(options.approvedDigest))
-    return invalidateRepository("approved-digest-invalid");
+  let repository: Awaited<ReturnType<typeof repositoryBinding>>;
+  let candidateLocation: CandidateLocationBinding;
+  const invalidateCurrentRepository = async (code: string) => {
+    try {
+      repository = await repositoryBinding(root, deps.git, deps.fileSystem);
+    } catch {
+      throw unable(
+        "candidate-git-unavailable",
+        ".",
+        "Required Git repository state could not be resolved.",
+      );
+    }
+    return invalidated(
+      options.approvedDigest,
+      code,
+      repository.targetFingerprint,
+    );
+  };
   try {
     candidateLocation = await bindExternalCandidateLocation(
-      repository.root,
+      root,
       options.candidateDir,
       deps.fileSystem,
       { requireExisting: false, requireEmpty: false },
     );
   } catch {
-    return invalidateRepository("candidate-location-invalid");
+    return invalidateCurrentRepository("candidate-location-invalid");
   }
   if (!candidateLocation.root)
     throw unable(
@@ -3017,32 +3086,36 @@ export async function applyCandidate(
       deps.fileSystem,
     );
   } catch {
-    return invalidateRepository("candidate-location-drift");
+    return invalidateCurrentRepository("candidate-location-drift");
   }
   const candidateRoot = candidateLocation.root?.real_path as string;
   let manifest: CandidateManifest;
   try {
     manifest = await readCandidateManifest(
-      repository.root,
+      root,
       candidateRoot,
       deps.fileSystem,
     );
   } catch (error) {
     if (error instanceof ValidationFailure)
-      return invalidateRepository("candidate-manifest-invalid");
+      return invalidateCurrentRepository("candidate-manifest-invalid");
     throw error;
   }
+  if (
+    sha256(canonicalizeJson(withoutCandidateDigest(manifest) as never)) !==
+    manifest.candidate_digest
+  )
+    return invalidateCurrentRepository("candidate-digest-mismatch");
+  if (manifest.candidate_digest !== options.approvedDigest)
+    return invalidateCurrentRepository("approved-digest-mismatch");
   const invalidate = (code: string) =>
     invalidated(options.approvedDigest, code, manifest.target_fingerprint);
-  if (manifest.candidate_digest !== options.approvedDigest)
-    return invalidate("approved-digest-mismatch");
   try {
-    if (
-      !DIGEST.test(manifest.candidate_digest) ||
-      sha256(canonicalizeJson(withoutCandidateDigest(manifest) as never)) !==
-        manifest.candidate_digest
-    )
-      return invalidate("candidate-digest-mismatch");
+    try {
+      repository = await repositoryBinding(root, deps.git, deps.fileSystem);
+    } catch {
+      return invalidate("target-fingerprint-drift");
+    }
     if (
       !(await requireCandidateLocation(
         candidateLocation,
@@ -3082,6 +3155,7 @@ export async function applyCandidate(
         repository.root,
         manifest.canonical_inputs,
         deps.fileSystem,
+        manifest,
       ))
     )
       return invalidate("canonical-input-drift");
@@ -3189,11 +3263,16 @@ export async function applyCandidate(
     } catch {
       return invalidate("candidate-location-drift");
     }
-    const finalRepository = await repositoryBinding(
-      repository.root,
-      deps.git,
-      deps.fileSystem,
-    );
+    let finalRepository: Awaited<ReturnType<typeof repositoryBinding>>;
+    try {
+      finalRepository = await repositoryBinding(
+        repository.root,
+        deps.git,
+        deps.fileSystem,
+      );
+    } catch {
+      return invalidate("target-fingerprint-drift");
+    }
     if (
       !sameJson(finalRepository.targetFingerprint, manifest.target_fingerprint)
     )

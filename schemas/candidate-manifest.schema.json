@@ -96,7 +96,7 @@
     "knowledge_digest": { "$ref": "#/$defs/digest" },
     "validation": { "$ref": "#/$defs/passed_validation" },
     "preview": {
-      "type": "object"
+      "$ref": "https://coffee-chat.dev/schemas/preview.schema.json#/$defs/preview_data"
     }
   },
   "$defs": {

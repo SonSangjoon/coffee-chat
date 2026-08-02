@@ -1221,6 +1221,13 @@ describe("exact approval preflight invalidation", () => {
       },
     },
     {
+      name: "an unknown embedded Preview property",
+      mutate: (manifest: Record<string, unknown>) => {
+        const preview = manifest.preview as Record<string, unknown>;
+        preview.untrusted_extension = true;
+      },
+    },
+    {
       name: "a traversal transaction path",
       mutate: (manifest: Record<string, unknown>) => {
         manifest.changed_paths = [

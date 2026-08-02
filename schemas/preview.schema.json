@@ -191,15 +191,94 @@
   },
   "allOf": [
     {
-      "if": { "properties": { "mode": { "const": "make-mine" } } },
+      "if": {
+        "type": "object",
+        "properties": { "mode": { "const": "make-mine" } }
+      },
       "then": {
+        "type": "object",
         "properties": { "content_notice": true },
         "required": ["content_notice"]
       },
-      "else": { "properties": { "content_notice": false } }
+      "else": {
+        "type": "object",
+        "properties": { "content_notice": false }
+      }
     }
   ],
   "$defs": {
+    "preview_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_directory",
+        "mode",
+        "base_commit",
+        "target_fingerprint",
+        "current_repository_role",
+        "proposed_repository_role",
+        "actual_origin_url",
+        "proposed_time_zone",
+        "marketplace_name",
+        "time_zone",
+        "frozen_date",
+        "affected_paths",
+        "output_hashes",
+        "knowledge_digest",
+        "canonical_diff",
+        "worktree",
+        "notes",
+        "entities",
+        "source_observations",
+        "setup_effects",
+        "unresolved_source_limitations",
+        "privacy_warnings",
+        "validation"
+      ],
+      "properties": {
+        "candidate_directory": {
+          "$ref": "#/properties/candidate_directory"
+        },
+        "mode": { "$ref": "#/properties/mode" },
+        "base_commit": { "$ref": "#/properties/base_commit" },
+        "target_fingerprint": {
+          "$ref": "#/properties/target_fingerprint"
+        },
+        "current_repository_role": {
+          "$ref": "#/properties/current_repository_role"
+        },
+        "proposed_repository_role": {
+          "$ref": "#/properties/proposed_repository_role"
+        },
+        "actual_origin_url": {
+          "$ref": "#/properties/actual_origin_url"
+        },
+        "proposed_time_zone": {
+          "$ref": "#/properties/proposed_time_zone"
+        },
+        "marketplace_name": { "$ref": "#/properties/marketplace_name" },
+        "content_notice": { "$ref": "#/properties/content_notice" },
+        "time_zone": { "$ref": "#/properties/time_zone" },
+        "frozen_date": { "$ref": "#/properties/frozen_date" },
+        "affected_paths": { "$ref": "#/properties/affected_paths" },
+        "output_hashes": { "$ref": "#/properties/output_hashes" },
+        "knowledge_digest": { "$ref": "#/properties/knowledge_digest" },
+        "canonical_diff": { "$ref": "#/properties/canonical_diff" },
+        "worktree": { "$ref": "#/properties/worktree" },
+        "notes": { "$ref": "#/properties/notes" },
+        "entities": { "$ref": "#/properties/entities" },
+        "source_observations": {
+          "$ref": "#/properties/source_observations"
+        },
+        "setup_effects": { "$ref": "#/properties/setup_effects" },
+        "unresolved_source_limitations": {
+          "$ref": "#/properties/unresolved_source_limitations"
+        },
+        "privacy_warnings": { "$ref": "#/properties/privacy_warnings" },
+        "validation": { "$ref": "#/properties/validation" }
+      },
+      "allOf": [{ "$ref": "#/allOf/0" }]
+    },
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"

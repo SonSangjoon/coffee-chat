@@ -235,6 +235,48 @@ function request() {
   };
 }
 
+async function addForeignInstancePackage(root: string): Promise<void> {
+  const packageName = "coffee-chat-other-instance";
+  const packageRoot = resolve(root, `plugins/${packageName}`);
+  await mkdir(resolve(packageRoot, ".codex-plugin"), { recursive: true });
+  await mkdir(resolve(packageRoot, "knowledge"), { recursive: true });
+  await writeFile(
+    resolve(packageRoot, ".codex-plugin/plugin.json"),
+    `${JSON.stringify(
+      {
+        name: packageName,
+        version: "1.0.0",
+        description: "Another valid Coffee Chat instance package.",
+        repository: "https://github.com/example/other-instance",
+        keywords: ["coffee-chat", "knowledge-graph", "perspective"],
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  await writeFile(
+    resolve(packageRoot, "knowledge/owned-sentinel.json"),
+    '{"owner":"other-instance"}\n',
+  );
+  await writeFile(
+    resolve(packageRoot, ".coffee-chat-generated.json"),
+    `${JSON.stringify(
+      {
+        generated_by: "coffee-chat",
+        schema_version: "1.0.0",
+        repository_role: "instance",
+        package_name: packageName,
+        owned_paths: [
+          `plugins/${packageName}/.codex-plugin/plugin.json`,
+          `plugins/${packageName}/knowledge/owned-sentinel.json`,
+        ],
+      },
+      null,
+      2,
+    )}\n`,
+  );
+}
+
 afterEach(async () => {
   await Promise.all(
     temporaryRoots
@@ -355,13 +397,27 @@ describe("Task 4 Candidate projection transaction", () => {
         "utf8",
       ),
     ) as object;
+    const previewSchema = JSON.parse(
+      await readFile(
+        resolve(projectRoot, "schemas/preview.schema.json"),
+        "utf8",
+      ),
+    ) as object;
     const ajv = new Ajv2020({ allErrors: true, strict: true });
     addFormats(ajv);
+    ajv.addSchema(previewSchema);
     const validateManifest = ajv.compile(manifestSchema);
     expect(
       validateManifest(manifest),
       JSON.stringify(validateManifest.errors, null, 2),
     ).toBe(true);
+    const forgedManifest = structuredClone(manifest) as CandidateManifest & {
+      preview: CandidateManifest["preview"] & {
+        untrusted_extension?: boolean;
+      };
+    };
+    forgedManifest.preview.untrusted_extension = true;
+    expect(validateManifest(forgedManifest)).toBe(false);
     const outputPaths = manifest.outputs.map((entry) => entry.path);
 
     expect(outputPaths).toEqual(
@@ -483,5 +539,66 @@ describe("Task 4 Candidate projection transaction", () => {
     expect(
       await readFile(resolve(fixture.root, "unrelated-sentinel.txt"), "utf8"),
     ).toBe("keep me\n");
+  });
+
+  it("preserves another valid instance package through Make mine and generate", async () => {
+    const fixture = await repositoryFixture();
+    await addForeignInstancePackage(fixture.root);
+    await git(fixture.root, "add", ".");
+    await git(fixture.root, "commit", "-qm", "add another instance package");
+    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+
+    const prepared = await prepareCandidate(
+      {
+        root: fixture.root,
+        requestPath: fixture.request,
+        out: fixture.candidate,
+      },
+      fixedDependencies(true),
+    );
+    const manifest = JSON.parse(
+      await readFile(
+        resolve(fixture.candidate, "candidate-manifest.json"),
+        "utf8",
+      ),
+    ) as CandidateManifest;
+    expect(
+      manifest.deletions.some((path) =>
+        path.startsWith("./plugins/coffee-chat-other-instance/"),
+      ),
+    ).toBe(false);
+
+    const receipt = await applyCandidate(
+      {
+        root: fixture.root,
+        candidateDir: fixture.candidate,
+        approvedDigest: prepared.candidateDigest,
+      },
+      fixedDependencies(false),
+    );
+    expect(receipt.status, JSON.stringify(receipt)).toBe("applied");
+    await execFileAsync(
+      process.execPath,
+      ["--experimental-strip-types", cliPath, "generate", "--format", "json"],
+      { cwd: fixture.root, encoding: "utf8" },
+    );
+    expect(
+      await readFile(
+        resolve(
+          fixture.root,
+          "plugins/coffee-chat-other-instance/knowledge/owned-sentinel.json",
+        ),
+        "utf8",
+      ),
+    ).toBe('{"owner":"other-instance"}\n');
+    expect(
+      await readFile(
+        resolve(
+          fixture.root,
+          "plugins/coffee-chat-other-instance/.coffee-chat-generated.json",
+        ),
+        "utf8",
+      ),
+    ).toContain('"repository_role": "instance"');
   });
 });

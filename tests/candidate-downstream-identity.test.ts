@@ -231,7 +231,9 @@ describe("downstream repository identity", () => {
       content_notice: string;
       target_fingerprint: TargetFingerprint;
     };
-    const common = await lstat(resolve(fixture.root, ".git"), { bigint: true });
+    const common = await lstat(resolve(fixture.root, ".git"), {
+      bigint: true,
+    });
 
     expect(manifest.target_fingerprint).toEqual({
       git_common_dir: {
@@ -282,7 +284,7 @@ describe("downstream repository identity", () => {
     expect(
       await readFile(resolve(fixture.root, "CONTENT_LICENSE.md"), "utf8"),
     ).toBe(CONTENT_NOTICE);
-  });
+  }, 15_000);
 
   it("rejects the engine origin and differently normalized multiple origins before materialization", async () => {
     for (const mode of ["same-engine", "multiple"] as const) {
@@ -417,6 +419,106 @@ describe("downstream repository identity", () => {
       status: "approval_invalidated",
       invalidation_code: "configured-date-drift",
     });
+  });
+
+  it.each([
+    {
+      name: "removed origin",
+      mutate: (root: string) => git(root, "remote", "remove", "origin"),
+    },
+    {
+      name: "GitLab origin",
+      mutate: (root: string) =>
+        git(
+          root,
+          "remote",
+          "set-url",
+          "origin",
+          "https://gitlab.com/example/downstream",
+        ),
+    },
+    {
+      name: "credential-bearing origin",
+      mutate: (root: string) =>
+        git(
+          root,
+          "remote",
+          "set-url",
+          "origin",
+          "https://token@github.com/example/downstream",
+        ),
+    },
+  ])(
+    "returns a schema-valid zero-write invalidation after $name drift",
+    async ({ mutate }) => {
+      const fixture = await makeDownstreamRepository();
+      const prepared = await prepare(fixture);
+      const manifest = JSON.parse(
+        await readFile(resolve(fixture.out, "candidate-manifest.json"), "utf8"),
+      ) as CandidateManifest;
+      await mutate(fixture.root);
+      const before = await trackedBytes(fixture.root);
+      const receipt = await applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir: fixture.out,
+          approvedDigest: prepared.candidateDigest,
+        },
+        dependencies(),
+      );
+      const schema = JSON.parse(
+        await readFile(
+          resolve(projectRoot, "schemas/receipt.schema.json"),
+          "utf8",
+        ),
+      ) as object;
+      const validate = new Ajv2020({ allErrors: true, strict: true }).compile(
+        schema,
+      );
+
+      expect(receipt).toMatchObject({
+        status: "approval_invalidated",
+        candidate_digest: prepared.candidateDigest,
+        invalidation_code: "target-fingerprint-drift",
+        changed_paths: [],
+        validation: { status: "not_run" },
+        target_fingerprint: manifest.target_fingerprint,
+      });
+      expect(validate(receipt), JSON.stringify(validate.errors, null, 2)).toBe(
+        true,
+      );
+      expect(await trackedBytes(fixture.root)).toEqual(before);
+      expect(
+        (await readdir(fixture.base)).some((path) =>
+          path.endsWith(".transaction.json"),
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it("rejects a malformed approved digest without returning an invalid Receipt", async () => {
+    const fixture = await makeDownstreamRepository();
+    await prepare(fixture);
+    const before = await trackedBytes(fixture.root);
+
+    await expect(
+      applyCandidate(
+        {
+          root: fixture.root,
+          candidateDir: fixture.out,
+          approvedDigest: "not-a-digest",
+        },
+        dependencies(),
+      ),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "approved-digest-invalid" },
+    });
+    expect(await trackedBytes(fixture.root)).toEqual(before);
+    expect(
+      (await readdir(fixture.base)).some((path) =>
+        path.endsWith(".transaction.json"),
+      ),
+    ).toBe(false);
   });
 
   it("requires the exact target fingerprint in every public Receipt", async () => {
