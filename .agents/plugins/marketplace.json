@@ -1,7 +1,7 @@
 {
   "name": "coffee-chat-marketplace",
   "interface": {
-    "displayName": "Coffee Chat Coffee Chat"
+    "displayName": "Coffee Chat"
   },
   "plugins": [
     {

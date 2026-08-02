@@ -164,7 +164,10 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(bytes.equals(second.get(path)!)).toBe(true);
 
     expect(first.get("CLAUDE.md")?.toString("utf8")).toBe("@AGENTS.md\n");
-    expect(first.has("CONTENT_LICENSE.md")).toBe(false);
+    expect(first.has("CONTENT_LICENSE.md")).toBe(true);
+    expect(first.get("CONTENT_LICENSE.md")?.toString("utf8")).toContain(
+      "Downstream authors retain ownership of the Notes",
+    );
     expect(first.get("AGENTS.md")?.toString("utf8")).toContain(
       "skills/coffee-chat/SKILL.md",
     );
@@ -221,11 +224,12 @@ describe("Task 4 deterministic delivery projections", () => {
     const readme = first.get("README.md")!.toString("utf8");
     const orderedHeadings = [
       "## Purpose / 목적",
-      "## AI synthesis / AI 해석",
-      "## One-time Coffee Chat / 일회성 커피챗",
-      "## Install plugin / 플러그인 설치",
-      "## Make mine / 내 것으로 만들기",
-      "## Browse KG / KG 둘러보기",
+      "## Create yours / 내 것으로 만들기",
+      "## Use an instance / 인스턴스 사용",
+      "## Install the engine plugin / 엔진 플러그인 설치",
+      "## Contribute to engine / 엔진에 기여",
+      "### Build the public record / 공개 기록 만들기",
+      "### Use the public record / 공개 기록 사용하기",
     ];
     let offset = -1;
     for (const heading of orderedHeadings) {
@@ -233,52 +237,9 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(next).toBeGreaterThan(offset);
       offset = next;
     }
-    expect(readme).toContain("Read `coffee-chat.json`, then `AGENTS.md`");
-    expect(readme).toContain("one-time mode installs nothing");
-    expect(readme).toContain("일회성 모드는 아무것도 설치하지 않습니다");
-    const lifecycleDetails = readme.indexOf("<details>");
-    expect(lifecycleDetails).toBeGreaterThan(
-      readme.indexOf("## Install plugin / 플러그인 설치"),
-    );
-    for (const quickCommand of [
-      "codex plugin marketplace add",
-      "codex plugin add",
-      "codex plugin remove",
-      "claude plugin marketplace add",
-      "claude plugin install",
-      "claude plugin uninstall",
-    ]) {
-      const position = readme.indexOf(quickCommand);
-      expect(position).toBeGreaterThan(-1);
-      expect(position).toBeLessThan(lifecycleDetails);
-    }
-    expect(readme.indexOf("</details>")).toBeLessThan(
-      readme.indexOf("## Make mine / 내 것으로 만들기"),
-    );
-    expect(readme).toContain(
-      "codex plugin remove coffee-chat@coffee-chat-marketplace",
-    );
-    expect(readme).toContain(
-      "codex plugin marketplace upgrade coffee-chat-marketplace",
-    );
-    expect(readme).toContain("Codex exposes no plugin scope selector");
-    expect(readme).toContain("host-managed configuration and cache");
-    expect(readme).toContain("label it `Unknown`");
-    expect(readme).toContain("codex plugin list --json");
-    expect(readme).toContain("codex plugin marketplace list --json");
-    expect(readme).toContain(
-      "claude plugin install coffee-chat@coffee-chat-marketplace --scope local",
-    );
-    expect(readme).toContain(
-      "claude plugin update coffee-chat@coffee-chat-marketplace --scope local",
-    );
-    expect(readme).toContain(
-      "claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local",
-    );
-    expect(readme.toLowerCase()).toContain("host conversation history");
-    expect(readme).not.toContain("codex plugin update");
-    expect(readme).not.toContain("codex plugin enable");
-    expect(readme).not.toContain("codex plugin disable");
+    expect(readme).toContain("https://github.com/OWNER/coffee-chat-instance");
+    expect(readme).toContain("knowledge-free engine plugin");
+    expect(readme).not.toContain("Coffee Chat — Coffee Chat");
 
     const coffeeChatSkill = await snapshot.read("skills/coffee-chat/SKILL.md");
     const coffeeChatText = coffeeChatSkill.toString("utf8");
@@ -338,7 +299,7 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(combined).toContain("https://example.github.io/fork-chat/");
     expect(combined).toContain("coffee-chat-fork-owner-marketplace");
     expect(generated.get("CONTENT_LICENSE.md")?.toString("utf8")).toContain(
-      "© 2026 Fork Owner, All rights reserved",
+      "Downstream authors retain ownership of the Notes",
     );
     expect(combined).not.toContain("Sangjoon Son");
     expect(combined).not.toContain("SonSangjoon/coffee-chat");
@@ -416,6 +377,17 @@ describe("Task 4 deterministic delivery projections", () => {
 
     const obsoletePackage = resolve(root, "plugins/coffee-chat-obsolete");
     await cp(currentPackage, obsoletePackage, { recursive: true });
+    const obsoleteMarker = resolve(
+      obsoletePackage,
+      ".coffee-chat-generated.json",
+    );
+    const marker = JSON.parse(await readFile(obsoleteMarker, "utf8")) as {
+      owned_paths: string[];
+    };
+    marker.owned_paths = marker.owned_paths.map((path) =>
+      path.replace("plugins/coffee-chat/", "plugins/coffee-chat-obsolete/"),
+    );
+    await writeFile(obsoleteMarker, `${JSON.stringify(marker, null, 2)}\n`);
     for (const relativePath of [".codex-plugin/plugin.json"]) {
       const path = resolve(obsoletePackage, relativePath);
       const value = JSON.parse(await readFile(path, "utf8")) as {

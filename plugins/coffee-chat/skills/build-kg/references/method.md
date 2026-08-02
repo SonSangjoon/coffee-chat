@@ -6,7 +6,7 @@ Use this method for every Coffee Chat query, task-scoped perspective, and public
 
 ## Locate the evidence
 
-1. Prefer an initialized live source repository containing `coffee-chat.json`, its canonical Notes, and a matching `knowledge/index.json`.
+1. Prefer an initialized live source repository containing `coffee-chat.json`, its canonical Notes, and a matching generated graph index.
 2. If no live initialized repository is available, use the installed plugin's `knowledge/` snapshot only when its manifest and index are readable.
 3. When using a snapshot, say so before synthesis. Disclose the plugin version, `knowledge_digest`, latest `recorded_on` found in its Notes, and source commit when the host exposes one. If a value is unavailable, label it `Unknown`; do not invent a commit or date.
 4. If live and snapshot data disagree, use the live repository. If neither can be read, stop and say the evidence is unavailable.

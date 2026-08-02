@@ -16,7 +16,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Coffee Chat — Coffee Chat",
+    "displayName": "Coffee Chat",
     "shortDescription": "Talk with a public, dated perspective graph",
     "longDescription": "Converse with, apply, or extend a source-grounded temporal perspective graph.",
     "developerName": "Coffee Chat",

@@ -40,6 +40,11 @@ export interface Snapshot {
   assertSafe(path: string): Promise<void>;
 }
 
+/** A snapshot whose observed repository inputs are retained for artifact provenance. */
+export interface DependencyTrackingSnapshot extends Snapshot {
+  dependencies(): string[];
+}
+
 function safeLogicalPath(path: string): boolean {
   return (
     path.length > 0 &&
@@ -62,13 +67,22 @@ function pathFailure(
   });
 }
 
-class WorktreeSnapshot implements Snapshot {
+class WorktreeSnapshot implements DependencyTrackingSnapshot {
   readonly mode = "worktree" as const;
   readonly root: string;
   private realRoot?: string;
+  private readonly observed = new Set<string>();
 
   constructor(root: string) {
     this.root = root;
+  }
+
+  dependencies(): string[] {
+    return [...this.observed].sort();
+  }
+
+  private observe(path: string): void {
+    this.observed.add(path);
   }
 
   private async safeAbsolute(path: string): Promise<string> {
@@ -97,6 +111,7 @@ class WorktreeSnapshot implements Snapshot {
   }
 
   async exists(path: string): Promise<boolean> {
+    this.observe(path);
     if (!safeLogicalPath(path)) throw pathFailure(path);
     try {
       await lstat(resolve(this.root, ...path.split("/")));
@@ -112,6 +127,7 @@ class WorktreeSnapshot implements Snapshot {
   }
 
   async assertSafe(path: string): Promise<void> {
+    this.observe(path);
     if (!safeLogicalPath(path)) throw pathFailure(path);
     const root = (this.realRoot ??= await realpath(this.root));
     let candidate = resolve(this.root, ...path.split("/"));
@@ -138,10 +154,13 @@ class WorktreeSnapshot implements Snapshot {
   }
 
   async list(prefix: string): Promise<string[]> {
+    this.observe(prefix);
     if (!safeLogicalPath(prefix)) throw pathFailure(prefix);
     const absolute = resolve(this.root, ...prefix.split("/"));
     try {
-      return (await this.walk(absolute, prefix)).sort();
+      const paths = (await this.walk(absolute, prefix)).sort();
+      for (const path of paths) this.observe(path);
+      return paths;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
       throw new UnableToComplete({
@@ -165,6 +184,7 @@ class WorktreeSnapshot implements Snapshot {
   }
 
   async read(path: string): Promise<Buffer> {
+    this.observe(path);
     const absolute = await this.safeAbsolute(path);
     try {
       return await readFile(absolute);
@@ -178,16 +198,25 @@ class WorktreeSnapshot implements Snapshot {
   }
 }
 
-class GitSnapshot implements Snapshot {
+class GitSnapshot implements DependencyTrackingSnapshot {
   readonly root: string;
   readonly mode: "staged" | "base";
   private readonly revision?: string;
   private entries?: Map<string, GitEntry>;
+  private readonly observed = new Set<string>();
 
   constructor(root: string, mode: "staged" | "base", revision?: string) {
     this.root = root;
     this.mode = mode;
     this.revision = revision;
+  }
+
+  dependencies(): string[] {
+    return [...this.observed].sort();
+  }
+
+  private observe(path: string): void {
+    this.observed.add(path);
   }
 
   private async loadEntries(): Promise<Map<string, GitEntry>> {
@@ -227,11 +256,13 @@ class GitSnapshot implements Snapshot {
   }
 
   async exists(path: string): Promise<boolean> {
+    this.observe(path);
     if (!safeLogicalPath(path)) throw pathFailure(path);
     return (await this.loadEntries()).has(path);
   }
 
   async assertSafe(path: string): Promise<void> {
+    this.observe(path);
     await this.resolveSymlinks(path);
   }
 
@@ -268,11 +299,14 @@ class GitSnapshot implements Snapshot {
   }
 
   async list(prefix: string): Promise<string[]> {
+    this.observe(prefix);
     if (!safeLogicalPath(prefix)) throw pathFailure(prefix);
     const start = `${prefix.replace(/\/$/, "")}/`;
-    return [...(await this.loadEntries()).keys()]
+    const paths = [...(await this.loadEntries()).keys()]
       .filter((path) => path.startsWith(start))
       .sort();
+    for (const path of paths) this.observe(path);
+    return paths;
   }
 
   private async raw(path: string): Promise<Buffer> {
@@ -293,7 +327,9 @@ class GitSnapshot implements Snapshot {
   }
 
   async read(path: string): Promise<Buffer> {
+    this.observe(path);
     const resolved = await this.resolveSymlinks(path);
+    this.observe(resolved);
     const entry = (await this.loadEntries()).get(resolved);
     if (!entry) {
       throw new UnableToComplete({
@@ -309,7 +345,7 @@ class GitSnapshot implements Snapshot {
 export async function createSnapshot(
   root: string,
   mode: "worktree" | "staged",
-): Promise<Snapshot> {
+): Promise<DependencyTrackingSnapshot> {
   return mode === "worktree"
     ? new WorktreeSnapshot(root)
     : new GitSnapshot(root, "staged");
@@ -318,7 +354,7 @@ export async function createSnapshot(
 export async function createBaseSnapshot(
   root: string,
   reference: string,
-): Promise<Snapshot> {
+): Promise<DependencyTrackingSnapshot> {
   let commit: string;
   try {
     commit = (

@@ -422,7 +422,7 @@ describe("Task 4 Candidate projection transaction", () => {
     expect(manifest.deletions).toContain(
       "./plugins/coffee-chat-upstream/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
     );
-    expect(manifest.changed_paths).toContain("./CONTENT_LICENSE.md");
+    expect(manifest.changed_paths).not.toContain("./CONTENT_LICENSE.md");
     expect(
       manifest.deletions.some((path) => path.includes("unrelated-sentinel")),
     ).toBe(false);
@@ -460,7 +460,7 @@ describe("Task 4 Candidate projection transaction", () => {
     ).toContain('"name": "coffee-chat-sangjoon"');
     expect(
       await readFile(resolve(fixture.root, "CONTENT_LICENSE.md"), "utf8"),
-    ).toContain("© 2026 Sangjoon Son, All rights reserved");
+    ).toContain("Downstream authors retain ownership of the Notes");
     expect(
       await readFile(resolve(fixture.root, "unrelated-sentinel.txt"), "utf8"),
     ).toBe("keep me\n");

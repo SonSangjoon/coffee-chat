@@ -16,19 +16,43 @@ import {
 } from "./contracts.ts";
 import { compareCodePoints, generatedIndexBytes } from "./generate.ts";
 import {
+  GENERATED_OWNERSHIP_MARKER,
+  assertArtifactBoundary as assertBoundary,
+  roleOwnedProjectionPaths as declaredOwnedPaths,
+  sameDirectory,
+  type ArtifactClass,
+  type ProjectionContext,
+} from "./artifact-inventory.ts";
+import {
+  isEngineManifest,
   isInstanceGraph,
   isInstanceManifest,
   type KnowledgeGraph,
   type Manifest,
 } from "./knowledge.ts";
-import type { Snapshot } from "./snapshot.ts";
+import type { DependencyTrackingSnapshot, Snapshot } from "./snapshot.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
 
 const SKILL_NAMES = ["coffee-chat", "apply-perspective", "build-kg"] as const;
 
+export type { ArtifactClass, ProjectionContext } from "./artifact-inventory.ts";
+export { roleOwnedProjectionPaths } from "./artifact-inventory.ts";
+export type { DependencyTrackingSnapshot } from "./snapshot.ts";
+
+export type ProjectionBundle = {
+  files: Map<string, Buffer>;
+  dependencies: string[];
+};
+
 function ownerName(manifest: Manifest): string {
   return isInstanceManifest(manifest)
     ? manifest.profile.display_name
+    : "Coffee Chat";
+}
+
+function presentationName(manifest: Manifest): string {
+  return isInstanceManifest(manifest)
+    ? `Coffee Chat — ${manifest.profile.short_name}`
     : "Coffee Chat";
 }
 
@@ -91,7 +115,7 @@ function codexManifest(manifest: Manifest): Record<string, unknown> {
     keywords: ["coffee-chat", "knowledge-graph", "perspective"],
     skills: "./skills/",
     interface: {
-      displayName: `Coffee Chat — ${ownerName(manifest)}`,
+      displayName: presentationName(manifest),
       shortDescription: "Talk with a public, dated perspective graph",
       longDescription:
         "Converse with, apply, or extend a source-grounded temporal perspective graph.",
@@ -125,7 +149,7 @@ function claudeManifest(manifest: Manifest): Record<string, unknown> {
 function codexMarketplace(manifest: Manifest): Record<string, unknown> {
   return {
     name: manifest.marketplace_name,
-    interface: { displayName: `${ownerName(manifest)} Coffee Chat` },
+    interface: { displayName: presentationName(manifest) },
     plugins: [
       {
         name: manifest.plugin.name,
@@ -167,8 +191,56 @@ function claudeMarketplace(manifest: Manifest): Record<string, unknown> {
 
 function readme(manifest: Manifest): Buffer {
   const pluginSelector = `${manifest.plugin.name}@${manifest.marketplace_name}`;
+  if (isEngineManifest(manifest))
+    return textBytes(
+      [
+        "# Coffee Chat",
+        "",
+        "## Purpose / 목적",
+        "",
+        "Coffee Chat is a reusable, knowledge-free engine for public, dated perspective graphs.",
+        "Coffee Chat은 공개된 날짜별 관점 그래프를 위한 재사용 가능한 지식 비포함 엔진입니다.",
+        "",
+        "## Create yours / 내 것으로 만들기",
+        "",
+        "Fork this engine, initialize an instance, and write only your own public, dated Notes.",
+        "이 엔진을 포크해 인스턴스를 만들고, 자신의 공개된 날짜별 Note만 작성하세요.",
+        "",
+        "## Use an instance / 인스턴스 사용",
+        "",
+        "Open an explicit instance URL, not this generic engine, for a one-time Coffee Chat: `https://github.com/OWNER/coffee-chat-instance`.",
+        "일회성 Coffee Chat에는 이 범용 엔진이 아니라 명시적인 인스턴스 URL을 여세요: `https://github.com/OWNER/coffee-chat-instance`.",
+        "",
+        "## Install the engine plugin / 엔진 플러그인 설치",
+        "",
+        "Install the knowledge-free engine plugin when you want its three Skills and shared method; it contains no represented-person data or Notes payload.",
+        "Skill 세 개와 공유 방법론이 필요할 때 지식 비포함 엔진 플러그인을 설치하세요. Profile이나 knowledge payload는 포함하지 않습니다.",
+        "",
+        "```sh",
+        `codex plugin marketplace add ${manifest.repository.url}`,
+        `codex plugin add ${pluginSelector}`,
+        "```",
+        "",
+        "## Contribute to engine / 엔진에 기여",
+        "",
+        "Contribute reusable schemas, methods, and Skills to the engine. Contribute personal Notes only to an instance you control.",
+        "재사용 가능한 스키마·방법론·Skill은 엔진에 기여하고, 개인 Note는 본인이 관리하는 인스턴스에만 기여하세요.",
+        "",
+        "### Build the public record / 공개 기록 만들기",
+        "",
+        "Public Sources plus dated thoughts become linked Notes, Sources, and neutral Entities in a temporal knowledge graph.",
+        "공개 Source와 날짜가 있는 생각이 서로 연결된 Note·Source·중립 Entity의 시계열 지식 그래프가 됩니다.",
+        "",
+        "### Use the public record / 공개 기록 사용하기",
+        "",
+        "An agent derives a query-scoped Perspective from an instance graph and never writes that synthesis back.",
+        "에이전트는 인스턴스 그래프에서 질문별 Perspective를 합성하고 그 해석을 다시 저장하지 않습니다.",
+        "",
+        "Code, schemas, templates, and Skills use the [MIT License](./LICENSE). Downstream authors own their Notes; see the [content terms](./CONTENT_LICENSE.md).",
+      ].join("\n"),
+    );
   const lines = [
-    `# Coffee Chat — ${ownerName(manifest)}`,
+    `# ${presentationName(manifest)}`,
     "",
     "## Purpose / 목적",
     "",
@@ -281,13 +353,9 @@ function readme(manifest: Manifest): Buffer {
   return textBytes(lines.join("\n"));
 }
 
-function contentLicense(manifest: Manifest): Buffer {
-  if (!isInstanceManifest(manifest))
-    return textBytes(
-      "# Content License\n\nThis generic engine contains no represented-person knowledge or original public prose.\n",
-    );
+function contentLicense(): Buffer {
   return textBytes(
-    `# Content License\n\n\`knowledge/notes/**\` and ${manifest.profile.display_name}'s original public prose are © 2026 ${manifest.profile.display_name}, All rights reserved.\n\nThird-party Sources retain their own terms. Linking to, citing, indexing, or describing a third-party Source does not grant rights in that Source beyond its applicable terms.\n`,
+    "# Content License\n\nThe [MIT License](./LICENSE) covers reusable Coffee Chat software, schemas, templates, and Skills. Downstream authors retain ownership of the Notes and original prose they add to their own instances.\n\nOnly `tests/fixtures/son-input/**` is © 2026 Son, All rights reserved. That path-scoped fixture notice does not apply to the generic plugin or downstream instances.\n\nThird-party Sources retain their own terms. Linking to, citing, indexing, or describing a third-party Source does not grant rights in that Source beyond its applicable terms.\n",
   );
 }
 
@@ -310,8 +378,7 @@ export async function generatedProjectionBytes(
   const codex = jsonBytes(codexManifest(manifest));
   const claude = jsonBytes(claudeManifest(manifest));
   values.set("README.md", readme(manifest));
-  if (isInstanceManifest(manifest))
-    values.set("CONTENT_LICENSE.md", contentLicense(manifest));
+  values.set("CONTENT_LICENSE.md", contentLicense());
   values.set(
     "AGENTS.md",
     textBytes(
@@ -336,7 +403,6 @@ export async function generatedProjectionBytes(
       `${packageRoot}/knowledge/coffee-chat.json`,
       await snapshot.read("coffee-chat.json"),
     );
-    values.set(`${packageRoot}/CONTENT_LICENSE.md`, contentLicense(manifest));
   }
   if (await snapshot.exists("LICENSE"))
     values.set(`${packageRoot}/LICENSE`, await snapshot.read("LICENSE"));
@@ -356,11 +422,66 @@ export async function generatedProjectionBytes(
     for (const note of graph.notes)
       values.set(`${packageRoot}/${note.path}`, note.bytes);
   }
+  values.set(
+    `${packageRoot}/${GENERATED_OWNERSHIP_MARKER}`,
+    jsonBytes({
+      generated_by: "coffee-chat",
+      schema_version: "1.0.0",
+      repository_role: manifest.repository_role,
+      owned_paths: [...values.keys()]
+        .filter((path) => path.startsWith(`${packageRoot}/`))
+        .sort(compareCodePoints),
+    }),
+  );
+  if (isEngineManifest(manifest)) {
+    const actual = [...values.keys()].sort(compareCodePoints);
+    const declared = declaredOwnedPaths(manifest);
+    if (actual.join("\0") !== declared.join("\0"))
+      throw new Error(
+        "Engine projection escaped its closed artifact inventory",
+      );
+  }
   return new Map(
     [...values.entries()].sort(([left], [right]) =>
       compareCodePoints(left, right),
     ),
   );
+}
+
+/**
+ * Builds a projection and binds it to every snapshot observation made while
+ * validating and rendering it. Callers cannot provide their own dependency
+ * list, so release provenance cannot be silently omitted.
+ */
+export async function buildProjectionBundle(
+  snapshot: DependencyTrackingSnapshot,
+  graph: KnowledgeGraph,
+  context: ProjectionContext,
+): Promise<ProjectionBundle> {
+  if (
+    context.artifact_class === "release" &&
+    (snapshot.mode !== "worktree" ||
+      !sameDirectory(context.output_root, snapshot.root))
+  )
+    throw new ValidationFailure({
+      code: "release-output-must-be-checkout",
+      path: ".",
+      message: "Release projections must be generated in the current checkout.",
+    });
+  if (
+    context.artifact_class === "ephemeral-test" &&
+    sameDirectory(context.output_root, snapshot.root)
+  )
+    throw new ValidationFailure({
+      code: "ephemeral-output-must-be-external",
+      path: ".",
+      message:
+        "Ephemeral test projections must be generated outside the checkout.",
+    });
+  const files = await generatedProjectionBytes(snapshot, graph);
+  const dependencies = snapshot.dependencies();
+  await assertBoundary(context, dependencies);
+  return { files, dependencies: [...dependencies] };
 }
 
 export type GeneratedProjectionInspection = {
@@ -388,33 +509,24 @@ async function isOwnedCoffeeChatPackage(
   packageName: string,
 ): Promise<boolean> {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(packageName)) return false;
-  const pluginPath = `plugins/${packageName}/.codex-plugin/plugin.json`;
-  const knowledgePath = `plugins/${packageName}/knowledge/coffee-chat.json`;
-  if (!(await snapshot.exists(pluginPath))) return false;
+  const markerPath = `plugins/${packageName}/${GENERATED_OWNERSHIP_MARKER}`;
+  if (!(await snapshot.exists(markerPath))) return false;
   try {
-    const plugin = record(
+    const marker = record(
       parseStrictJson(
-        decodeCanonicalText(await snapshot.read(pluginPath), pluginPath),
-        pluginPath,
+        decodeCanonicalText(await snapshot.read(markerPath), markerPath),
+        markerPath,
       ),
     );
-    if (!(await snapshot.exists(knowledgePath)))
-      return (
-        plugin?.name === packageName &&
-        Array.isArray(plugin?.keywords) &&
-        plugin.keywords.includes("coffee-chat")
-      );
-    const knowledge = record(
-      parseStrictJson(
-        decodeCanonicalText(await snapshot.read(knowledgePath), knowledgePath),
-        knowledgePath,
-      ),
-    );
-    const knowledgePlugin = record(knowledge?.plugin);
     return (
-      plugin?.name === packageName &&
-      knowledge?.schema_version === "1.0.0" &&
-      knowledgePlugin?.name === packageName
+      marker?.generated_by === "coffee-chat" &&
+      marker?.schema_version === "1.0.0" &&
+      Array.isArray(marker?.owned_paths) &&
+      marker.owned_paths.every(
+        (path) =>
+          typeof path === "string" &&
+          path.startsWith(`plugins/${packageName}/`),
+      )
     );
   } catch {
     return false;
@@ -460,7 +572,12 @@ export async function inspectGeneratedProjections(
   snapshot: Snapshot,
   graph: KnowledgeGraph,
 ): Promise<GeneratedProjectionInspection> {
-  const expected = await generatedProjectionBytes(snapshot, graph);
+  const expected = (
+    await buildProjectionBundle(snapshot as DependencyTrackingSnapshot, graph, {
+      artifact_class: "release",
+      output_root: snapshot.root,
+    })
+  ).files;
   const diagnostics: Diagnostic[] = [];
   const blockingDiagnostics: Diagnostic[] = [];
   const ownedStalePaths = new Set<string>();
@@ -634,7 +751,12 @@ export async function writeGeneratedProjections(
         throw error;
     }
   }
-  const projections = inspection.expected;
+  const projections = (
+    await buildProjectionBundle(snapshot as DependencyTrackingSnapshot, graph, {
+      artifact_class: "release",
+      output_root: root,
+    })
+  ).files;
   for (const [path, bytes] of projections) {
     const target = await assertSafeOutput(root, path);
     await mkdir(dirname(target), { recursive: true });

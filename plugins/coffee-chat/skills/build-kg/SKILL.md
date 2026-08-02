@@ -15,7 +15,7 @@ Operate only in the authoritative Coffee Chat source checkout whose `coffee-chat
 
 Interview adaptively until the intended public record is clear. Do not impose a fixed number of Sources, sections, words, objections, or maturity scores.
 
-- Confirm `make-mine`, `contribute`, or `update` and the public profile identity when applicable.
+- Confirm `make-mine`, `contribute`, or `update` and the public owner identity when applicable.
 - For each Note, preserve the owner's authored words and identify the perspective time separately from the recording date. A public URL anchors the topic; it does not prove every authored sentence.
 - Record only Source metadata actually observed or explicitly supplied. If retrieval is unavailable, retain the limitation and do not invent content, publication time, access time, or endorsement.
 - Decide explicitly whether a change is a correction that preserves Note identity and `recorded_on`, a later evolution, a contextual coexistence, or a new view. Do not label time or context variation a contradiction by default.
