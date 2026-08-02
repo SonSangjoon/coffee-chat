@@ -198,14 +198,18 @@ describe("Task 4 deterministic delivery projections", () => {
     });
 
     const readme = first.get("README.md")!.toString("utf8");
+    const koreanReadme = first.get("README.ko.md")!.toString("utf8");
     const orderedHeadings = [
-      "## Talk with a Coffee Chat / Coffee Chat과 대화하기",
-      "## Put a point of view to work / 관점을 업무에 적용하기",
-      "## How a POV is made / POV가 만들어지는 과정",
-      "## Why trust it / 신뢰할 수 있는 이유",
-      "## Create your Coffee Chat / 나의 Coffee Chat 만들기",
-      "## Use once or install / 일회성 사용 또는 설치",
-      "## Contribute to the engine / 엔진에 기여하기",
+      "## AI makes execution abundant. Taste decides what is worth making.",
+      "## Why Coffee Chat",
+      "## Two needs, one graph",
+      "## Have a Coffee Chat without installing",
+      "## One record, two directions",
+      "## Why this is not another knowledge base",
+      "## How it earns trust",
+      "## Put Taste to work",
+      "## Build your Coffee Chat",
+      "## Install, remove, contribute, and license",
     ];
     let offset = -1;
     for (const heading of orderedHeadings) {
@@ -213,32 +217,19 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(next).toBeGreaterThan(offset);
       offset = next;
     }
+    expect(readme.startsWith("[한국어](./README.ko.md)\n")).toBe(true);
+    expect(koreanReadme.startsWith("[English](./README.md)\n")).toBe(true);
+    expect(readme).toContain("Taste here means judgment under uncertainty");
     expect(readme).toContain(
-      "Talk with a point of view, not a personality prompt.",
+      "This is the neutral engine: it has no person to chat with.",
     );
-    expect(readme).toContain(
-      "a temporal, source-linked personal knowledge graph for conversation and agent work",
-    );
-    expect(readme).toContain(
-      "install that person's Coffee Chat plugin in Codex or Claude Code",
-    );
-    expect(readme).toContain("as AI lowers the cost of execution");
     expect(readme).not.toMatch(/\bblog\b|social account|social post/i);
-    expect(readme).toContain("https://github.com/OWNER/coffee-chat-instance");
+    expect(readme).toContain("Open <COFFEE_CHAT_INSTANCE_URL>.");
     expect(readme).toContain("Start a one-time Coffee Chat");
-    expect(readme).toContain("Fictional answer shape");
     expect(readme).toContain(
-      "Use <COFFEE_CHAT_INSTANCE_URL> as the perspective source for <TASK>",
+      "Use <YOUR_COFFEE_CHAT_URL> as the perspective source for <TASK>",
     );
-    expect(readme).toContain(
-      "install the author's instance plugin, not this engine plugin",
-    );
-    expect(readme).toContain(
-      "A Coffee Chat starts with one public reference and your dated thought",
-    );
-    expect(readme).toContain("before mutating canonical instance files");
-    expect(readme).not.toContain("before writing anything");
-    expect(readme).toContain("knowledge-free engine plugin");
+    expect(readme).toContain("one public reference + your dated thought");
     expect(readme).toContain(
       `codex plugin remove coffee-chat@coffee-chat-marketplace`,
     );
@@ -251,7 +242,8 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(readme).toContain(
       "claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local",
     );
-    expect(readme).not.toContain("Coffee Chat — Coffee Chat");
+    expect(koreanReadme).toContain("## 왜 Coffee Chat인가");
+    expect(koreanReadme).not.toContain("## Why Coffee Chat");
   });
 
   it("regenerates all public identity strings from a fork manifest", async () => {
@@ -298,6 +290,9 @@ describe("Task 4 deterministic delivery projections", () => {
     const { snapshot, graph } = await projectGraph(root);
     const generated = await generatedProjectionBytes(snapshot, graph);
     const instanceReadme = generated.get("README.md")!.toString("utf8");
+    const instanceKoreanReadme = generated
+      .get("README.ko.md")!
+      .toString("utf8");
     const combined = [...generated.values()]
       .map((bytes) => bytes.toString("utf8"))
       .join("\n");
@@ -306,22 +301,26 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(combined).toContain("https://github.com/example/fork-chat");
     expect(combined).toContain("https://example.github.io/fork-chat/");
     expect(combined).toContain("coffee-chat-fork-owner-marketplace");
-    expect(instanceReadme).toContain(
-      "Talk with a point of view, not a personality prompt.",
-    );
-    expect(instanceReadme.indexOf("## Talk with a Coffee Chat")).toBeLessThan(
-      instanceReadme.indexOf("## Put this point of view to work"),
-    );
+    expect(instanceReadme).toContain("# Coffee Chat — Fork Owner");
+    expect(instanceKoreanReadme).toContain("# Coffee Chat — Fork Owner");
     expect(
-      instanceReadme.indexOf("## Put this point of view to work"),
-    ).toBeLessThan(instanceReadme.indexOf("## Build your knowledge base"));
+      instanceReadme.indexOf("## Have a Coffee Chat without installing"),
+    ).toBeLessThan(instanceReadme.indexOf("## Put Taste to work"));
+    expect(instanceReadme.indexOf("## Put Taste to work")).toBeLessThan(
+      instanceReadme.indexOf("## Build your Coffee Chat"),
+    );
     expect(instanceReadme).toContain(
       "Open https://github.com/example/fork-chat",
     );
     expect(instanceReadme).toContain(
-      "This is an AI synthesis of public, dated records",
+      "This is Fork Owner's approved public record.",
     );
-    expect(instanceReadme).toContain("the public Profile and Notes snapshot");
+    expect(instanceReadme).toContain(
+      "https://example.github.io/fork-chat/timeline/",
+    );
+    expect(instanceReadme).toContain(
+      "https://example.github.io/fork-chat/graph/",
+    );
     expect(instanceReadme).not.toMatch(
       /\bblog\b|social account|social post|how this author thinks/i,
     );
@@ -333,7 +332,9 @@ describe("Task 4 deterministic delivery projections", () => {
       "Downstream authors retain ownership of the Notes",
     );
     expect(combined).not.toContain("Sangjoon Son");
-    expect(combined).not.toContain("SonSangjoon/coffee-chat");
+    expect(instanceReadme).toContain(
+      "https://github.com/SonSangjoon/coffee-chat",
+    );
     expect(combined).not.toContain("coffee-chat-sangjoon");
     expect(roleOwnedProjectionPaths(graph)).toEqual(
       expect.arrayContaining([

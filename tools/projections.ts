@@ -42,6 +42,7 @@ import {
   type KnowledgeGraph,
   type Manifest,
 } from "./knowledge.ts";
+import { renderReadmes } from "./readme.ts";
 import type { DependencyTrackingSnapshot, Snapshot } from "./snapshot.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
 
@@ -593,7 +594,7 @@ export async function generatedProjectionBytes(
   const values = new Map<string, Buffer>();
   const codex = jsonBytes(codexManifest(manifest));
   const claude = jsonBytes(claudeManifest(manifest));
-  values.set("README.md", readme(manifest));
+  for (const [path, bytes] of renderReadmes(manifest)) values.set(path, bytes);
   values.set(
     "CONTENT_LICENSE.md",
     isInstanceManifest(manifest)

@@ -32,6 +32,8 @@ describe("artifact provenance boundaries", () => {
 
     expect([...bundle.files.keys()]).toEqual(
       expect.arrayContaining([
+        "README.md",
+        "README.ko.md",
         ".codex-plugin/plugin.json",
         ".claude-plugin/plugin.json",
         ".agents/plugins/marketplace.json",
@@ -45,6 +47,7 @@ describe("artifact provenance boundaries", () => {
     expect(roleOwnedProjectionPaths(graph)).toContain(
       "plugins/coffee-chat/.coffee-chat-generated.json",
     );
+    expect(roleOwnedProjectionPaths(graph)).toContain("README.ko.md");
     expect(
       [...bundle.files.keys()].filter((path) =>
         /(?:^|\/)(?:knowledge|hooks|mcp|agents|lsp|settings|monitor|bin)(?:\/|$)/.test(

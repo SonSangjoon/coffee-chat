@@ -1,0 +1,72 @@
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+import { generatedProjectionBytes } from "../tools/projections.ts";
+import { validateKnowledge } from "../tools/knowledge.ts";
+import { createSnapshot } from "../tools/snapshot.ts";
+
+const projectRoot = resolve(import.meta.dirname, "..");
+
+async function engineProjection() {
+  const snapshot = await createSnapshot(projectRoot, "worktree");
+  const validation = await validateKnowledge(snapshot, {
+    validateIndex: false,
+  });
+  expect(validation.diagnostics).toEqual([]);
+  expect(validation.graph).toBeDefined();
+  return generatedProjectionBytes(snapshot, validation.graph!);
+}
+
+function expectHeadingOrder(readme: string, headings: readonly string[]) {
+  let offset = -1;
+  for (const heading of headings) {
+    const next = readme.indexOf(heading);
+    expect(next).toBeGreaterThan(offset);
+    offset = next;
+  }
+}
+
+describe("localized README projections", () => {
+  it("renders separate reciprocal English and Korean engine readmes", async () => {
+    const projected = await engineProjection();
+    const english = projected.get("README.md")?.toString("utf8");
+    const korean = projected.get("README.ko.md")?.toString("utf8");
+
+    expect(english?.startsWith("[한국어](./README.ko.md)\n")).toBe(true);
+    expect(korean?.startsWith("[English](./README.md)\n")).toBe(true);
+    expect(english).toContain(
+      "## AI makes execution abundant. Taste decides what is worth making.",
+    );
+    expect(korean).toContain(
+      "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
+    );
+    expect(english).toContain("## Why Coffee Chat");
+    expect(korean).toContain("## 왜 Coffee Chat인가");
+    expect(english).not.toContain("Coffee Chat과 대화하기");
+    expect(korean).not.toContain("Talk with a Coffee Chat / ");
+
+    expectHeadingOrder(english!, [
+      "## AI makes execution abundant. Taste decides what is worth making.",
+      "## Why Coffee Chat",
+      "## Two needs, one graph",
+      "## Have a Coffee Chat without installing",
+      "## One record, two directions",
+      "## Why this is not another knowledge base",
+      "## How it earns trust",
+      "## Put Taste to work",
+      "## Build your Coffee Chat",
+      "## Install, remove, contribute, and license",
+    ]);
+    expectHeadingOrder(korean!, [
+      "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
+      "## 왜 Coffee Chat인가",
+      "## 두 가지 필요, 하나의 그래프",
+      "## 설치 없이 Coffee Chat 하기",
+      "## 하나의 기록, 두 방향",
+      "## 또 하나의 지식 베이스가 아닌 이유",
+      "## 신뢰를 얻는 방식",
+      "## Taste를 업무에 적용하기",
+      "## 나만의 Coffee Chat 만들기",
+      "## 설치, 제거, 기여, 라이선스",
+    ]);
+  });
+});

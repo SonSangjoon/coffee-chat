@@ -36,6 +36,7 @@ export function roleOwnedProjectionPaths(graph: KnowledgeGraph): string[] {
   const packageRoot = `plugins/${manifest.plugin.name}`;
   const paths = [
     "README.md",
+    "README.ko.md",
     "CONTENT_LICENSE.md",
     "AGENTS.md",
     "CLAUDE.md",
