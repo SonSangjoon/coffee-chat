@@ -364,6 +364,29 @@ function contentLicense(): Buffer {
   );
 }
 
+function agentRouter(manifest: Manifest): Buffer {
+  const roleEntry = isEngineManifest(manifest)
+    ? [
+        "This engine has no default person. At an engine URL, offer only **Create yours**, **Install engine plugin**, or **Contribute to engine**, then stop and wait; never follow an instance fallback from that same entry message or start a personal Coffee Chat from engine data.",
+        "Coffee Chat and Apply Perspective require an explicit public instance URL verified through that instance's `coffee-chat.json` and `knowledge/index.json`. Build KG requires an explicit downstream instance checkout.",
+      ]
+    : [
+        "Verify this initialized public instance by matching its explicit locator to `coffee-chat.json` `repository.url` or `pages_url`, then matching `repository_role` and profile id to `knowledge/index.json` before treating it as a target.",
+        "At instance entry, ask the user to choose **one-time Coffee Chat** or **install instance plugin**, then wait before continuing.",
+      ];
+  return textBytes(
+    [
+      "# Coffee Chat agent router",
+      "",
+      "Read `coffee-chat.json` and select behavior from its `repository_role` before loading a Skill.",
+      "",
+      ...roleEntry,
+      "",
+      "Route conversation requests to `skills/coffee-chat/SKILL.md`, named external task application to `skills/apply-perspective/SKILL.md`, and Make mine or public graph updates to `skills/build-kg/SKILL.md`. Read only the selected Skill and its generated `references/method.md`.",
+    ].join("\n"),
+  );
+}
+
 export async function generatedProjectionBytes(
   snapshot: Snapshot,
   graph: KnowledgeGraph,
@@ -389,12 +412,7 @@ export async function generatedProjectionBytes(
       ? await snapshot.read("CONTENT_LICENSE.md")
       : contentLicense(),
   );
-  values.set(
-    "AGENTS.md",
-    textBytes(
-      `# Coffee Chat agent router\n\nRead \`coffee-chat.json\`. Route conversation requests to \`skills/coffee-chat/SKILL.md\`, named external task application to \`skills/apply-perspective/SKILL.md\`, and Make mine or public graph updates to \`skills/build-kg/SKILL.md\`. Read only the selected Skill and its generated shared-method reference.\n`,
-    ),
-  );
+  values.set("AGENTS.md", agentRouter(manifest));
   values.set("CLAUDE.md", Buffer.from("@AGENTS.md\n", "utf8"));
   values.set(".codex-plugin/plugin.json", codex);
   values.set(".claude-plugin/plugin.json", claude);

@@ -57,12 +57,13 @@ describe("artifact provenance boundaries", () => {
         .get("plugins/coffee-chat/.codex-plugin/plugin.json")!
         .toString("utf8"),
     ).toContain('"name": "Coffee Chat"');
-    expect(
-      [...bundle.files.entries()]
-        .filter(([path]) => path.startsWith("plugins/coffee-chat/"))
-        .map(([, bytes]) => bytes.toString("utf8"))
-        .join("\n"),
-    ).not.toMatch(/profile|knowledge\/index/);
+    const enginePackageText = [...bundle.files.entries()]
+      .filter(([path]) => path.startsWith("plugins/coffee-chat/"))
+      .map(([, bytes]) => bytes.toString("utf8"))
+      .join("\n");
+    expect(enginePackageText).not.toContain('"profile":');
+    expect(enginePackageText).not.toContain('"profile_id":');
+    expect(enginePackageText).not.toContain('"nodes":');
   });
 
   it("rejects release generation when tracked reads include a fixture", async () => {

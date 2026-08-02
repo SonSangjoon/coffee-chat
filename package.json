@@ -10,7 +10,7 @@
   },
   "scripts": {
     "cc": "node --experimental-strip-types tools/cc.ts",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=4",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check ."

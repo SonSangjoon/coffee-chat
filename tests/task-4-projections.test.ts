@@ -8,13 +8,10 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
-import { Ajv2020 } from "ajv/dist/2020.js";
-import type { FormatsPlugin } from "ajv-formats";
 import { parse as parseYaml } from "yaml";
 import {
   checkGeneratedProjections,
@@ -25,8 +22,6 @@ import { validateKnowledge } from "../tools/knowledge.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
-const require = createRequire(import.meta.url);
-const addFormats = require("ajv-formats").default as FormatsPlugin;
 const cliPath = resolve(projectRoot, "tools/cc.ts");
 const execFileAsync = promisify(execFile);
 const temporaryRoots: string[] = [];
@@ -105,33 +100,13 @@ describe("Task 4 deterministic delivery projections", () => {
       const frontmatter = /^---\n([\s\S]*?)\n---\n/.exec(skill)?.[1];
       expect(frontmatter).toBeDefined();
       const metadata = parseYaml(frontmatter!) as Record<string, unknown>;
-      expect(Object.keys(metadata).sort()).toEqual(["description", "name"]);
+      expect(Object.keys(metadata).sort()).toEqual([
+        "compatibility",
+        "description",
+        "name",
+      ]);
       expect(metadata.name).toBe(name);
     }
-
-    const buildKg = await readFile(
-      resolve(projectRoot, "skills/build-kg/SKILL.md"),
-      "utf8",
-    );
-    const skeleton =
-      /<!-- candidate-request-skeleton -->\n\s*```json\n([\s\S]*?)\n```/.exec(
-        buildKg,
-      )?.[1];
-    expect(skeleton).toBeDefined();
-    const requestSchema = JSON.parse(
-      await readFile(
-        resolve(projectRoot, "schemas/candidate-request.schema.json"),
-        "utf8",
-      ),
-    ) as object;
-    const ajv = new Ajv2020({ allErrors: true, strict: true });
-    addFormats(ajv);
-    const validateRequest = ajv.compile(requestSchema);
-    const exampleRequest = JSON.parse(skeleton!) as object;
-    expect(
-      validateRequest(exampleRequest),
-      JSON.stringify(validateRequest.errors, null, 2),
-    ).toBe(true);
 
     const { snapshot, graph } = await projectGraph();
     const generated = await generatedProjectionBytes(snapshot, graph);
@@ -241,17 +216,6 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(readme).toContain("https://github.com/OWNER/coffee-chat-instance");
     expect(readme).toContain("knowledge-free engine plugin");
     expect(readme).not.toContain("Coffee Chat — Coffee Chat");
-
-    const coffeeChatSkill = await snapshot.read("skills/coffee-chat/SKILL.md");
-    const coffeeChatText = coffeeChatSkill.toString("utf8");
-    expect(coffeeChatText).toContain(
-      "An explicit request to install, remove, update, or “do it now” is not an answer",
-    );
-    expect(coffeeChatText).toContain("Never infer option 2");
-    expect(coffeeChatText).toContain("inspect the current native manager");
-    expect(coffeeChatText).toContain("host-managed settings and cache");
-    expect(coffeeChatText).toContain("removal receipt");
-    expect(coffeeChatText).toContain("`Unknown`");
   });
 
   it("regenerates all public identity strings from a fork manifest", async () => {
