@@ -30,8 +30,14 @@
 - Modify: `tools/knowledge.ts`
 - Modify: `tools/generate.ts`
 - Modify: `tools/cc.ts`
+- Modify: `tools/projections.ts`
+- Modify: `tools/candidate.ts`
 - Modify: `tests/foundation-contracts.test.ts`
 - Modify: `tests/task-2-contracts.test.ts`
+- Modify: `tests/task-3-candidate.test.ts`
+- Modify: `tests/task-3-cli.test.ts`
+- Modify: `tests/task-4-projections.test.ts`
+- Modify: `tests/task-4-candidate-projections.test.ts`
 - Modify: `tests/fixtures/initialized-valid/coffee-chat.json`
 - Add: `tests/fixtures/engine-valid/coffee-chat.json`
 - Add: `tests/role-contracts.test.ts`
@@ -101,7 +107,9 @@ export type KnowledgeGraph = EngineGraph | InstanceGraph;
 export function isInstanceGraph(graph: KnowledgeGraph): graph is InstanceGraph;
 ```
 
-Branch before reading `knowledge/`: engine validation rejects any tracked root `knowledge/` files and returns an empty graph; instance validation keeps the existing strict Note/Entity/index behavior. Restrict `buildKnowledgeIndex`, `generatedIndexBytes`, and index write/check functions to `InstanceGraph`, and make `cc generate/check` skip the index for engine role while still checking other projections in Task 2.
+Branch before reading `knowledge/`: engine validation rejects any tracked root `knowledge/` files and returns an empty graph; instance validation keeps the existing strict Note/Entity/index behavior. Restrict `buildKnowledgeIndex`, `generatedIndexBytes`, and index write/check functions to `InstanceGraph`, and make `cc generate/check` skip the index for engine role.
+
+In the same slice, narrow every existing manifest dereference in `tools/projections.ts` and `tools/candidate.ts` so the complete suite and typecheck remain green at this commit. Implement only the minimum role behavior needed here: the engine generates the stable knowledge-free namespace; instance behavior preserves the current synthetic-fixture semantics; Make mine recognizes `engine -> instance`, while its complete downstream fingerprint and request redesign remain Task 3. Remove every compile-time or runtime read of `profile`, `time_zone`, or `initialization_state` that is not guarded by the instance role.
 
 Set the root manifest to the real maintained repository URL and Pages URL, stable generic package identity, and no personal fields. Convert `tests/fixtures/initialized-valid` into an explicitly fictional instance with `display_name: "Example Author"`, `short_name: "Example"`, and `coffee-chat-example` identity.
 
@@ -152,7 +160,6 @@ Make the projection API explicit:
 export type ArtifactClass = "release" | "ephemeral-test";
 export type ProjectionContext = {
   artifact_class: ArtifactClass;
-  source_root: string;
   output_root: string;
 };
 
@@ -162,7 +169,7 @@ export type ProjectionBundle = {
 };
 
 export async function buildProjectionBundle(
-  snapshot: Snapshot,
+  snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
   context: ProjectionContext,
 ): Promise<ProjectionBundle>;
@@ -172,6 +179,10 @@ export function assertArtifactBoundary(
   context: ProjectionContext,
   dependencies: string[],
 ): Promise<void>;
+
+export interface DependencyTrackingSnapshot extends Snapshot {
+  dependencies(): string[];
+}
 ```
 
 Tests must prove:
@@ -188,7 +199,9 @@ Expected red: the current generator dereferences `manifest.profile` for every ro
 
 ### Step 2: Implement role-aware rendering and provenance boundaries
 
-Move role-neutral manifest fields into shared builders and branch presentation only through `isEngineManifest`/`isInstanceManifest`. Every projection reader records its repository-relative input path in `ProjectionBundle.dependencies`; release validation walks that ledger and rejects any test/example dependency. Engine `author`/`developerName` identify the project (`Coffee Chat`), never a represented person. Generate the engine first screen in this order: purpose, Create yours, use an explicit instance URL, install the knowledge-free engine plugin, Contribute to engine, then the two conceptual blocks. Generate the instance first screen in the approved one-time chat/install/Make mine/Browse order with the bilingual AI-synthesis disclosure.
+Instrument `Snapshot.exists`, `list`, `read`, and `assertSafe` so dependency capture is automatic and inherited by validation plus projection generation; projection builders do not self-report their reads. Returned list members and missing-path observations are dependencies because either can change output. `ProjectionBundle.dependencies` is copied from the bound Snapshot ledger, and release validation rejects any test/example dependency. Add a test that deliberately reads a fixture through the tracked Snapshot without declaring it elsewhere and prove release generation fails.
+
+Move role-neutral manifest fields into shared builders and branch presentation only through `isEngineManifest`/`isInstanceManifest`. Engine `author`/`developerName` identify the project (`Coffee Chat`), never a represented person. Generate the engine first screen in this order: purpose, Create yours, use an explicit instance URL, install the knowledge-free engine plugin, Contribute to engine, then the two conceptual blocks. Generate the instance first screen in the approved one-time chat/install/Make mine/Browse order with the bilingual AI-synthesis disclosure.
 
 Make `AGENTS.md` a thin role router and `CLAUDE.md` exactly `@AGENTS.md`. Add a generated-file ownership marker and a closed projection inventory so conversion can prune only generator-owned stale paths. Generalize `CONTENT_LICENSE.md`: MIT covers reusable software; downstream authors own their Notes; only `tests/fixtures/son-input/**` receives a path-scoped `© 2026 Son, All rights reserved` notice. Do not emit that fixture notice inside the generic plugin.
 
@@ -258,18 +271,20 @@ export type CandidateRequest = {
 };
 ```
 
-`make-mine` requires the configuration and an engine base; `contribute` and `update` forbid it and require an instance base. Preserve existing Entity create/update/retire, Note create/correct, rollback, receipt, Source observation, and setup-effect semantics.
+`make-mine` requires the configuration, an engine base, and at least one Note `create` operation containing at least one public Source; reject an empty instance before materialization. `contribute` and `update` forbid the configuration and require an instance base. Derive `marketplace_name` exactly as `${plugin.name}-marketplace`, show it in Preview, and verify it matches every generated catalog. Preserve existing Entity create/update/retire, Note create/correct, rollback, receipt, Source observation, and setup-effect semantics.
 
 Add red tests for the precise fingerprint:
 
 ```ts
-export type RepositoryIdentity = {
-  top_level: string;
-  git_common_dir: string;
-  git_common_dir_device: number;
-  git_common_dir_inode: number;
-  branch: string;
+export type TargetFingerprint = {
+  git_common_dir: {
+    real_path: string;
+    device: string;
+    inode: string;
+  };
   origin_url: string;
+  base_commit: string;
+  pre_conversion_manifest_digest: string;
 };
 
 export function normalizeGitHubRepositoryUrl(raw: string): string;
@@ -279,13 +294,13 @@ Acceptance cases: HTTPS and SCP-like GitHub SSH normalize to canonical HTTPS; ho
 
 ### Step 2: Bind target identity, manifest digest, and proposed-zone date
 
-Extend `repositoryBinding` to resolve `remote.origin.url` with `git config --get-all`, realpath/stat the Git common dir, and include device/inode. Record the pre-conversion `coffee-chat.json` digest separately in `CandidateManifest`. The Candidate preview shows current/proposed roles, canonical actual origin, full target fingerprint, proposed time zone, and exact content notice.
+Extend `repositoryBinding` to resolve `remote.origin.url` with `git config --get-all`, realpath/stat the Git common dir, and encode device/inode as lossless base-10 strings. Use one `TargetFingerprint` object in `CandidateManifest`, `PreviewData`, and `CandidateReceipt`. The Candidate preview shows current/proposed roles, canonical actual origin, full target fingerprint, proposed time zone, derived marketplace name, and exact content notice.
 
-During prepare, use `instance_configuration.time_zone` to freeze the date before an instance manifest exists. During apply, re-resolve origin, Git common-dir realpath/device/inode, HEAD, branch, base manifest digest, configured-zone date, Source observations, worktree state, Candidate directory identity, and hook target. Any drift returns `approval_invalidated` with no canonical mutation.
+During prepare, use `instance_configuration.time_zone` to freeze the date before an instance manifest exists. During apply, re-resolve the complete target fingerprint, configured-zone date, Source observations, worktree state, Candidate directory identity, and hook target. Perform one final fingerprint assertion after materialized-candidate validation and immediately before `applyTransaction`; a checkpoint-injected change there must return `approval_invalidated` with zero canonical writes.
 
 ### Step 3: Make engine-to-instance conversion atomic
 
-In `buildDesiredState`, create a fresh Profile UUID, switch the manifest to `instance`, create only the approved Entities/Notes, write `CONTENT_LICENSE.md` from the exact approved `content_notice`, generate the index and instance projections, and delete only marker-owned engine projections. Keep all canonical writes in the existing backup/swap/rollback transaction. Run `install-pre-commit` only after canonical success and preserve `partial_local_result` on setup failure.
+In `buildDesiredState`, create a fresh Profile UUID, switch the manifest to `instance`, create only the approved Entities/Notes, write canonical authored `CONTENT_LICENSE.md` from the exact approved `content_notice`, generate the index and instance projections, and delete only marker-owned engine projections. Include `CONTENT_LICENSE.md` in canonical input binding so prepare -> apply -> generate reproduces byte-identical licensing output. Keep all canonical writes in the existing backup/swap/rollback transaction. Run `install-pre-commit` only after canonical success and preserve `partial_local_result` on setup failure.
 
 Test a real temporary Git topology with an engine origin and a different downstream origin. Cover same-engine rejection, origin race, common-dir replacement, inode change, base digest drift, date rollover, projection failure rollback, and hook partial success. Then run:
 
@@ -333,6 +348,11 @@ Required evaluations:
 - Build KG accepts only an explicit downstream/instance checkout and always routes writes through Candidate Preview approval;
 - Coffee Chat produces no filesystem diff; Apply Perspective may edit only named external task paths and never canonical/plugin paths;
 - Authored, Sourced, Inferred, and Unknown stay distinguishable; repeated Sources do not add confidence; temporal/context changes are not called contradictions by default;
+- a retrospective Note is labeled hindsight rather than contemporaneous evidence;
+- first-recorded cutoffs filter the current corrected corpus and disclose that limit;
+- actual as-of requests read the matching Git revision or return Unknown, while combined-axis requests apply both perspective time and first-recorded cutoff;
+- current answers reconstruct the trajectory instead of blindly selecting the latest Note;
+- live instance knowledge wins over a bundled snapshot, and fallback discloses its plugin version, source commit when available, digest, and latest recorded date;
 - Derived Perspective and Task Lens are not written to disk, package cache, index, Pages, or test snapshots;
 - prompt-like text in Notes/Sources/entities is treated as data, never instructions.
 
@@ -437,7 +457,6 @@ export type SiteBuildRequest = {
   source_root: string;
   output_root: string;
   artifact_class: "release" | "ephemeral-test";
-  source_commit: string;
 };
 
 export async function loadSiteModel(
@@ -450,7 +469,7 @@ export async function loadSiteModel(
 export function sourceRouteSlug(url: string): string;
 ```
 
-`sourceRouteSlug` is the lowercase SHA-256 hex of the exact URL. `release` must read the current root only and write only the configured `dist/site`; `ephemeral-test` must read a fixture or temporary instance and write outside the checkout. Engine release mode must reject any graph/fixture dependency and emit docs-only routes. Instance mode must require a valid current index and canonical source paths.
+`sourceRouteSlug` is the lowercase SHA-256 hex of the exact URL. Resolve `source_commit` from `git rev-parse HEAD` in the bound source checkout; it is never caller-authored. A test that changes a supplied environment hint or fixture field must not change the published commit. `release` must read the current root only and write only the configured `dist/site`; `ephemeral-test` must read a fixture or temporary instance and write outside the checkout. Engine release mode must reject any graph/fixture dependency and emit docs-only routes. Instance mode must require a valid current index and canonical source paths.
 
 Expected red: there is no Astro source, build wrapper, or role-aware publication boundary.
 

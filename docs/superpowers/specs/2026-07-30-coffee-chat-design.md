@@ -77,6 +77,7 @@ Canonical authority does not mean putting the whole product in one file. It mean
 - coffee-chat.json owns repository role and package metadata and, in an instance, public Profile metadata;
 - an instance's knowledge/notes owns its dated authored thoughts;
 - an instance's knowledge/entities.yml owns its Entity identity and aliases;
+- CONTENT_LICENSE.md owns the repository's explicit public-content holder and terms;
 - method owns shared provenance, synthesis behavior, and disclosure language;
 - README.md owns the short bilingual layout and action order, while importing generated metadata and disclosure fragments;
 - each skill owns only its trigger and task-specific boundary.
@@ -676,7 +677,7 @@ Make mine requires a Git checkout with one unambiguous `origin` repository ident
 
 The engine identity is the normalized `repository.url` in the pre-conversion engine manifest. The target identity is the normalized actual `origin` of the selected checkout. Make mine is allowed only when the target identity differs from the engine identity and exactly matches the proposed instance `repository.url`. Therefore a maintained engine checkout, whose actual origin matches its engine manifest, cannot be converted in place. A GitHub **Use this template** checkout has its own origin and can become an instance after explicit approval.
 
-Candidate preparation resolves and records a target fingerprint containing the real path plus device and inode of `git rev-parse --git-common-dir`, normalized origin identity, base commit, and digest of the pre-conversion `coffee-chat.json`. Candidate apply re-resolves every component and also rechecks the proposed time zone's calendar date, Source observations, and approved setup-effect targets. Any difference invalidates approval and requires a new Candidate. The fingerprint is local approval metadata stored only in the external Candidate directory and receipt; machine-specific paths and inode values never enter canonical files or generated projections.
+Candidate preparation resolves and records one target fingerprint containing the real path plus decimal-string device and inode values of `git rev-parse --git-common-dir`, normalized origin identity, base commit, and digest of the pre-conversion `coffee-chat.json`. The same exact object appears in the Candidate manifest, Preview, and Receipt. Candidate apply re-resolves every component immediately before the canonical transaction and also rechecks the proposed time zone's calendar date, Source observations, and approved setup-effect targets. Any difference invalidates approval and requires a new Candidate. The fingerprint is local approval metadata stored only in the external Candidate directory and receipt; machine-specific paths and inode values never enter canonical files or generated projections.
 
 ## 8. Plugin architecture and lifecycle
 
