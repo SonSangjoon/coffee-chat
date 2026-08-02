@@ -303,6 +303,7 @@ function renderEnglish(manifest: Manifest): string {
 
 function renderKorean(manifest: Manifest): string {
   const c = context(manifest);
+  const buildUrl = c.isEngine ? "#나만의-coffee-chat-만들기" : c.buildUrl;
   const roleCopy = c.isEngine
     ? "이곳은 특정 인물을 담지 않은 중립 엔진입니다. 대화하려면 초기화된 공개 인스턴스 URL을 사용하세요."
     : `이곳은 ${c.profileName}의 승인된 공개 기록입니다. 모델이 그 사람이라고 주장하는 것이 아니라, 문서화된 근거에 접근하는 인터페이스입니다.`;
@@ -323,7 +324,7 @@ function renderKorean(manifest: Manifest): string {
     "Coffee Chat은 사람을 복제하거나 고정된 Mental Model을 저장하지 않습니다. 현재 질문이나 작업에 필요한 관점만 도출하고, 무엇이 그 관점을 뒷받침하는지와 공개 기록의 경계를 함께 보여줍니다.",
     "",
     "[**설치 없이 Coffee Chat 하기**](#설치-없이-coffee-chat-하기) · [**나만의 Coffee Chat 만들기**](" +
-      c.buildUrl +
+      buildUrl +
       ")",
     "",
     "## 왜 Coffee Chat인가",

@@ -70,6 +70,9 @@ describe("localized README projections", () => {
     expect(korean).toContain("## 왜 Coffee Chat인가");
     expect(english).not.toContain("Coffee Chat과 대화하기");
     expect(korean).not.toContain("Talk with a Coffee Chat / ");
+    expect(korean).toContain(
+      "[**나만의 Coffee Chat 만들기**](#나만의-coffee-chat-만들기)",
+    );
     expect(english).toContain(
       "![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.png)",
     );
@@ -143,6 +146,9 @@ describe("localized README projections", () => {
     );
     expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
     expect(korean).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
+    expect(korean).toContain(
+      "[**나만의 Coffee Chat 만들기**](https://github.com/SonSangjoon/coffee-chat)",
+    );
     expect(english).not.toContain("Sangjoon Son");
     expect(korean).not.toContain("Sangjoon Son");
   });

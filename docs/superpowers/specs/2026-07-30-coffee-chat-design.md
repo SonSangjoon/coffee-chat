@@ -745,35 +745,7 @@ No MCP server is required in v1. The static public graph, agent instructions, an
 
 ### 9.1 README
 
-The README is short, bilingual, action-first, and generated for the repository role. English and Korean appear as paired lines rather than two long duplicated documents.
-
-The generic engine README contains:
-
-1. product name;
-2. one-sentence purpose;
-3. Create yours through **Use this template**;
-4. use an explicit Coffee Chat instance URL;
-5. install the knowledge-free engine plugin;
-6. **Contribute to engine** and documentation links.
-
-It never presents the repository maintainer or a fixture author as the represented person. An initialized instance README instead contains the AI-generated synthesis disclaimer, one-time Coffee Chat action, instance-plugin installation, Make mine link back to the neutral template, and Browse the KG action.
-
-The disclosure is explicit and paired bilingually:
-
-> This is an AI-generated synthesis of public, dated records—not the person and not a statement of unrecorded beliefs.
->
-> 공개된 날짜별 기록을 바탕으로 AI가 만든 해석입니다. 본인이 아니며, 기록되지 않은 생각을 대신 말하지 않습니다.
-
-The copyable universal prompt tells the agent to open the repository and follow coffee-chat.json. For the engine role it asks for an instance URL or offers creation/contribution. For the instance role it asks whether the user wants one-time Coffee Chat or instance-plugin installation, uses only public dated evidence, and distinguishes Authored, Sourced, Inferred, and Unknown content.
-
-Architecture, schemas, detailed commands, and contribution notes remain below the first screen or in linked documentation. Installation commands are generated from role-specific canonical metadata so an instance cannot leave stale template, owner, repository, or plugin names in the README.
-
-Immediately after the actions, the README explains the product in exactly two short conceptual blocks:
-
-1. Build the public record: public Sources plus dated thoughts become linked Notes, Sources, and Entities in a temporal knowledge graph.
-2. Use the public record: an agent retrieves the relevant temporal subgraph, produces a Derived Perspective and optional Task Lens, uses them with evidence, and never writes that synthesis back to the public record.
-
-These are explanatory blocks, not additional setup steps or a second schema.
+The authoritative README language layout, role-aware rendering, section order, shared visual assets, validation, and acceptance contract is the [Coffee Chat README Redesign](./2026-08-02-coffee-chat-readme-design.md). It supersedes this section; all other v1 knowledge, Candidate, agent-behavior, plugin, safety, and Pages contracts remain unchanged.
 
 ### 9.2 Template and contribution onboarding
 

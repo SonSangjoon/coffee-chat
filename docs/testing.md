@@ -22,18 +22,23 @@ npm run test:site
 
 ## Acceptance map
 
-| Flow                                                                | Evidence                                                       |
-| ------------------------------------------------------------------- | -------------------------------------------------------------- |
-| Knowledge-free engine validation and byte-identical generation      | `foundation-contracts`, `role-contracts`, `task-4-projections` |
-| No Son or synthetic fixture dependency in an engine release         | `fixture-isolation`, `artifact-boundaries`                     |
-| Docs-only engine Pages                                              | `site-build`, `site-publication-boundary`, Playwright          |
-| Disposable Make mine through Preview digest approval                | `make-mine-acceptance`, Candidate contract tests               |
-| Instance Note, temporal KG, plugin snapshot, and Pages              | projection, site-model, site-build, and Playwright tests       |
-| Public-evidence Coffee Chat and task-scoped query behavior          | `skill-evaluations`                                            |
-| Local commit and CI-style secret rejection without value disclosure | `gitleaks-contracts`, workflow contracts                       |
-| Co-installed engine plus two fictional instance plugins             | `plugin-lifecycle`                                             |
+| Flow                                                                | Evidence                                                        |
+| ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Knowledge-free engine validation and byte-identical generation      | `foundation-contracts`, `role-contracts`, `task-4-projections`  |
+| Separate reciprocal English and Korean README projections           | `readme-projections`, `task-4-projections`                      |
+| Locked README PNG dimensions, digests, and parsed local links       | `readme-assets`                                                 |
+| Candidate materialization of both READMEs and shared visual support | `task-4-candidate-projections`, `candidate-downstream-identity` |
+| No Son or synthetic fixture dependency in an engine release         | `fixture-isolation`, `artifact-boundaries`                      |
+| Docs-only engine Pages                                              | `site-build`, `site-publication-boundary`, Playwright           |
+| Disposable Make mine through Preview digest approval                | `make-mine-acceptance`, Candidate contract tests                |
+| Instance Note, temporal KG, plugin snapshot, and Pages              | projection, site-model, site-build, and Playwright tests        |
+| Public-evidence Coffee Chat and task-scoped query behavior          | `skill-evaluations`                                             |
+| Local commit and CI-style secret rejection without value disclosure | `gitleaks-contracts`, workflow contracts                        |
+| Co-installed engine plus two fictional instance plugins             | `plugin-lifecycle`                                              |
 
 The Son fixture under `tests/fixtures/son-input/` is input-only and non-canonical. Release inventory tests prove that its bytes and the synthetic instance bytes do not enter the engine Profile, knowledge graph, plugin, README, or Pages.
+
+README asset tests parse PNG signatures and IHDR dimensions directly, enforce byte ceilings and approved SHA-256 digests for the three shared visuals, and walk inline, reference-style, and angle-bracket local Markdown targets through `mdast`. Candidate projection tests prove that both localized READMEs and those three support assets materialize transactionally without entering plugin payloads or the knowledge graph.
 
 ## Native host isolation
 
