@@ -509,7 +509,7 @@ export async function buildProjectionBundle(
     });
   if (
     context.artifact_class === "ephemeral-test" &&
-    (await outputRootWithinCheckout(snapshot.root, context.output_root))
+    (await pathResolvesWithin(snapshot.root, context.output_root))
   )
     throw new ValidationFailure({
       code: "ephemeral-output-must-be-external",
@@ -529,7 +529,7 @@ export async function buildProjectionBundle(
 
 const MAX_OUTPUT_SYMLINK_HOPS = 40;
 
-async function canonicalizeOutputRoot(
+export async function canonicalizePotentialPath(
   path: string,
   symlinkHops = 0,
 ): Promise<string> {
@@ -559,7 +559,7 @@ async function canonicalizeOutputRoot(
       const resolvedTarget = isAbsolute(linkTarget)
         ? linkTarget
         : resolve(dirname(existing), linkTarget);
-      return canonicalizeOutputRoot(
+      return canonicalizePotentialPath(
         resolve(resolvedTarget, ...missingSegments.reverse()),
         symlinkHops + 1,
       );
@@ -567,17 +567,17 @@ async function canonicalizeOutputRoot(
   }
 }
 
-async function outputRootWithinCheckout(
-  checkoutRoot: string,
-  outputRoot: string,
+export async function pathResolvesWithin(
+  parentRoot: string,
+  candidatePath: string,
 ): Promise<boolean> {
-  if (sameOrDescendant(checkoutRoot, outputRoot)) return true;
+  if (sameOrDescendant(parentRoot, candidatePath)) return true;
   try {
-    const [canonicalCheckout, canonicalOutput] = await Promise.all([
-      realpath(checkoutRoot),
-      canonicalizeOutputRoot(outputRoot),
+    const [canonicalParent, canonicalCandidate] = await Promise.all([
+      realpath(parentRoot),
+      canonicalizePotentialPath(candidatePath),
     ]);
-    return sameOrDescendant(canonicalCheckout, canonicalOutput);
+    return sameOrDescendant(canonicalParent, canonicalCandidate);
   } catch {
     return true;
   }
