@@ -1,10 +1,16 @@
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { generatedProjectionBytes } from "../tools/projections.ts";
-import { validateKnowledge } from "../tools/knowledge.ts";
+import { type Manifest, validateKnowledge } from "../tools/knowledge.ts";
+import { renderReadmes } from "../tools/readme.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
+const initializedFixtureRoot = resolve(
+  projectRoot,
+  "tests/fixtures/initialized-valid",
+);
 
 async function engineProjection() {
   const snapshot = await createSnapshot(projectRoot, "worktree");
@@ -14,6 +20,13 @@ async function engineProjection() {
   expect(validation.diagnostics).toEqual([]);
   expect(validation.graph).toBeDefined();
   return generatedProjectionBytes(snapshot, validation.graph!);
+}
+
+async function initializedInstanceProjection() {
+  const manifest = JSON.parse(
+    await readFile(resolve(initializedFixtureRoot, "coffee-chat.json"), "utf8"),
+  ) as Manifest;
+  return renderReadmes(manifest);
 }
 
 function expectHeadingOrder(readme: string, headings: readonly string[]) {
@@ -89,5 +102,24 @@ describe("localized README projections", () => {
       "## 나만의 Coffee Chat 만들기",
       "## 설치, 제거, 기여, 라이선스",
     ]);
+  });
+
+  it("renders the initialized instance identity in both localized READMEs", async () => {
+    const projected = await initializedInstanceProjection();
+    const english = projected.get("README.md")?.toString("utf8");
+    const korean = projected.get("README.ko.md")?.toString("utf8");
+
+    expect(english).toContain("Open https://github.com/example/coffee-chat");
+    expect(korean).toContain("https://github.com/example/coffee-chat");
+    expect(english).toContain(
+      "coffee-chat-example@coffee-chat-example-marketplace",
+    );
+    expect(korean).toContain(
+      "coffee-chat-example@coffee-chat-example-marketplace",
+    );
+    expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
+    expect(korean).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
+    expect(english).not.toContain("Sangjoon Son");
+    expect(korean).not.toContain("Sangjoon Son");
   });
 });

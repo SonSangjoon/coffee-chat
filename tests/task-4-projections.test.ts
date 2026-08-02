@@ -60,7 +60,6 @@ async function pendingRepository(): Promise<string> {
     "skills",
     "LICENSE",
     "CONTENT_LICENSE.md",
-    "README.md",
   ])
     await cp(resolve(projectRoot, path), resolve(root, path), {
       recursive: true,
@@ -359,6 +358,8 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(combined).not.toContain("coffee-chat-sangjoon");
     expect(roleOwnedProjectionPaths(graph)).toEqual(
       expect.arrayContaining([
+        "README.md",
+        "README.ko.md",
         "plugins/coffee-chat-fork-owner/knowledge/coffee-chat.json",
         "plugins/coffee-chat-fork-owner/knowledge/index.json",
         "plugins/coffee-chat-fork-owner/knowledge/entities.yml",

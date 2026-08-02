@@ -73,7 +73,6 @@ async function repositoryFixture(
     "skills",
     "LICENSE",
     "CONTENT_LICENSE.md",
-    "README.md",
   ])
     await cp(resolve(projectRoot, path), resolve(root, path), {
       recursive: true,
@@ -425,6 +424,7 @@ describe("Task 4 Candidate projection transaction", () => {
         "./coffee-chat.json",
         "./knowledge/index.json",
         "./README.md",
+        "./README.ko.md",
         "./AGENTS.md",
         "./CLAUDE.md",
         "./.codex-plugin/plugin.json",
@@ -438,6 +438,7 @@ describe("Task 4 Candidate projection transaction", () => {
       ]),
     );
     expect(manifest.preview.affected_paths).toEqual(manifest.changed_paths);
+    expect(manifest.preview.affected_paths).toContain("./README.ko.md");
     expect(manifest.setup_effects).toEqual([]);
     expect(await readFile(prepared.previewMarkdown, "utf8")).toContain(
       "## Repository changes",
@@ -452,6 +453,9 @@ describe("Task 4 Candidate projection transaction", () => {
       fixedDependencies(false),
     );
     expect(receipt).toEqual(expect.objectContaining({ status: "applied" }));
+    expect(
+      await readFile(resolve(fixture.root, "README.ko.md"), "utf8"),
+    ).toContain("[English](./README.md)");
 
     const snapshot = await createSnapshot(fixture.root, "worktree");
     const validation = await validateKnowledge(snapshot);
