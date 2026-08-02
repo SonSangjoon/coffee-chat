@@ -1,6 +1,6 @@
 # Coffee Chat README Redesign
 
-**Status:** Approved for implementation after all-ImageGen visual revision
+**Status:** Approved for implementation after shared-English visual revision
 
 **Date:** 2026-08-02
 
@@ -234,7 +234,7 @@ The section leads with:
 
 ### 4.7 How it earns trust
 
-The section begins with the localized ImageGen-based trust-layer diagram defined in section 5.4. Its meaning is repeated in Markdown immediately below it.
+The section begins with the shared English ImageGen-based trust-layer diagram defined in section 5.4. Its meaning is repeated in native-language Markdown immediately below it.
 
 Keep six compact bullets:
 
@@ -301,7 +301,7 @@ Commands are role-aware projections from canonical metadata.
 
 ## 5. Visual assets
 
-The README uses one shared cover and two localized explanatory visuals. This creates five tracked PNG files: one shared cover, two English diagrams, and two Korean diagrams. Every asset has one named position in the README; unused decorative variants and generation masters are not tracked.
+The README uses one shared cover and two shared English explanatory visuals. This creates three tracked PNG files. Both README languages reference the same images, while native-language Markdown carries the complete meaning. Unused localized duplicates, decorative variants, and generation masters are not tracked.
 
 ### 5.1 Design inheritance
 
@@ -317,7 +317,7 @@ Every visual inherits the approved cover rather than starting from a new style p
 - quiet negative space, no gradients, no neon, no glossy 3D, and no AI iconography;
 - pixel influence limited to isolated non-glyph dither details visible only on close inspection.
 
-The approved cover is always supplied as the visual reference for every additional raster generation or refinement. Each explanatory diagram begins from one textless ImageGen master. English and Korean variants are derived from that same master rather than independently regenerated, preventing locale drift.
+The approved cover is always supplied as the visual reference for every additional raster generation or refinement. Each explanatory diagram begins from one textless ImageGen master and produces one deterministic English final image shared by both README languages.
 
 Every final visual contains ImageGen-generated composition, texture, and diagram structure. Image generation never supplies final typography, diagram labels, table content, or other semantic text because exact wording must remain reliable. Deterministic post-processing is limited to cropping, resizing, compression, and overlaying approved text. Comparisons remain native Markdown so readers can copy, translate, navigate, and diff their contents.
 
@@ -358,22 +358,20 @@ The same PNG is referenced from both README languages and is suitable for manual
 Paths:
 
 - docs/assets/readme/coffee-chat-flow.en.png
-- docs/assets/readme/coffee-chat-flow.ko.png
 
 Contract:
 
 - one textless ImageGen master produced with the approved cover as its reference image;
-- English and Korean PNGs derived from the same generated master;
+- one English PNG derived from the generated master;
 - exactly 1200 x 900, a 4:3 stacked layout rather than a desktop-only ultra-wide flow;
 - each file remains below 1.5 MiB;
 - same off-white, charcoal, coffee-brown, clay, and muted-sage palette as the cover;
 - matte paper texture, lightly illustrated nodes, thin imperfect curved connectors, and generous spacing;
 - no generated text, letters, numbers, pseudo-glyphs, logos, watermark, people, laptop, robot, brain, neon, gradient, or glossy 3D;
 - English labels: Public Source, Dated Judgment, Approved Note, Temporal Perspective Graph, You + Your Agent, People + Their Agents, Relevant Task Lens, Grounded Coffee Chat, Work with Your Taste, and Understand or Apply with Limits;
-- Korean labels: 공개 Source, 날짜가 있는 판단, 승인된 Note, 시계열 관점 그래프, 나와 나의 Agent, 다른 사람과 그들의 Agent, 관련 Task Lens, 근거 기반 Coffee Chat, 내 Taste를 반영한 업무, and 경계가 있는 이해·활용;
 - exact labels added deterministically after generation;
-- identical generated geometry, reading order, and color roles across locales;
-- the same meaning repeated in localized Markdown so the image is never the only explanation;
+- the same image referenced by English and Korean README files;
+- the complete meaning repeated in each README's native-language Markdown so the English image is never the only explanation;
 - readable at narrow and wide GitHub widths;
 - useful alt text in each README.
 
@@ -382,23 +380,21 @@ Contract:
 Paths:
 
 - docs/assets/readme/coffee-chat-trust.en.png
-- docs/assets/readme/coffee-chat-trust.ko.png
 
 Contract:
 
 - one textless ImageGen master produced with the approved cover as its reference image;
-- English and Korean PNGs derived from the same generated master;
+- one English PNG derived from the generated master;
 - exactly 1200 x 600, a compact 2:1 layout suited to a mid-README section;
 - each file remains below 1.5 MiB;
 - four clearly separated layers: Authored, Sourced, Inferred, and Unknown;
-- Korean layer labels: 작성자 기록, 출처 내용, 제한된 추론, and 기록으로 알 수 없음;
 - no hierarchy implying that inference is authored truth;
 - one subtle orbit line connecting the layers without merging their boundaries;
-- one short localized definition per layer, added deterministically after generation;
-- identical generated geometry and semantics across locales;
+- one short English definition per layer, added deterministically after generation;
+- the same image referenced by English and Korean README files;
 - all visual, accessibility, and no-glyph constraints from the product-flow diagram.
 
-The final PNGs are visual explanations, not the semantic source of truth. Exact terminology and meaning are repeated in native localized Markdown and descriptive alt text. The diagrams inherit the image-generated cover through their paper texture, palette, orbit geometry, node proportions, negative space, and restrained dither accents.
+The final PNGs are visual explanations, not the semantic source of truth. Exact terminology and meaning are repeated in native-language Markdown and descriptive localized alt text. The diagrams inherit the image-generated cover through their paper texture, palette, orbit geometry, node proportions, negative space, and restrained dither accents.
 
 No additional asset is added unless it has a named README section and materially improves understanding.
 
@@ -412,8 +408,8 @@ The implementation updates:
 - generated-file drift checks;
 - formatting ignore or include configuration as required;
 - README link and asset validation;
-- locale-aware selection of the two diagram pairs;
-- PNG signature, dimension, size, and expected SHA-256 validation for all five assets;
+- shared selection of the two English diagrams from both README languages;
+- PNG signature, dimension, size, and expected SHA-256 validation for all three assets;
 - the prior README contract documentation that currently requires paired bilingual lines.
 
 Canonical Coffee Chat knowledge and schema behavior do not change.
@@ -428,8 +424,8 @@ Generation fails without modifying tracked outputs when:
 - a role-specific URL, plugin identity, or author field is missing;
 - a local README asset is missing;
 - the cover is not 1280 × 640, exceeds 1 MB, or is not a PNG;
-- either product-flow PNG is not 1200 × 900, exceeds 1.5 MiB, or differs from its approved final digest;
-- either trust-layer PNG is not 1200 × 600, exceeds 1.5 MiB, or differs from its approved final digest;
+- the product-flow PNG is not 1200 × 900, exceeds 1.5 MiB, or differs from its approved final digest;
+- the trust-layer PNG is not 1200 × 600, exceeds 1.5 MiB, or differs from its approved final digest;
 - a generated README links to a missing local path;
 - a generated README omits either **Have a Coffee Chat** or **Build your Coffee Chat**;
 - engine copy implies that the engine represents a person;
@@ -450,7 +446,7 @@ The change is complete when:
 7. recruiter and collaborator copy is an example rather than the product identity, permits alignment, tension, and Unknown, and forbids scores and hiring decisions;
 8. the comparison section distinguishes Coffee Chat from a generic KB without claiming that graph or temporal storage is unique;
 9. the cover renders in GitHub Markdown, is 1280 × 640, and remains below 1 MB;
-10. both localized PNG pairs remain legible at narrow and wide widths, contain no generated pseudo-glyph artifacts, and preserve matching semantics and geometry from their shared ImageGen master;
+10. both shared English diagrams remain legible at narrow and wide widths, contain no generated pseudo-glyph artifacts, and have their complete meaning repeated in native-language Markdown;
 11. all local Markdown links and image paths resolve;
 12. generation is byte-identical on two consecutive runs;
 13. existing engine, instance, Candidate, validation, plugin, and Pages tests continue to pass.

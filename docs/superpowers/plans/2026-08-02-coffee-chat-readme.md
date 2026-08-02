@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the bilingual mixed README with separate English and Korean, role-aware generated READMEs that lead with the Taste thesis and ship the approved Coffee Chat cover plus two localized explanatory diagrams.
+**Goal:** Replace the bilingual mixed README with separate English and Korean, role-aware generated READMEs that lead with the Taste thesis and ship the approved Coffee Chat cover plus two shared English explanatory diagrams.
 
-**Architecture:** Move README rendering into a focused module that returns both locales from one manifest and keep `tools/projections.ts` as the projection orchestrator. Treat the five README visuals as canonical, MIT-licensed repository inputs: validate them before rendering, reference them from both role variants, and include their snapshot observations in projection provenance without copying them into plugin payloads.
+**Architecture:** Move README rendering into a focused module that returns both locales from one manifest and keep `tools/projections.ts` as the projection orchestrator. Treat the three README visuals as canonical, MIT-licensed repository inputs: validate them before rendering, reference the same English diagrams from both README languages, and include their snapshot observations in projection provenance without copying them into plugin payloads.
 
 **Tech Stack:** Node.js 24.5.0, npm 11.5.1, TypeScript 7.0.2, Vitest 4.1.10, GitHub-flavored Markdown, built-in ImageGen, and deterministic PNG typography composition.
 
@@ -16,8 +16,8 @@
 - Engine copy represents no person; instance copy uses only manifest-provided public identity, URL, Pages URL, plugin name, and marketplace name.
 - **Have a Coffee Chat** and **Build your Coffee Chat** receive equal first-page visibility; recruiting is an example, not the product identity.
 - The cover is `docs/assets/readme/coffee-chat-cover.png`, exactly 1280 x 640 PNG and less than 1 MiB, derived from approved source SHA-256 `3a47a283ef60316ea1ef6bd0191bc4e15f49d251a90b364e88d58455828b8052`.
-- Product-flow locale PNGs are 1200 x 900 and trust-layer locale PNGs are 1200 x 600; each diagram file is below 1.5 MiB.
-- Every explanatory diagram uses an ImageGen master produced with the approved cover as its reference image; locale variants derive from the same master.
+- The shared English product-flow PNG is 1200 x 900 and the shared English trust-layer PNG is 1200 x 600; each diagram file is below 1.5 MiB.
+- Every explanatory diagram uses an ImageGen master produced with the approved cover as its reference image; no localized duplicate image is tracked.
 - The approved palette is `#EEE9DF`, `#25221F`, `#75503D`, `#9A7059`, and `#697166`; no neon, glossy 3D, robot, brain, laptop, or AI iconography is introduced.
 - Every visual resource contains ImageGen-generated composition and texture. Typography, diagram labels, semantic tables, and Markdown copy remain deterministic.
 - Canonical knowledge, Candidate semantics, plugin behavior, Pages behavior, and schema behavior do not change.
@@ -224,17 +224,17 @@ git commit -m "test: cover localized instance readme projections"
 - Delete: `docs/assets/readme/coffee-chat-trust.en.svg`
 - Delete: `docs/assets/readme/coffee-chat-trust.ko.svg`
 - Create: `docs/assets/readme/coffee-chat-flow.en.png`
-- Create: `docs/assets/readme/coffee-chat-flow.ko.png`
 - Create: `docs/assets/readme/coffee-chat-trust.en.png`
-- Create: `docs/assets/readme/coffee-chat-trust.ko.png`
+- Delete: `docs/assets/readme/coffee-chat-flow.ko.png`
+- Delete: `docs/assets/readme/coffee-chat-trust.ko.png`
 - Modify: temporary-repository helper copy lists used by projection, lifecycle, and Candidate tests
 
 **Interfaces:**
 
-- Produces: `README_ASSET_PATHS: readonly string[]` containing exactly five PNG paths.
+- Produces: `README_ASSET_PATHS: readonly string[]` containing exactly three PNG paths.
 - Produces: `validateReadmeAssets(snapshot: Snapshot): Promise<void>` using dimensions, size ceilings, and exact approved SHA-256 digests.
 - Produces: `validateReadmeLinks(snapshot: Snapshot, readmes: ReadonlyMap<string, Buffer>): Promise<void>` using `mdast-util-from-markdown` for inline, reference-style, and angle-bracket local destinations.
-- Consumes: the approved cover source, two textless ImageGen masters, four localized derivatives, and both rendered README buffers.
+- Consumes: the approved cover source, two textless ImageGen masters, two English derivatives, and both rendered README buffers.
 
 - [ ] **Step 1: Rewrite the asset tests and verify RED**
 
@@ -244,14 +244,10 @@ The expected production break is that the committed contract still points at SVG
 expect(README_ASSET_PATHS).toEqual([
   "docs/assets/readme/coffee-chat-cover.png",
   "docs/assets/readme/coffee-chat-flow.en.png",
-  "docs/assets/readme/coffee-chat-flow.ko.png",
   "docs/assets/readme/coffee-chat-trust.en.png",
-  "docs/assets/readme/coffee-chat-trust.ko.png",
 ]);
 expect(readPngDimensions(flowEnglish)).toEqual({ width: 1200, height: 900 });
-expect(readPngDimensions(flowKorean)).toEqual({ width: 1200, height: 900 });
 expect(readPngDimensions(trustEnglish)).toEqual({ width: 1200, height: 600 });
-expect(readPngDimensions(trustKorean)).toEqual({ width: 1200, height: 600 });
 expect(await readdir(assetRoot)).not.toEqual(
   expect.arrayContaining([expect.stringMatching(/\.svg$/)]),
 );
@@ -291,7 +287,7 @@ Color palette: #EEE9DF, #25221F, #75503D, #9A7059, #697166
 Constraints: absolutely no text, letters, numbers, pseudo-glyphs, logos, watermark, people, laptop, robot, brain, neon, gradient, glossy 3D, or decorative clutter; keep every label area calm and empty
 ```
 
-Inspect the generated result. Reject any pseudo-glyph or structure that cannot hold all ten labels. Preserve the accepted master outside the repository and derive both locale outputs from exactly that image.
+Inspect the generated result. Reject any pseudo-glyph or structure that cannot hold all ten labels. Preserve the accepted master outside the repository and derive one exact English output from it.
 
 - [ ] **Step 5: Generate the textless trust-layer master with ImageGen**
 
@@ -310,9 +306,9 @@ Constraints: absolutely no text, letters, numbers, pseudo-glyphs, logos, waterma
 
 Inspect the result and preserve one accepted master outside the repository.
 
-- [ ] **Step 6: Derive exact English and Korean PNGs**
+- [ ] **Step 6: Derive the exact shared English PNGs**
 
-Crop and resize the accepted flow master once to 1200 x 900 and the trust master once to 1200 x 600. Create both locale variants from those identical resized bases. Overlay the exact labels and definitions from design spec sections 5.3 and 5.4 with deterministic fonts, positions, line wrapping, and colors. Do not ask ImageGen to render typography. Optimize each diagram below 1.5 MiB and inspect all four at original resolution plus approximately 360 px and 900 px display widths.
+Crop and resize the accepted flow master once to 1200 x 900 and the trust master once to 1200 x 600. Overlay the exact English labels and definitions from design spec sections 5.3 and 5.4 with deterministic fonts, positions, line wrapping, and colors. Do not ask ImageGen to render typography. Optimize each diagram below 1.5 MiB and inspect both at original resolution plus approximately 360 px and 900 px display widths.
 
 - [ ] **Step 7: Replace SVG validation with locked PNG validation**
 
@@ -329,13 +325,13 @@ In `tools/readme-assets.ts`:
 
 - [ ] **Step 8: Integrate PNG references and Candidate materialization**
 
-Update both README locale renderers to reference the PNG paths with descriptive localized alt text. Keep all diagram semantics repeated in native Markdown. Preserve `tools/candidate.ts` support for `docs/assets/readme/**`, and keep the five PNGs outside plugin payloads and the knowledge graph. Update every temporary-repository helper that materializes projection support files.
+Update both README locale renderers to reference the same English PNG paths with descriptive localized alt text. Keep all diagram semantics repeated in native Markdown. Preserve `tools/candidate.ts` support for `docs/assets/readme/**`, and keep the three PNGs outside plugin payloads and the knowledge graph. Update every temporary-repository helper that materializes projection support files.
 
 - [ ] **Step 9: Run the focused suites and verify GREEN**
 
 Run: `npm test -- tests/readme-assets.test.ts tests/readme-projections.test.ts tests/task-4-projections.test.ts tests/task-4-candidate-projections.test.ts tests/plugin-lifecycle.test.ts tests/candidate-downstream-identity.test.ts tests/skill-contracts.test.ts`
 
-Expected: PASS with five ImageGen-based PNG assets, valid local links, Candidate materialization, and no tracked SVG diagram.
+Expected: PASS with three ImageGen-based PNG assets, valid local links, Candidate materialization, and no localized duplicate or tracked SVG diagram.
 
 - [ ] **Step 10: Commit**
 
@@ -374,12 +370,12 @@ Expected: exit 0 with no stale projection diagnostics. Run `npm run cc -- genera
 
 - [ ] **Step 3: Perform visual QA**
 
-Inspect the cover at 1280 x 640 and both ImageGen-based PNG pairs at narrow and wide widths. Confirm:
+Inspect the cover at 1280 x 640 and both shared English ImageGen-based diagrams at narrow and wide widths. Confirm:
 
 - title and subtitle remain legible at repository-social-preview scale;
 - the cup remains on the right and does not collide with typography;
 - each diagram reads in the documented order at approximately 360 px and 900 px content width;
-- Korean labels do not clip;
+- Korean Markdown repeats the full diagram meaning without requiring localized image text;
 - no glyph-like image-generation artifacts appear in any asset;
 - the explanatory diagrams visibly inherit the approved cover and do not look like generic vector boxes;
 - solid off-white assets remain intentional against light and dark GitHub surroundings.
