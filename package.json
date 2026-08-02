@@ -13,6 +13,7 @@
     "test": "vitest run --maxWorkers=4",
     "test:watch": "vitest",
     "test:site": "playwright test",
+    "test:acceptance": "vitest run --maxWorkers=1 tests/make-mine-acceptance.test.ts tests/fixture-isolation.test.ts tests/gitleaks-contracts.test.ts tests/skill-evaluations.test.ts tests/plugin-lifecycle.test.ts",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
     "gitleaks:scan": "node --experimental-strip-types tools/gitleaks.ts scan --mode repository",
@@ -26,13 +27,13 @@
     "astro": "7.1.6",
     "prettier": "3.6.2",
     "typescript": "7.0.2",
-    "vitest": "4.0.18"
+    "vitest": "4.1.10"
   },
   "dependencies": {
-    "ajv": "8.17.1",
+    "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "cytoscape": "3.34.0",
     "mdast-util-from-markdown": "2.0.2",
-    "yaml": "2.8.1"
+    "yaml": "2.9.0"
   }
 }

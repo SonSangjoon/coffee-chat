@@ -20,9 +20,32 @@ Open an explicit instance URL, not this generic engine, for a one-time Coffee Ch
 Install the knowledge-free engine plugin when you want its three Skills and shared method; it contains no represented-person data or Notes payload.
 Skill 세 개와 공유 방법론이 필요할 때 지식 비포함 엔진 플러그인을 설치하세요. Profile이나 knowledge payload는 포함하지 않습니다.
 
+Codex install / Codex 설치:
+
 ```sh
 codex plugin marketplace add https://github.com/SonSangjoon/coffee-chat
 codex plugin add coffee-chat@coffee-chat-marketplace
+```
+
+Codex remove after use / 사용 후 Codex 삭제:
+
+```sh
+codex plugin remove coffee-chat@coffee-chat-marketplace
+codex plugin marketplace remove coffee-chat-marketplace
+```
+
+Claude Code local-scope install / Claude Code local scope 설치:
+
+```sh
+claude plugin marketplace add https://github.com/SonSangjoon/coffee-chat --scope local
+claude plugin install coffee-chat@coffee-chat-marketplace --scope local
+```
+
+Claude Code remove after use / 사용 후 Claude Code 삭제:
+
+```sh
+claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local
+claude plugin marketplace remove coffee-chat-marketplace
 ```
 
 ## Contribute to engine / 엔진에 기여

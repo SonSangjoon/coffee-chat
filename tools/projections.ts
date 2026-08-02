@@ -231,9 +231,32 @@ function readme(manifest: Manifest): Buffer {
         "Install the knowledge-free engine plugin when you want its three Skills and shared method; it contains no represented-person data or Notes payload.",
         "Skill 세 개와 공유 방법론이 필요할 때 지식 비포함 엔진 플러그인을 설치하세요. Profile이나 knowledge payload는 포함하지 않습니다.",
         "",
+        "Codex install / Codex 설치:",
+        "",
         "```sh",
         `codex plugin marketplace add ${manifest.repository.url}`,
         `codex plugin add ${pluginSelector}`,
+        "```",
+        "",
+        "Codex remove after use / 사용 후 Codex 삭제:",
+        "",
+        "```sh",
+        `codex plugin remove ${pluginSelector}`,
+        `codex plugin marketplace remove ${manifest.marketplace_name}`,
+        "```",
+        "",
+        "Claude Code local-scope install / Claude Code local scope 설치:",
+        "",
+        "```sh",
+        `claude plugin marketplace add ${manifest.repository.url} --scope local`,
+        `claude plugin install ${pluginSelector} --scope local`,
+        "```",
+        "",
+        "Claude Code remove after use / 사용 후 Claude Code 삭제:",
+        "",
+        "```sh",
+        `claude plugin uninstall ${pluginSelector} --scope local`,
+        `claude plugin marketplace remove ${manifest.marketplace_name}`,
         "```",
         "",
         "## Contribute to engine / 엔진에 기여",
@@ -284,20 +307,30 @@ function readme(manifest: Manifest): Buffer {
     "Use the native host manager and review this repository as the source before installation. Coffee Chat v1 contributes only three Skills; it has no service, hook, MCP server, agent, or executable.",
     "호스트의 기본 관리자를 사용하고 설치 전에 이 저장소를 소스로 검토하세요. Coffee Chat v1은 Skill 세 개만 제공하며 서비스·hook·MCP server·agent·실행 파일은 없습니다.",
     "",
-    "Codex install, then plugin-first removal / Codex 설치 후 플러그인 우선 삭제:",
+    "Codex install / Codex 설치:",
     "",
     "```sh",
     `codex plugin marketplace add ${manifest.repository.url}`,
     `codex plugin add ${pluginSelector}`,
+    "```",
+    "",
+    "Codex remove after use / 사용 후 Codex 삭제:",
+    "",
+    "```sh",
     `codex plugin remove ${pluginSelector}`,
     `codex plugin marketplace remove ${manifest.marketplace_name}`,
     "```",
     "",
-    "Claude Code local-scope install, then plugin-first removal / Claude Code local scope 설치 후 플러그인 우선 삭제:",
+    "Claude Code local-scope install / Claude Code local scope 설치:",
     "",
     "```sh",
     `claude plugin marketplace add ${manifest.repository.url} --scope local`,
     `claude plugin install ${pluginSelector} --scope local`,
+    "```",
+    "",
+    "Claude Code remove after use / 사용 후 Claude Code 삭제:",
+    "",
+    "```sh",
     `claude plugin uninstall ${pluginSelector} --scope local`,
     `claude plugin marketplace remove ${manifest.marketplace_name}`,
     "```",
@@ -499,8 +532,7 @@ export async function buildProjectionBundle(
 ): Promise<ProjectionBundle> {
   if (
     context.artifact_class === "release" &&
-    (snapshot.mode !== "worktree" ||
-      !sameDirectory(context.output_root, snapshot.root))
+    !sameDirectory(context.output_root, snapshot.root)
   )
     throw new ValidationFailure({
       code: "release-output-must-be-checkout",
@@ -871,6 +903,12 @@ export async function writeGeneratedProjections(
   snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
 ): Promise<void> {
+  if (snapshot.mode !== "worktree" || !sameDirectory(root, snapshot.root))
+    throw new ValidationFailure({
+      code: "release-output-must-be-checkout",
+      path: ".",
+      message: "Release projections must be generated in the current checkout.",
+    });
   const inspection = await inspectGeneratedProjections(snapshot, graph);
   if (inspection.blockingDiagnostics.length > 0)
     throw new ValidationFailure(inspection.blockingDiagnostics[0]!);

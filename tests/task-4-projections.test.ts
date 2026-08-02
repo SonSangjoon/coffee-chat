@@ -215,6 +215,18 @@ describe("Task 4 deterministic delivery projections", () => {
     }
     expect(readme).toContain("https://github.com/OWNER/coffee-chat-instance");
     expect(readme).toContain("knowledge-free engine plugin");
+    expect(readme).toContain(
+      `codex plugin remove coffee-chat@coffee-chat-marketplace`,
+    );
+    expect(readme).toContain(
+      "codex plugin marketplace remove coffee-chat-marketplace",
+    );
+    expect(readme).toContain(
+      "claude plugin install coffee-chat@coffee-chat-marketplace --scope local",
+    );
+    expect(readme).toContain(
+      "claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local",
+    );
     expect(readme).not.toContain("Coffee Chat — Coffee Chat");
   });
 
@@ -499,6 +511,33 @@ describe("Task 4 deterministic delivery projections", () => {
       stdout: "[]\n",
     });
     expect(await readFile(reference, "utf8")).not.toBe("drift\n");
+  });
+
+  it("checks the staged virtual tree without reading worktree projection drift", async () => {
+    const root = await pendingRepository();
+    expect(await runCli(root, "generate", "--format", "json")).toEqual({
+      exitCode: 0,
+      stdout: "[]\n",
+    });
+    await execFileAsync("git", ["init", "--quiet", "--initial-branch=main"], {
+      cwd: root,
+    });
+    await execFileAsync("git", ["add", "--all"], { cwd: root });
+
+    await writeFile(resolve(root, "README.md"), "worktree-only drift\n");
+
+    expect(
+      await runCli(root, "check", "--snapshot", "staged", "--format", "json"),
+    ).toEqual({ exitCode: 0, stdout: "[]\n" });
+    expect(
+      await runCli(root, "check", "--snapshot", "worktree", "--format", "json"),
+    ).toEqual({
+      exitCode: 1,
+      stdout: expect.stringContaining('"path":"./README.md"'),
+    });
+    expect(await readFile(resolve(root, "README.md"), "utf8")).toBe(
+      "worktree-only drift\n",
+    );
   });
 
   it("reports a valid but edited current ownership marker as generated drift", async () => {
