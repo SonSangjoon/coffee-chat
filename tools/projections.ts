@@ -550,7 +550,8 @@ async function ownedCoffeeChatPackagePaths(
       marker?.schema_version === "1.0.0" &&
       (marker?.repository_role === "engine" ||
         marker?.repository_role === "instance") &&
-      marker?.package_name === packageName &&
+      (marker?.package_name === undefined ||
+        marker?.package_name === packageName) &&
       plugin?.name === packageName &&
       Array.isArray(plugin?.keywords) &&
       plugin.keywords.includes("coffee-chat") &&
@@ -616,12 +617,7 @@ export async function inspectGeneratedProjections(
     let matches = false;
     if (await snapshot.exists(path))
       matches = (await snapshot.read(path)).equals(bytes);
-    const packageName = /^plugins\/([^/]+)\/.coffee-chat-generated\.json$/.exec(
-      path,
-    )?.[1];
-    const isPriorOwnedMarker =
-      packageName !== undefined && ownedPackages.has(packageName);
-    if (!matches && !isPriorOwnedMarker) {
+    if (!matches) {
       const diagnostic = {
         code: "stale-generated-projection",
         path: repositoryPath(path),

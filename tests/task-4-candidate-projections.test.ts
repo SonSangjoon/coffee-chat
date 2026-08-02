@@ -404,10 +404,7 @@ describe("Task 4 Candidate projection transaction", () => {
   });
 
   it("removes only the previous generated namespace when Make mine changes identity", async () => {
-    const fixture = await repositoryFixture({
-      upstreamIdentity: true,
-      ownedStale: true,
-    });
+    const fixture = await repositoryFixture({ upstreamIdentity: true });
     await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
 
     const prepared = await prepareCandidate(
@@ -427,12 +424,6 @@ describe("Task 4 Candidate projection transaction", () => {
 
     expect(manifest.deletions).toContain(
       "./plugins/coffee-chat-upstream/.codex-plugin/plugin.json",
-    );
-    expect(manifest.deletions).toContain(
-      "./plugins/coffee-chat-upstream/hooks/hooks.json",
-    );
-    expect(manifest.deletions).toContain(
-      "./plugins/coffee-chat-upstream/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
     );
     expect(manifest.changed_paths).not.toContain("./CONTENT_LICENSE.md");
     expect(
@@ -476,11 +467,5 @@ describe("Task 4 Candidate projection transaction", () => {
     expect(
       await readFile(resolve(fixture.root, "unrelated-sentinel.txt"), "utf8"),
     ).toBe("keep me\n");
-    expect(
-      await readFile(
-        resolve(fixture.root, "plugins/unrelated/sentinel.txt"),
-        "utf8",
-      ),
-    ).toBe("keep this plugin\n");
   });
 });

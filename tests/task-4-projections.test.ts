@@ -408,10 +408,10 @@ describe("Task 4 deterministic delivery projections", () => {
       ".coffee-chat-generated.json",
     );
     const marker = JSON.parse(await readFile(obsoleteMarker, "utf8")) as {
-      package_name: string;
+      package_name?: string;
       owned_paths: string[];
     };
-    marker.package_name = "coffee-chat-obsolete";
+    delete marker.package_name;
     marker.owned_paths = marker.owned_paths.map((path) =>
       path.replace("plugins/coffee-chat/", "plugins/coffee-chat-obsolete/"),
     );
@@ -529,5 +529,31 @@ describe("Task 4 deterministic delivery projections", () => {
       stdout: "[]\n",
     });
     expect(await readFile(reference, "utf8")).not.toBe("drift\n");
+  });
+
+  it("reports a valid but edited current ownership marker as generated drift", async () => {
+    const root = await pendingRepository();
+    expect(await runCli(root, "generate", "--format", "json")).toEqual({
+      exitCode: 0,
+      stdout: "[]\n",
+    });
+    const markerPath = resolve(
+      root,
+      "plugins/coffee-chat/.coffee-chat-generated.json",
+    );
+    const marker = JSON.parse(await readFile(markerPath, "utf8")) as {
+      owned_paths: string[];
+    };
+    marker.owned_paths.reverse();
+    await writeFile(markerPath, `${JSON.stringify(marker, null, 2)}\n`);
+
+    const checked = await runCli(root, "check", "--format", "json");
+    expect(checked.exitCode).toBe(1);
+    expect(JSON.parse(checked.stdout)).toContainEqual(
+      expect.objectContaining({
+        code: "stale-generated-projection",
+        path: "./plugins/coffee-chat/.coffee-chat-generated.json",
+      }),
+    );
   });
 });
