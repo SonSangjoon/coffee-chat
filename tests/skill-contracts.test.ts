@@ -107,6 +107,15 @@ describe("Task 4 Agent Skill contracts", () => {
     expect(agents).toContain("Contribute to engine");
     expect(agents).toContain("knowledge/index.json");
     expect(agents).toContain("no default person");
+    expect(agents).toContain("downstream pre-conversion engine checkout");
+    expect(agents).toContain("origin and target-fingerprint rules");
+    expect(agents).toContain("maintained engine checkout");
+    expect(agents).toContain(
+      "`contribute` and `update` require an initialized authoritative instance checkout",
+    );
+    expect(agents).not.toContain(
+      "Build KG requires an explicit downstream instance checkout",
+    );
     expect(claude).toBe("@AGENTS.md\n");
   });
 
