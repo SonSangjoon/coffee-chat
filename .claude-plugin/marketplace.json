@@ -1,0 +1,27 @@
+{
+  "name": "coffee-chat-marketplace",
+  "owner": {
+    "name": "Coffee Chat"
+  },
+  "plugins": [
+    {
+      "name": "coffee-chat",
+      "source": "./plugins/coffee-chat",
+      "description": "Converse with and apply a public, dated perspective graph.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Coffee Chat"
+      },
+      "homepage": "https://sonsangjoon.github.io/coffee-chat/",
+      "repository": "https://github.com/SonSangjoon/coffee-chat",
+      "license": "MIT",
+      "keywords": [
+        "coffee-chat",
+        "knowledge-graph",
+        "perspective"
+      ],
+      "category": "Productivity",
+      "skills": "./skills/"
+    }
+  ]
+}

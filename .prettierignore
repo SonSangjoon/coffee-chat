@@ -1,0 +1,13 @@
+node_modules/
+dist/
+coverage/
+.astro/
+.superpowers/
+package-lock.json
+README.md
+README.ko.md
+docs/superpowers/specs/2026-07-30-coffee-chat-design.md
+.codex-plugin/
+.claude-plugin/
+plugins/*/.codex-plugin/
+plugins/*/.claude-plugin/

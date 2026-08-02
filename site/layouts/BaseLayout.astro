@@ -1,0 +1,80 @@
+---
+import "../styles/global.css";
+import type { SiteModel } from "../lib/load-site-model.ts";
+import { siteHref } from "../lib/build-context.ts";
+
+type Props = {
+  model: SiteModel;
+  title: string;
+  description: string;
+};
+
+const { model, title, description } = Astro.props;
+const data = model.role === "engine" ? model.documentation : model.graph;
+const homeHref = siteHref(data.base_path);
+const repositoryUrl = model.manifest.repository.url;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="coffee-chat:repository-role" content={model.role} />
+    <meta name="coffee-chat:source-commit" content={data.source_commit} />
+    {
+      model.role === "instance" && (
+        <meta
+          name="coffee-chat:knowledge-digest"
+          content={model.graph.knowledge_digest}
+        />
+      )
+    }
+    <title>{title}</title>
+  </head>
+  <body data-repository-role={model.role}>
+    <a class="skip-link" href="#main-content">Skip to content / 본문으로</a>
+    <header class="site-header">
+      <a class="wordmark" href={homeHref} aria-label="Coffee Chat home">
+        <span aria-hidden="true" class="wordmark-mark">●</span>
+        Coffee Chat
+      </a>
+      {
+        model.role === "instance" && (
+          <nav aria-label="Knowledge navigation / 지식 탐색">
+            <a
+              href={siteHref(data.base_path, "timeline/")}
+              data-shared-query-link>Timeline / 타임라인</a
+            >
+            <a href={siteHref(data.base_path, "graph/")} data-shared-query-link>
+              Graph / 그래프
+            </a>
+          </nav>
+        )
+      }
+    </header>
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div>
+        <p class="eyebrow">Reproducible provenance / 재현 가능한 출처</p>
+        <p>
+          Source commit <code>{data.source_commit}</code>
+          {
+            model.role === "instance" && (
+              <>
+                <br />Knowledge digest <code>{model.graph.knowledge_digest}</code>
+              </>
+            )
+          }
+        </p>
+      </div>
+      <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">
+        Repository / 저장소 <span aria-hidden="true">↗</span>
+      </a>
+    </footer>
+  </body>
+</html>

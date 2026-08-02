@@ -1,0 +1,35 @@
+{
+  "name": "coffee-chat",
+  "version": "1.0.0",
+  "description": "Converse with and apply a public, dated perspective graph.",
+  "author": {
+    "name": "Coffee Chat",
+    "url": "https://github.com/SonSangjoon/coffee-chat"
+  },
+  "homepage": "https://sonsangjoon.github.io/coffee-chat/",
+  "repository": "https://github.com/SonSangjoon/coffee-chat",
+  "license": "MIT",
+  "keywords": [
+    "coffee-chat",
+    "knowledge-graph",
+    "perspective"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Coffee Chat",
+    "shortDescription": "Talk with a public, dated perspective graph",
+    "longDescription": "Converse with, apply, or extend a source-grounded temporal perspective graph.",
+    "developerName": "Coffee Chat",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://sonsangjoon.github.io/coffee-chat/",
+    "defaultPrompt": [
+      "Start a one-time Coffee Chat from the public dated graph.",
+      "Apply the documented perspective to my named task.",
+      "Add a public Source-backed Note through Preview approval."
+    ]
+  }
+}

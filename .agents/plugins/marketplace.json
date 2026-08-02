@@ -1,0 +1,20 @@
+{
+  "name": "coffee-chat-marketplace",
+  "interface": {
+    "displayName": "Coffee Chat"
+  },
+  "plugins": [
+    {
+      "name": "coffee-chat",
+      "source": {
+        "source": "local",
+        "path": "./plugins/coffee-chat"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

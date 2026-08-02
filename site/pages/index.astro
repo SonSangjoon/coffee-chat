@@ -1,0 +1,167 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { siteHref } from "../lib/build-context.ts";
+import { siteModel } from "../lib/site-context.ts";
+
+const model = siteModel;
+const data = model.role === "engine" ? model.documentation : model.graph;
+const title =
+  model.role === "engine"
+    ? "Coffee Chat — Public perspective infrastructure"
+    : `Coffee Chat with ${model.manifest.profile.short_name}`;
+const description =
+  model.role === "engine"
+    ? "Build a public, source-linked, temporal knowledge graph that agents can use at query time."
+    : `Explore ${model.manifest.profile.display_name}'s public, dated knowledge graph.`;
+---
+
+<BaseLayout {model} {title} {description}>
+  {
+    model.role === "engine" ? (
+      <>
+        <section class="hero">
+          <p class="eyebrow">Generic engine / 범용 엔진</p>
+          <h1>Your point of view, traceable over time.</h1>
+          <p class="lede">
+            Coffee Chat turns public Sources and dated author Notes into a temporal
+            knowledge graph. Agents derive a perspective only when someone asks a
+            question or applies it to a task. / Coffee Chat은 공개 출처와 날짜가
+            있는 작성자 기록을 시계열 지식 그래프로 만듭니다. 관점은 질문이나
+            작업이 있을 때만 에이전트가 발현합니다.
+          </p>
+          <div class="hero-actions">
+            <a
+              class="button"
+              href={model.manifest.repository.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Create your own / 나만의 그래프 만들기
+            </a>
+            <a class="button secondary" href="#how-it-works">
+              How it works / 작동 방식
+            </a>
+          </div>
+        </section>
+        <section class="section" id="how-it-works">
+          <p class="eyebrow">Two layers / 두 개의 층</p>
+          <h2>Store evidence. Derive perspective.</h2>
+          <div class="card-grid">
+            <article class="card">
+              <h3>1. Temporal KG / 시계열 KG</h3>
+              <p>
+                Store only public Source links, dated author Notes, and neutral
+                Entities. A later view does not erase an earlier one.
+              </p>
+            </article>
+            <article class="card">
+              <h3>2. Query-time synthesis / 질의 시점 합성</h3>
+              <p>
+                Coffee Chat and Apply Perspective derive a view from relevant
+                records without committing a fixed mental model back to Git.
+              </p>
+            </article>
+            <article class="card">
+              <h3>3. Approval boundary / 승인 경계</h3>
+              <p>
+                Build KG prepares a complete public preview. Canonical knowledge
+                changes only after the author approves its exact digest.
+              </p>
+            </article>
+          </div>
+        </section>
+        <section class="section">
+          <p class="eyebrow">Start light / 가볍게 시작하기</p>
+          <h2>A URL is enough for a one-time Coffee Chat.</h2>
+          <div class="card-grid">
+            <article class="card">
+              <h3>Use an instance URL / 인스턴스 URL 사용</h3>
+              <p>
+                Give an agent a public Coffee Chat instance URL and ask it to read
+                <code>coffee-chat.json</code>, then <code>AGENTS.md</code>.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Install the engine plugin / 엔진 플러그인 설치</h3>
+              <p>
+                Install <code>coffee-chat</code> for reusable authoring and
+                conversation Skills. The engine ships no person's knowledge.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Contribute to the engine / 엔진 기여</h3>
+              <p>
+                Improve schemas, validation, authoring, and presentation without
+                mixing downstream personal content into this repository.
+              </p>
+            </article>
+          </div>
+        </section>
+      </>
+    ) : (
+      <>
+        <section class="hero">
+          <p class="eyebrow">Public temporal knowledge graph / 공개 시계열 지식 그래프</p>
+          <h1>Coffee Chat with {model.manifest.profile.short_name}</h1>
+          <p class="lede">
+            Explore public Sources and dated Notes, then ask an agent to derive a
+            perspective for this conversation. / 공개 출처와 날짜가 있는 기록을
+            살펴보고, 이 대화에 필요한 관점을 에이전트가 발현하도록 요청하세요.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href={siteHref(data.base_path, "timeline/")}>
+              Browse timeline / 타임라인 보기
+            </a>
+            <a class="button secondary" href={siteHref(data.base_path, "graph/")}>
+              Browse graph / 그래프 보기
+            </a>
+          </div>
+        </section>
+        <section class="section">
+          <p class="eyebrow">Choose your entry / 시작 방법</p>
+          <h2>Talk once, or install a reusable lens.</h2>
+          <div class="card-grid">
+            <article class="card">
+              <h3>Coffee Chat / 커피챗</h3>
+              <p>
+                Give this URL to your agent for a one-time, read-only conversation
+                grounded in this graph.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Install plugin / 플러그인 설치</h3>
+              <p>
+                Install <code>{model.manifest.plugin.name}</code> when you want the
+                three Skills available across later conversations and tasks.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Make mine / 내 것으로 만들기</h3>
+              <p>
+                Fork the generic engine and let Build KG initialize your own
+                namespace from an approved first Note.
+              </p>
+            </article>
+          </div>
+        </section>
+        <section class="section">
+          <p class="eyebrow">AI synthesis disclosure / AI 합성 고지</p>
+          <h2>No fixed avatar is stored here.</h2>
+          <p class="lede">
+            Responses are AI-derived at query time from selected public records.
+            They may be incomplete and are not the author speaking in real time.
+            Derived Perspective and Task Lens are not written back to Git. / 응답은
+            선택된 공개 기록에서 질의 시점에 AI가 합성합니다. 불완전할 수 있으며
+            작성자가 실시간으로 말하는 것이 아닙니다. 발현된 관점과 작업 렌즈는
+            Git에 저장하지 않습니다.
+          </p>
+          <ul class="tag-list" aria-label="Knowledge graph counts / 지식 그래프 개수">
+            <li class="tag">{data.notes.length} Notes</li>
+            <li class="tag">{data.entities.length} Entities</li>
+            <li class="tag">{data.sources.length} Sources</li>
+          </ul>
+        </section>
+      </>
+    )
+  }
+</BaseLayout>

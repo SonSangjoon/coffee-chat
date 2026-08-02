@@ -1,0 +1,42 @@
+---
+import KnowledgeList from "../components/KnowledgeList.astro";
+import TemporalFilters from "../components/TemporalFilters.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { siteModel } from "../lib/site-context.ts";
+
+const model = siteModel;
+const graph = model.role === "instance" ? model.graph : undefined;
+const pageTitle =
+  model.role === "instance"
+    ? `Timeline — Coffee Chat with ${model.manifest.profile.short_name}`
+    : "Timeline — Coffee Chat";
+---
+
+<BaseLayout
+  {model}
+  title={pageTitle}
+  description="Browse dated Notes by perspective time and first-recorded cutoff."
+>
+  {
+    graph && (
+      <>
+        <section class="hero">
+          <p class="eyebrow">Timeline / 타임라인</p>
+          <h1>Views change. The record keeps the sequence.</h1>
+          <p class="lede">
+            Perspective time marks when an idea or experience applies. Recorded
+            date marks when this public Note first entered the graph. / 관점의
+            시간은 생각이나 경험이 적용되는 시점을, 기록일은 이 공개 기록이
+            그래프에 처음 들어온 날짜를 뜻합니다.
+          </p>
+        </section>
+        <TemporalFilters basePath={graph.base_path} activeView="timeline" />
+        <section class="section" aria-labelledby="timeline-records">
+          <p class="eyebrow">Current corrected corpus / 현재 정정된 코퍼스</p>
+          <h2 id="timeline-records">Dated Notes / 날짜별 기록</h2>
+          <KnowledgeList {graph} />
+        </section>
+      </>
+    )
+  }
+</BaseLayout>

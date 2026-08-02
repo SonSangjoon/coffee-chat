@@ -1,0 +1,17 @@
+{
+  "generated_by": "coffee-chat",
+  "schema_version": "1.0.0",
+  "repository_role": "engine",
+  "package_name": "coffee-chat",
+  "owned_paths": [
+    "plugins/coffee-chat/.claude-plugin/plugin.json",
+    "plugins/coffee-chat/.codex-plugin/plugin.json",
+    "plugins/coffee-chat/LICENSE",
+    "plugins/coffee-chat/skills/apply-perspective/SKILL.md",
+    "plugins/coffee-chat/skills/apply-perspective/references/method.md",
+    "plugins/coffee-chat/skills/build-kg/SKILL.md",
+    "plugins/coffee-chat/skills/build-kg/references/method.md",
+    "plugins/coffee-chat/skills/coffee-chat/SKILL.md",
+    "plugins/coffee-chat/skills/coffee-chat/references/method.md"
+  ]
+}

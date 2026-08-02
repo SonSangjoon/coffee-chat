@@ -1,0 +1,7 @@
+node_modules/
+.worktrees/
+dist/
+coverage/
+.astro/
+.superpowers/
+*.tsbuildinfo

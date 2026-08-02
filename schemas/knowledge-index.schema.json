@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/knowledge-index.schema.json",
+  "title": "Coffee Chat Instance Generated Index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "knowledge_digest",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "#/$defs/semver" },
+    "profile_id": { "$ref": "#/$defs/uuid_v4" },
+    "knowledge_digest": { "$ref": "#/$defs/digest" },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "uuid_v4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "repository_path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+    },
+    "partial_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12][0-9]|3[01]))?)?$"
+    },
+    "note_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "path",
+        "content_digest",
+        "title",
+        "temporal_coverage",
+        "recorded_on"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid_v4" },
+        "type": { "const": "note" },
+        "path": { "$ref": "#/$defs/repository_path" },
+        "content_digest": { "$ref": "#/$defs/digest" },
+        "title": { "type": "string" },
+        "temporal_coverage": { "type": "string" },
+        "recorded_on": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$"
+        }
+      }
+    },
+    "source_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "format": "uri", "pattern": "^https?://" },
+        "type": { "const": "source" }
+      }
+    },
+    "entity_node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "label"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid_v4" },
+        "type": { "const": "entity" },
+        "label": { "type": "string" },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "kind": { "type": "string" },
+        "same_as": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/note_node" },
+        { "$ref": "#/$defs/source_node" },
+        { "$ref": "#/$defs/entity_node" }
+      ]
+    },
+    "citation_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title"],
+      "properties": {
+        "title": { "type": "string" },
+        "published_on": { "$ref": "#/$defs/partial_date" },
+        "accessed_on": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$"
+        }
+      }
+    },
+    "cites_edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "predicate", "object", "citation_metadata"],
+      "properties": {
+        "subject": { "$ref": "#/$defs/uuid_v4" },
+        "predicate": { "const": "cites" },
+        "object": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        "citation_metadata": { "$ref": "#/$defs/citation_metadata" }
+      }
+    },
+    "relation_edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "predicate", "object"],
+      "properties": {
+        "subject": { "$ref": "#/$defs/uuid_v4" },
+        "predicate": { "enum": ["mentions", "links_to"] },
+        "object": { "$ref": "#/$defs/uuid_v4" }
+      }
+    },
+    "edge": {
+      "oneOf": [
+        { "$ref": "#/$defs/cites_edge" },
+        { "$ref": "#/$defs/relation_edge" }
+      ]
+    }
+  }
+}

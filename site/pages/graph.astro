@@ -1,0 +1,42 @@
+---
+import GraphView from "../components/GraphView.astro";
+import TemporalFilters from "../components/TemporalFilters.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { siteModel } from "../lib/site-context.ts";
+
+const model = siteModel;
+const graph = model.role === "instance" ? model.graph : undefined;
+const pageTitle =
+  model.role === "instance"
+    ? `Graph — Coffee Chat with ${model.manifest.profile.short_name}`
+    : "Graph — Coffee Chat";
+---
+
+<BaseLayout
+  {model}
+  title={pageTitle}
+  description="Explore Notes, Sources, Entities, and their explicit relationships."
+>
+  {
+    graph && (
+      <>
+        <section class="hero">
+          <p class="eyebrow">Knowledge graph / 지식 그래프</p>
+          <h1>Trace every view back to its records.</h1>
+          <p class="lede">
+            Notes cite Sources, mention neutral Entities, and link to other Notes.
+            The graph does not store a fixed POV or Mental Model. / 기록은 출처를
+            인용하고 중립적인 엔티티를 언급하며 다른 기록과 연결됩니다. 고정된
+            POV나 멘탈 모델은 저장하지 않습니다.
+          </p>
+        </section>
+        <TemporalFilters basePath={graph.base_path} activeView="graph" />
+        <section class="section" aria-labelledby="graph-view-title">
+          <p class="eyebrow">Explicit relationships / 명시적 관계</p>
+          <h2 id="graph-view-title">Notes, Sources, Entities</h2>
+          <GraphView {graph} />
+        </section>
+      </>
+    )
+  }
+</BaseLayout>
