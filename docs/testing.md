@@ -24,6 +24,12 @@ npm run test:site
 
 The two integration cases that repeatedly spawn the CLI or copy the complete engine checkout declare explicit 15-second and 30-second budgets. The assertions remain unchanged; the larger budgets absorb filesystem variance on GitHub-hosted runners without weakening the default timeout for unit-scale tests.
 
+## CodeQL analysis
+
+`npm test -- tests/workflow-contracts.test.ts` validates the source-controlled CodeQL workflow contract locally, including its triggers, least-privilege permissions, pinned Actions, JavaScript/TypeScript language selection, and secret-free pull-request boundary.
+
+The analysis itself runs only on GitHub-hosted runners as `CodeQL / Analyze (javascript-typescript)` for pull requests and pushes to `main`. JavaScript/TypeScript extraction needs no project-specific build step.
+
 ## Acceptance map
 
 | Flow                                                                | Evidence                                                        |

@@ -12,6 +12,10 @@ const uploadPagesAction =
   "actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b";
 const deployPagesAction =
   "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e";
+const codeqlInitAction =
+  "github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38";
+const codeqlAnalyzeAction =
+  "github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38";
 
 type JsonObject = Record<string, unknown>;
 type LoadedWorkflow = { raw: string; value: JsonObject };
@@ -156,6 +160,48 @@ describe("Task 7 shared workflow hardening", () => {
         ]).toContain(action);
       }
     }
+  });
+});
+
+describe("Task 1 CodeQL workflow", () => {
+  it("analyzes JavaScript and TypeScript on pull requests and main", async () => {
+    const { raw, value } = await loadWorkflow("codeql.yml");
+    const events = object(value.on, "CodeQL on");
+    const push = object(events.push, "CodeQL push event");
+    const permissions = object(value.permissions, "CodeQL permissions");
+    const jobs = object(value.jobs, "CodeQL jobs");
+
+    expect(value.name).toBe("CodeQL");
+    expect(Object.keys(events).sort()).toEqual(["pull_request", "push"]);
+    expect(push.branches).toEqual(["main"]);
+    expect(events).not.toHaveProperty("pull_request_target");
+    expect(raw).not.toMatch(/\bpull_request_target\b/);
+    expect(raw).not.toMatch(/\$\{\{\s*secrets\./i);
+    expect(hasObjectKey(value, "secrets")).toBe(false);
+    expect(permissions).toEqual({
+      contents: "read",
+      "security-events": "write",
+    });
+    expect(Object.keys(jobs)).toEqual(["analyze"]);
+
+    const analyze = object(jobs.analyze, "CodeQL analyze job");
+    expect(analyze.name).toBe("Analyze (javascript-typescript)");
+    expect(effectivePermissions(value, analyze)).toEqual(permissions);
+    expect(analyze).not.toHaveProperty("environment");
+
+    const steps = jobSteps(analyze);
+    expect(steps.map((step) => step.uses)).toEqual([
+      checkoutAction,
+      codeqlInitAction,
+      codeqlAnalyzeAction,
+    ]);
+    expect(
+      object(steps[0]?.with, "CodeQL checkout inputs")["persist-credentials"],
+    ).toBe(false);
+    expect(object(steps[1]?.with, "CodeQL init inputs").languages).toBe(
+      "javascript-typescript",
+    );
+    expect(steps.some((step) => typeof step.run === "string")).toBe(false);
   });
 });
 
