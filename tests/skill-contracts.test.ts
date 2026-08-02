@@ -121,6 +121,29 @@ describe("Task 4 Agent Skill contracts", () => {
     expect(agents).toContain("install instance plugin");
   });
 
+  it("allows Make mine only in a verified downstream engine copy", async () => {
+    const buildKg = await readSkill("build-kg");
+    const method = await readFile(
+      resolve(projectRoot, "method/shared-method.md"),
+      "utf8",
+    );
+
+    for (const guidance of [buildKg.body, method]) {
+      expect(guidance).toContain("Make mine");
+      expect(guidance).toContain("pre-conversion engine checkout");
+      expect(guidance).toContain("`repository_role: engine`");
+      expect(guidance).toContain(
+        "normalized actual `origin` differs from the engine manifest `repository.url`",
+      );
+      expect(guidance).toContain(
+        "matches the proposed instance `repository.url`",
+      );
+      expect(guidance).toContain("maintained engine checkout");
+      expect(guidance).toContain("`contribute` and `update`");
+      expect(guidance).toContain("initialized authoritative instance checkout");
+    }
+  });
+
   it("projects byte-identical source Skills and one-level shared-method references without agent definitions", async () => {
     const snapshot = await createSnapshot(projectRoot, "worktree");
     const validation = await validateKnowledge(snapshot, {
