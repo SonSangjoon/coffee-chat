@@ -12,6 +12,14 @@ function markdown(lines: readonly string[]): string {
   return lines.join("\n");
 }
 
+function pagesRoute(base: string, route: string): string {
+  const normalized = new URL(base);
+  if (!normalized.pathname.endsWith("/")) normalized.pathname += "/";
+  normalized.search = "";
+  normalized.hash = "";
+  return new URL(route, normalized).toString();
+}
+
 type ReadmeContext = {
   name: string;
   profileName: string;
@@ -171,7 +179,7 @@ function renderEnglish(manifest: Manifest): string {
     ? "This is the neutral engine: it has no person to chat with. Use an initialized public instance URL for a conversation."
     : `This is ${c.profileName}'s approved public record. It is an interface to documented evidence, not a claim that a model is the person.`;
   const timelineLinks = c.pagesUrl
-    ? ` Explore the public [Timeline](${c.pagesUrl}timeline/) and [Graph](${c.pagesUrl}graph/).`
+    ? ` Explore the public [Timeline](${pagesRoute(c.pagesUrl, "timeline/")}) and [Graph](${pagesRoute(c.pagesUrl, "graph/")}).`
     : "";
   return markdown([
     "![Coffee Chat cover showing a coffee cup, orbit lines, and four colored nodes](./docs/assets/readme/coffee-chat-cover.png)",
@@ -308,7 +316,7 @@ function renderKorean(manifest: Manifest): string {
     ? "이곳은 특정 인물을 담지 않은 중립 엔진입니다. 대화하려면 초기화된 공개 인스턴스 URL을 사용하세요."
     : `이곳은 ${c.profileName}의 승인된 공개 기록입니다. 모델이 그 사람이라고 주장하는 것이 아니라, 문서화된 근거에 접근하는 인터페이스입니다.`;
   const timelineLinks = c.pagesUrl
-    ? ` 공개 [Timeline](${c.pagesUrl}timeline/)과 [Graph](${c.pagesUrl}graph/)도 볼 수 있습니다.`
+    ? ` 공개 [Timeline](${pagesRoute(c.pagesUrl, "timeline/")})과 [Graph](${pagesRoute(c.pagesUrl, "graph/")})도 볼 수 있습니다.`
     : "";
   return markdown([
     "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)",

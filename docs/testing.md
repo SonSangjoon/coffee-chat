@@ -20,6 +20,8 @@ npm run test:site
 
 `npm run test:acceptance` runs the cross-cutting local acceptance set. It covers the input-only Make mine flow, generated-artifact isolation, secret rejection, query behavior, and native plugin lifecycle before the browser suite runs separately through `npm run test:site`.
 
+`npm test` caps Vitest at two workers because Candidate fixtures materialize and hash the shared README PNG support files. Higher local concurrency can turn filesystem contention into unrelated per-test timeouts.
+
 ## Acceptance map
 
 | Flow                                                                | Evidence                                                        |

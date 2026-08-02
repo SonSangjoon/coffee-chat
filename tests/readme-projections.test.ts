@@ -152,4 +152,28 @@ describe("localized README projections", () => {
     expect(english).not.toContain("Sangjoon Son");
     expect(korean).not.toContain("Sangjoon Son");
   });
+
+  it("joins instance Pages routes when pages_url has no trailing slash", async () => {
+    const manifest = JSON.parse(
+      await readFile(
+        resolve(initializedFixtureRoot, "coffee-chat.json"),
+        "utf8",
+      ),
+    ) as Manifest;
+    manifest.pages_url = "https://example.github.io/coffee-chat";
+    const projected = renderReadmes(manifest);
+    const english = projected.get("README.md")?.toString("utf8");
+    const korean = projected.get("README.ko.md")?.toString("utf8");
+
+    for (const readme of [english, korean]) {
+      expect(readme).toContain(
+        "[Timeline](https://example.github.io/coffee-chat/timeline/)",
+      );
+      expect(readme).toContain(
+        "[Graph](https://example.github.io/coffee-chat/graph/)",
+      );
+      expect(readme).not.toContain("coffee-chattimeline");
+      expect(readme).not.toContain("coffee-chatgraph");
+    }
+  });
 });

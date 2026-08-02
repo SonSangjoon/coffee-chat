@@ -463,7 +463,7 @@ Visual review covers GitHub-like light and dark surroundings at desktop and mobi
 - an automatic GitHub Social Preview upload;
 - redesigning GitHub Pages;
 - badges or visual assets without a named explanatory role;
-- more than the approved cover, product-flow pair, and trust-layer pair;
+- more than the approved cover, product-flow diagram, and trust-layer diagram;
 - creating the separate personal flagship instance.
 
 The separate personal instance remains the eventual proof surface, but this change keeps the engine neutral and knowledge-free.
