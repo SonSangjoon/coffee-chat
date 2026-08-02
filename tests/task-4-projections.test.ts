@@ -199,13 +199,13 @@ describe("Task 4 deterministic delivery projections", () => {
 
     const readme = first.get("README.md")!.toString("utf8");
     const orderedHeadings = [
-      "## Purpose / 목적",
-      "## Create yours / 내 것으로 만들기",
-      "## Use an instance / 인스턴스 사용",
-      "## Install the engine plugin / 엔진 플러그인 설치",
-      "## Contribute to engine / 엔진에 기여",
-      "### Build the public record / 공개 기록 만들기",
-      "### Use the public record / 공개 기록 사용하기",
+      "## Talk with a Coffee Chat / Coffee Chat과 대화하기",
+      "## Put a point of view to work / 관점을 업무에 적용하기",
+      "## How a POV is made / POV가 만들어지는 과정",
+      "## Why trust it / 신뢰할 수 있는 이유",
+      "## Create your Coffee Chat / 나의 Coffee Chat 만들기",
+      "## Use once or install / 일회성 사용 또는 설치",
+      "## Contribute to the engine / 엔진에 기여하기",
     ];
     let offset = -1;
     for (const heading of orderedHeadings) {
@@ -213,7 +213,31 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(next).toBeGreaterThan(offset);
       offset = next;
     }
+    expect(readme).toContain(
+      "Talk with a point of view, not a personality prompt.",
+    );
+    expect(readme).toContain(
+      "a temporal, source-linked personal knowledge graph for conversation and agent work",
+    );
+    expect(readme).toContain(
+      "install that person's Coffee Chat plugin in Codex or Claude Code",
+    );
+    expect(readme).toContain("as AI lowers the cost of execution");
+    expect(readme).not.toMatch(/\bblog\b|social account|social post/i);
     expect(readme).toContain("https://github.com/OWNER/coffee-chat-instance");
+    expect(readme).toContain("Start a one-time Coffee Chat");
+    expect(readme).toContain("Fictional answer shape");
+    expect(readme).toContain(
+      "Use <COFFEE_CHAT_INSTANCE_URL> as the perspective source for <TASK>",
+    );
+    expect(readme).toContain(
+      "install the author's instance plugin, not this engine plugin",
+    );
+    expect(readme).toContain(
+      "A Coffee Chat starts with one public reference and your dated thought",
+    );
+    expect(readme).toContain("before mutating canonical instance files");
+    expect(readme).not.toContain("before writing anything");
     expect(readme).toContain("knowledge-free engine plugin");
     expect(readme).toContain(
       `codex plugin remove coffee-chat@coffee-chat-marketplace`,
@@ -273,6 +297,7 @@ describe("Task 4 deterministic delivery projections", () => {
 
     const { snapshot, graph } = await projectGraph(root);
     const generated = await generatedProjectionBytes(snapshot, graph);
+    const instanceReadme = generated.get("README.md")!.toString("utf8");
     const combined = [...generated.values()]
       .map((bytes) => bytes.toString("utf8"))
       .join("\n");
@@ -281,6 +306,29 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(combined).toContain("https://github.com/example/fork-chat");
     expect(combined).toContain("https://example.github.io/fork-chat/");
     expect(combined).toContain("coffee-chat-fork-owner-marketplace");
+    expect(instanceReadme).toContain(
+      "Talk with a point of view, not a personality prompt.",
+    );
+    expect(instanceReadme.indexOf("## Talk with a Coffee Chat")).toBeLessThan(
+      instanceReadme.indexOf("## Put this point of view to work"),
+    );
+    expect(
+      instanceReadme.indexOf("## Put this point of view to work"),
+    ).toBeLessThan(instanceReadme.indexOf("## Build your knowledge base"));
+    expect(instanceReadme).toContain(
+      "Open https://github.com/example/fork-chat",
+    );
+    expect(instanceReadme).toContain(
+      "This is an AI synthesis of public, dated records",
+    );
+    expect(instanceReadme).toContain("the public Profile and Notes snapshot");
+    expect(instanceReadme).not.toMatch(
+      /\bblog\b|social account|social post|how this author thinks/i,
+    );
+    expect(instanceReadme).not.toContain("before writing anything");
+    expect(instanceReadme).not.toContain(
+      "Fork the repository, open the fork in Codex or Claude Code, explicitly choose **Make mine**",
+    );
     expect(generated.get("CONTENT_LICENSE.md")?.toString("utf8")).toContain(
       "Downstream authors retain ownership of the Notes",
     );
