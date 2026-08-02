@@ -111,12 +111,18 @@ export async function bindSiteBuildRequest(
         "Release Pages output must resolve inside the current repository.",
       );
   } else {
-    if (sameOrDescendant(currentRepositoryRoot, sourceRoot))
+    if (
+      sameOrDescendant(currentRepositoryRoot, sourceRoot) ||
+      sameOrDescendant(sourceRoot, currentRepositoryRoot)
+    )
       throw boundaryFailure(
         "site-ephemeral-source-must-be-external",
         "Ephemeral site inputs must be outside the current repository.",
       );
-    if (sameOrDescendant(currentRepositoryRoot, outputRoot))
+    if (
+      sameOrDescendant(currentRepositoryRoot, outputRoot) ||
+      sameOrDescendant(outputRoot, currentRepositoryRoot)
+    )
       throw boundaryFailure(
         "site-ephemeral-output-must-be-external",
         "Ephemeral site output must be outside the current repository.",
@@ -151,7 +157,11 @@ export function siteHref(basePath: string, route = ""): string {
   } catch {
     throw new Error("Site routes must use valid URL encoding.");
   }
-  if (decodedRoute.split("/").includes(".."))
+  if (
+    cleanRoute.includes("\\") ||
+    decodedRoute.includes("\\") ||
+    decodedRoute.split("/").includes("..")
+  )
     throw new Error("Site routes cannot escape the configured base path.");
   const joined = posix.join(basePath, cleanRoute);
   return route === "" || route.endsWith("/")

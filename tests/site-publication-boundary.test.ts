@@ -1,7 +1,8 @@
-import { lstat, rm, symlink, writeFile } from "node:fs/promises";
+import { lstat, mkdir, rename, rm, symlink, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ValidationFailure } from "../tools/contracts.ts";
+import { bindSiteBuildRequest } from "../site/lib/build-context.ts";
 import { loadSiteModel } from "../site/lib/load-site-model.ts";
 import { renderMarkdown } from "../site/lib/render-markdown.ts";
 import {
@@ -79,6 +80,25 @@ describe("Task 6 site publication boundary", () => {
         }),
       ),
     ).resolves.toBe("site-ephemeral-output-must-be-external");
+
+    await expect(
+      failureCode(
+        bindSiteBuildRequest({
+          source_root: resolve(projectRoot, ".."),
+          output_root: fixture.output,
+          artifact_class: "ephemeral-test",
+        }),
+      ),
+    ).resolves.toBe("site-ephemeral-source-must-be-external");
+    await expect(
+      failureCode(
+        bindSiteBuildRequest({
+          source_root: fixture.source,
+          output_root: resolve(projectRoot, ".."),
+          artifact_class: "ephemeral-test",
+        }),
+      ),
+    ).resolves.toBe("site-ephemeral-output-must-be-external");
   });
 
   it("rejects symlink aliases and overlapping ephemeral roots", async () => {
@@ -124,6 +144,30 @@ describe("Task 6 site publication boundary", () => {
         }),
       ),
     ).resolves.toBe("site-ephemeral-roots-overlap");
+  });
+
+  it("rejects canonical inputs that alias other in-repository content", async () => {
+    const fixture = await syntheticFixture();
+    const fixtureDirectory = resolve(fixture.source, "tests/fixtures/alias");
+    await mkdir(fixtureDirectory, { recursive: true });
+    await rename(
+      resolve(fixture.source, "coffee-chat.json"),
+      resolve(fixtureDirectory, "coffee-chat.json"),
+    );
+    await symlink(
+      "tests/fixtures/alias/coffee-chat.json",
+      resolve(fixture.source, "coffee-chat.json"),
+    );
+
+    await expect(
+      failureCode(
+        loadSiteModel({
+          source_root: fixture.source,
+          output_root: fixture.output,
+          artifact_class: "ephemeral-test",
+        }),
+      ),
+    ).resolves.toBe("site-source-symlink");
   });
 
   it("requires an exact current generated instance index", async () => {

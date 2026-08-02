@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { realpath } from "node:fs/promises";
+import { lstat, realpath } from "node:fs/promises";
+import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { assertArtifactBoundary } from "../../tools/artifact-inventory.ts";
 import { ValidationFailure } from "../../tools/contracts.ts";
@@ -30,6 +31,44 @@ import {
 } from "./build-context.ts";
 
 const execFileAsync = promisify(execFile);
+
+function sanitizedGitEnvironment(): NodeJS.ProcessEnv {
+  return Object.fromEntries(
+    Object.entries(process.env).filter(
+      ([key]) => !key.toUpperCase().startsWith("GIT_"),
+    ),
+  );
+}
+
+async function assertCanonicalSiteDependencies(
+  root: string,
+  dependencies: string[],
+): Promise<void> {
+  for (const dependency of dependencies) {
+    let current = root;
+    for (const segment of dependency.split("/")) {
+      current = resolve(current, segment);
+      try {
+        if ((await lstat(current)).isSymbolicLink())
+          throw new ValidationFailure({
+            code: "site-source-symlink",
+            path: `./${dependency}`,
+            message:
+              "Published canonical inputs must not resolve through symbolic links.",
+          });
+      } catch (error) {
+        if (error instanceof ValidationFailure) throw error;
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") break;
+        throw new ValidationFailure({
+          code: "site-source-path-unsafe",
+          path: `./${dependency}`,
+          message:
+            "Published canonical input provenance could not be verified.",
+        });
+      }
+    }
+  }
+}
 
 export type SiteEdge = {
   subject: string;
@@ -106,11 +145,13 @@ async function gitSourceCommit(root: string): Promise<string> {
       await Promise.all([
         execFileAsync("git", ["rev-parse", "HEAD"], {
           cwd: root,
+          env: sanitizedGitEnvironment(),
           encoding: "utf8",
           maxBuffer: 1024 * 1024,
         }),
         execFileAsync("git", ["rev-parse", "--show-toplevel"], {
           cwd: root,
+          env: sanitizedGitEnvironment(),
           encoding: "utf8",
           maxBuffer: 1024 * 1024,
         }),
@@ -252,6 +293,7 @@ export async function loadSiteModel(
 
   if (!isInstanceGraph(validation.graph)) {
     const dependencies = snapshot.dependencies();
+    await assertCanonicalSiteDependencies(bound.source_root, dependencies);
     await assertArtifactBoundary(bound, dependencies);
     return {
       role: "engine",
@@ -277,6 +319,7 @@ export async function loadSiteModel(
   const edges = siteEdges(index);
   const notes = siteNotes(validation.graph.notes, edges);
   const dependencies = snapshot.dependencies();
+  await assertCanonicalSiteDependencies(bound.source_root, dependencies);
   await assertArtifactBoundary(bound, dependencies);
   return {
     role: "instance",

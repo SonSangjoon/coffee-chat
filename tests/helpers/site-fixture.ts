@@ -102,6 +102,16 @@ export async function gitHead(root: string): Promise<string> {
   return git(root, "rev-parse", "HEAD");
 }
 
+export async function commitFixtureMarker(
+  root: string,
+  marker: string,
+): Promise<string> {
+  await writeFile(resolve(root, "fixture-marker.txt"), `${marker}\n`);
+  await git(root, "add", "fixture-marker.txt");
+  await git(root, "commit", "--quiet", "-m", marker);
+  return gitHead(root);
+}
+
 export async function readKnowledgeIndex(
   root: string,
 ): Promise<Record<string, unknown>> {
