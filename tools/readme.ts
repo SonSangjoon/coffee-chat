@@ -108,6 +108,63 @@ function installCommands(
   ];
 }
 
+function lifecycleGuidance(
+  context: ReadmeContext,
+  locale: "en" | "ko",
+): string[] {
+  const commands = [
+    "```sh",
+    "npm run cc -- hooks inspect --format json",
+    "npm run cc -- hooks install --format json",
+    "npm run cc -- hooks uninstall --format json",
+    "```",
+    "",
+    "```sh",
+    "codex plugin add --help",
+    `codex plugin marketplace upgrade ${context.marketplace}`,
+    "codex plugin list --json",
+    "codex plugin marketplace list --json",
+    "```",
+    "",
+    "```sh",
+    `claude plugin update ${context.pluginSelector} --scope local`,
+    "claude plugin list --json",
+    "claude plugin marketplace list --json",
+    "```",
+  ];
+  if (locale === "en")
+    return [
+      "<details><summary>Hooks, lifecycle, update, cache, and removal receipt</summary>",
+      "",
+      "Inspect the resolved repository hook before installation. Install only after a safe inspection; uninstall removes only the Coffee Chat-managed hook and repository-local runtime. Do not bypass, silently chain, or overwrite an unmanaged hook.",
+      "",
+      ...commands,
+      "",
+      "Codex exposes no plugin scope selector in `plugin add` and no separate plugin update command. Treat unreported scope or host-managed paths as Unknown. Marketplace upgrade refreshes the source snapshot; the two read-only list commands are the removal receipt for this exact plugin and marketplace.",
+      "",
+      "Claude Code `local` scope is the narrowest temporary choice. Its update command refreshes this namespaced plugin; the two list commands are the same presence-or-absence receipt. Host-managed caches, conversation history, logs, and retention may remain after removal.",
+      "",
+      "Derived POVs, Mental Models, Task Lenses, and new personal knowledge are never appended to the installed snapshot at runtime.",
+      "",
+      "</details>",
+    ];
+  return [
+    "<details><summary>Hook, 수명주기, 업데이트, 캐시, 삭제 receipt</summary>",
+    "",
+    "설치 전에 실제 저장소 hook 경로와 상태를 확인하세요. 안전한 inspection 뒤에만 설치하며, uninstall은 Coffee Chat이 관리하는 hook과 저장소 로컬 runtime만 제거합니다. 관리되지 않는 hook을 우회·자동 연결·덮어쓰지 않습니다.",
+    "",
+    ...commands,
+    "",
+    "Codex의 `plugin add`에는 scope 선택자가 없고 별도 plugin update 명령도 없습니다. 확인되지 않은 scope와 호스트 관리 경로는 Unknown으로 둡니다. Marketplace upgrade는 source snapshot을 갱신하며, 두 개의 읽기 전용 list 명령이 정확한 플러그인과 marketplace의 삭제 receipt입니다.",
+    "",
+    "Claude Code에서는 `local` scope가 가장 좁은 임시 선택입니다. update 명령은 namespaced plugin을 갱신하며, 두 list 명령은 같은 presence-or-absence receipt입니다. 호스트 관리 캐시·대화 기록·로그·보존 데이터는 삭제 후에도 남을 수 있습니다.",
+    "",
+    "도출된 POV·Mental Model·Task Lens와 새 개인 지식은 runtime에 설치된 snapshot에 덧붙이지 않습니다.",
+    "",
+    "</details>",
+  ];
+}
+
 function renderEnglish(manifest: Manifest): string {
   const c = context(manifest);
   const roleCopy = c.isEngine
@@ -123,7 +180,7 @@ function renderEnglish(manifest: Manifest): string {
     "",
     "## AI makes execution abundant. Taste decides what is worth making.",
     "",
-    "Taste here means judgment under uncertainty: what you notice, value, choose, refine, reject, and stop. Coffee Chat turns public Sources and dated, author-approved thinking into a temporal perspective graph that people and agents can question and use.",
+    "Taste here means trained judgment under uncertainty: what you notice, value, choose, refine, reject, and stop. Coffee Chat turns public Sources and dated, author-approved thinking into a temporal perspective graph that people and agents can question and use.",
     "",
     "It does not clone a person or store a fixed Mental Model. It derives only the perspective relevant to the current question or task, shows what supports it, and makes the boundary of the public record visible.",
     "",
@@ -242,7 +299,7 @@ function renderEnglish(manifest: Manifest): string {
     "",
     ...installCommands(c, "en"),
     "",
-    "Inspect lifecycle commands before use; host-managed paths and details that the manager does not report remain Unknown.",
+    ...lifecycleGuidance(c, "en"),
     "",
     "Contribute reusable schemas, methods, Skills, and safety guardrails to the [engine](" +
       ENGINE_REPOSITORY_URL +
@@ -267,7 +324,7 @@ function renderKorean(manifest: Manifest): string {
     "",
     "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
     "",
-    "여기서 Taste는 미적 취향이나 성격이 아니라 불확실성 속에서 무엇을 보고·선택하고·다듬고·버리며·멈출지를 정하는 판단입니다. Coffee Chat은 공개 Source와 날짜가 있는 작성자 승인 기록을, 사람과 Agent가 질문하고 활용할 수 있는 시계열 관점 그래프로 만듭니다.",
+    "여기서 Taste는 미적 취향이나 성격이 아니라, 불확실성 속에서 훈련된 판단입니다. 무엇을 보고·선택하고·다듬고·버리며·멈출지를 정합니다. Coffee Chat은 공개 Source와 날짜가 있는 작성자 승인 기록을, 사람과 Agent가 질문하고 활용할 수 있는 시계열 관점 그래프로 만듭니다.",
     "",
     "Coffee Chat은 사람을 복제하거나 고정된 Mental Model을 저장하지 않습니다. 현재 질문이나 작업에 필요한 관점만 도출하고, 무엇이 그 관점을 뒷받침하는지와 공개 기록의 경계를 함께 보여줍니다.",
     "",
@@ -386,7 +443,7 @@ function renderKorean(manifest: Manifest): string {
     "",
     ...installCommands(c, "ko"),
     "",
-    "사용 전 lifecycle 명령을 확인하세요. 호스트 관리자가 알려주지 않는 경로와 세부 사항은 Unknown으로 남습니다.",
+    ...lifecycleGuidance(c, "ko"),
     "",
     "재사용 가능한 스키마·방법론·Skill·안전 가드레일은 [엔진](" +
       ENGINE_REPOSITORY_URL +

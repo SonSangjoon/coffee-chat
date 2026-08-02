@@ -219,7 +219,9 @@ describe("Task 4 deterministic delivery projections", () => {
     }
     expect(readme.startsWith("[한국어](./README.ko.md)\n")).toBe(true);
     expect(koreanReadme.startsWith("[English](./README.md)\n")).toBe(true);
-    expect(readme).toContain("Taste here means judgment under uncertainty");
+    expect(readme).toContain(
+      "Taste here means trained judgment under uncertainty",
+    );
     expect(readme).toContain(
       "This is the neutral engine: it has no person to chat with.",
     );
@@ -242,6 +244,19 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(readme).toContain(
       "claude plugin uninstall coffee-chat@coffee-chat-marketplace --scope local",
     );
+    expect(readme).toContain(
+      "codex plugin marketplace upgrade coffee-chat-marketplace",
+    );
+    expect(readme).toContain("codex plugin list --json");
+    expect(readme).toContain("codex plugin marketplace list --json");
+    expect(readme).toContain(
+      "claude plugin update coffee-chat@coffee-chat-marketplace --scope local",
+    );
+    expect(readme).toContain("claude plugin list --json");
+    expect(readme).toContain("claude plugin marketplace list --json");
+    expect(readme).toContain("npm run cc -- hooks inspect --format json");
+    expect(readme).toContain("npm run cc -- hooks install --format json");
+    expect(readme).toContain("npm run cc -- hooks uninstall --format json");
     expect(koreanReadme).toContain("## 왜 Coffee Chat인가");
     expect(koreanReadme).not.toContain("## Why Coffee Chat");
   });
@@ -320,6 +335,12 @@ describe("Task 4 deterministic delivery projections", () => {
     );
     expect(instanceReadme).toContain(
       "https://example.github.io/fork-chat/graph/",
+    );
+    expect(instanceReadme).toContain(
+      "codex plugin marketplace upgrade coffee-chat-fork-owner-marketplace",
+    );
+    expect(instanceReadme).toContain(
+      "claude plugin update coffee-chat-fork-owner@coffee-chat-fork-owner-marketplace --scope local",
     );
     expect(instanceReadme).not.toMatch(
       /\bblog\b|social account|social post|how this author thinks/i,

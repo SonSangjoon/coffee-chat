@@ -39,10 +39,31 @@ describe("localized README projections", () => {
     expect(korean).toContain(
       "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
     );
+    expect(english).toContain(
+      "Taste here means trained judgment under uncertainty",
+    );
+    expect(korean).toContain(
+      "여기서 Taste는 미적 취향이나 성격이 아니라, 불확실성 속에서 훈련된 판단입니다.",
+    );
     expect(english).toContain("## Why Coffee Chat");
     expect(korean).toContain("## 왜 Coffee Chat인가");
     expect(english).not.toContain("Coffee Chat과 대화하기");
     expect(korean).not.toContain("Talk with a Coffee Chat / ");
+    for (const command of [
+      "npm run cc -- hooks inspect --format json",
+      "npm run cc -- hooks install --format json",
+      "npm run cc -- hooks uninstall --format json",
+      "codex plugin add --help",
+      "codex plugin marketplace upgrade coffee-chat-marketplace",
+      "codex plugin list --json",
+      "codex plugin marketplace list --json",
+      "claude plugin update coffee-chat@coffee-chat-marketplace --scope local",
+      "claude plugin list --json",
+      "claude plugin marketplace list --json",
+    ]) {
+      expect(english).toContain(command);
+      expect(korean).toContain(command);
+    }
 
     expectHeadingOrder(english!, [
       "## AI makes execution abundant. Taste decides what is worth making.",
