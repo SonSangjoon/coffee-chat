@@ -8,7 +8,7 @@ import {
   symlink,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, posix, resolve } from "node:path";
+import { basename, dirname, posix, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildProjectionBundle,
@@ -132,6 +132,38 @@ describe("Task 5 fixture and output isolation", () => {
       });
     } finally {
       await removeAndProveAbsent(aliasParent);
+    }
+  });
+
+  it("rejects a dangling external symlink alias to a missing output descendant", async () => {
+    const aliasParent = await mkdtemp(
+      resolve(tmpdir(), "coffee-chat-dangling-output-alias-"),
+    );
+    const missingTarget = resolve(
+      projectRoot,
+      `.missing-output-${basename(aliasParent)}`,
+    );
+    try {
+      const alias = resolve(aliasParent, "checkout");
+      await expect(lstat(missingTarget)).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+      await symlink(missingTarget, alias, "dir");
+      const { snapshot, graph } = await engineGraph();
+
+      await expect(
+        buildProjectionBundle(snapshot, graph, {
+          artifact_class: "ephemeral-test",
+          output_root: resolve(alias, "out"),
+        }),
+      ).rejects.toMatchObject({
+        diagnostic: { code: "ephemeral-output-must-be-external" },
+      });
+    } finally {
+      await removeAndProveAbsent(aliasParent);
+      await expect(lstat(missingTarget)).rejects.toMatchObject({
+        code: "ENOENT",
+      });
     }
   });
 

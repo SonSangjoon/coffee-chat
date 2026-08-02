@@ -2,12 +2,21 @@ import {
   lstat,
   mkdir,
   readFile,
+  readlink,
   realpath,
   rmdir,
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { basename, dirname, posix, relative, resolve, sep } from "node:path";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  posix,
+  relative,
+  resolve,
+  sep,
+} from "node:path";
 import type { Diagnostic } from "./contracts.ts";
 import {
   ValidationFailure,
@@ -518,7 +527,12 @@ export async function buildProjectionBundle(
   };
 }
 
-async function canonicalizeOutputRoot(path: string): Promise<string> {
+const MAX_OUTPUT_SYMLINK_HOPS = 40;
+
+async function canonicalizeOutputRoot(
+  path: string,
+  symlinkHops = 0,
+): Promise<string> {
   let existing = resolve(path);
   const missingSegments: string[] = [];
   while (true) {
@@ -526,10 +540,29 @@ async function canonicalizeOutputRoot(path: string): Promise<string> {
       return resolve(await realpath(existing), ...missingSegments.reverse());
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-      const parent = dirname(existing);
-      if (parent === existing) throw error;
-      missingSegments.push(basename(existing));
-      existing = parent;
+      let status;
+      try {
+        status = await lstat(existing);
+      } catch (inspectionError) {
+        if ((inspectionError as NodeJS.ErrnoException).code !== "ENOENT")
+          throw inspectionError;
+        const parent = dirname(existing);
+        if (parent === existing) throw error;
+        missingSegments.push(basename(existing));
+        existing = parent;
+        continue;
+      }
+      if (!status.isSymbolicLink()) throw error;
+      if (symlinkHops >= MAX_OUTPUT_SYMLINK_HOPS)
+        throw new Error("Too many output-root symlink hops.");
+      const linkTarget = await readlink(existing);
+      const resolvedTarget = isAbsolute(linkTarget)
+        ? linkTarget
+        : resolve(dirname(existing), linkTarget);
+      return canonicalizeOutputRoot(
+        resolve(resolvedTarget, ...missingSegments.reverse()),
+        symlinkHops + 1,
+      );
     }
   }
 }
