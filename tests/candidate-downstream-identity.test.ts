@@ -125,6 +125,8 @@ async function makeDownstreamRepository() {
     "tools",
     "method",
     "skills",
+    "docs/assets/readme",
+    "docs/testing.md",
     "LICENSE",
     "CONTENT_LICENSE.md",
   ])

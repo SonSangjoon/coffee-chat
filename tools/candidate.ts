@@ -1108,8 +1108,14 @@ async function supportPaths(
     resolve(root, "schemas"),
     "schemas",
   );
+  const readmeAssets = await walkFiles(
+    fileSystem,
+    resolve(root, "docs/assets/readme"),
+    "docs/assets/readme",
+  );
   const optional = [
     "LICENSE",
+    "docs/testing.md",
     "skills/coffee-chat/SKILL.md",
     "skills/apply-perspective/SKILL.md",
     "skills/build-kg/SKILL.md",
@@ -1117,7 +1123,7 @@ async function supportPaths(
   const found: string[] = [];
   for (const path of optional)
     if (await pathExists(fileSystem, resolve(root, path))) found.push(path);
-  return sortedStrings([...schemas, ...found]);
+  return sortedStrings([...schemas, ...readmeAssets, ...found]);
 }
 
 async function implementationPaths(

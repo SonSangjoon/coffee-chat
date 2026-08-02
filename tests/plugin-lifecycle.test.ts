@@ -452,7 +452,13 @@ async function createFictionalInstanceMarketplace(
     cp(resolve(projectRoot, "tests/fixtures/synthetic-instance"), root, {
       recursive: true,
     }),
-    ...["schemas", "method", "skills"].map((path) =>
+    ...[
+      "schemas",
+      "method",
+      "skills",
+      "docs/assets/readme",
+      "docs/testing.md",
+    ].map((path) =>
       cp(resolve(projectRoot, path), resolve(root, path), { recursive: true }),
     ),
     ...["LICENSE", "CONTENT_LICENSE.md"].map((path) =>

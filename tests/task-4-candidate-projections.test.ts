@@ -71,6 +71,8 @@ async function repositoryFixture(
     "tools",
     "method",
     "skills",
+    "docs/assets/readme",
+    "docs/testing.md",
     "LICENSE",
     "CONTENT_LICENSE.md",
   ])
@@ -418,6 +420,17 @@ describe("Task 4 Candidate projection transaction", () => {
     forgedManifest.preview.untrusted_extension = true;
     expect(validateManifest(forgedManifest)).toBe(false);
     const outputPaths = manifest.outputs.map((entry) => entry.path);
+    const supportPaths = manifest.support_files.map((entry) => entry.path);
+
+    expect(supportPaths).toEqual(
+      expect.arrayContaining([
+        "./docs/assets/readme/coffee-chat-cover.png",
+        "./docs/assets/readme/coffee-chat-flow.en.svg",
+        "./docs/assets/readme/coffee-chat-flow.ko.svg",
+        "./docs/assets/readme/coffee-chat-trust.en.svg",
+        "./docs/assets/readme/coffee-chat-trust.ko.svg",
+      ]),
+    );
 
     expect(outputPaths).toEqual(
       expect.arrayContaining([

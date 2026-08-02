@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" role="img" aria-labelledby="title description">
+  <title id="title">One public record, two directions</title>
+  <desc id="description">A public source and dated judgment become an approved note and temporal perspective graph. The graph supports the owner and their agent through a relevant task lens, and other people and their agents through a grounded Coffee Chat.</desc>
+  <rect width="960" height="720" fill="#EEE9DF"/>
+  <path d="M106 156 C136 66 292 43 391 97 C468 139 496 201 479 266" fill="none" stroke="#697166" stroke-width="2" stroke-linecap="round"/>
+  <path d="M480 334 C480 397 319 384 239 433 M480 334 C480 397 641 384 721 433" fill="none" stroke="#75503D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M238 493 C238 525 238 538 238 558 M722 493 C722 525 722 538 722 558" fill="none" stroke="#9A7059" stroke-width="2" stroke-linecap="round"/>
+  <path d="M238 612 C238 633 238 640 238 653 M722 612 C722 633 722 640 722 653" fill="none" stroke="#697166" stroke-width="2" stroke-linecap="round"/>
+  <path d="M280 128 C330 147 392 178 430 215 M680 128 C630 147 568 178 530 215 M480 269 C480 284 480 293 480 308" fill="none" stroke="#25221F" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="170" cy="94" r="12" fill="#9A7059"/>
+  <circle cx="790" cy="101" r="9" fill="#697166"/>
+  <circle cx="480" cy="43" r="6" fill="#25221F"/>
+  <circle cx="885" cy="307" r="7" fill="#75503D"/>
+  <rect x="72" y="76" width="216" height="64" rx="28" fill="#F7F3EB" stroke="#75503D" stroke-width="2"/>
+  <rect x="672" y="76" width="216" height="64" rx="28" fill="#F7F3EB" stroke="#697166" stroke-width="2"/>
+  <rect x="357" y="205" width="246" height="70" rx="28" fill="#DCCBBE" stroke="#75503D" stroke-width="2"/>
+  <rect x="310" y="307" width="340" height="80" rx="34" fill="#75503D" stroke="#25221F" stroke-width="2"/>
+  <rect x="72" y="428" width="332" height="70" rx="28" fill="#F7F3EB" stroke="#75503D" stroke-width="2"/>
+  <rect x="556" y="428" width="332" height="70" rx="28" fill="#F7F3EB" stroke="#697166" stroke-width="2"/>
+  <rect x="102" y="553" width="272" height="64" rx="26" fill="#E2D7CC" stroke="#9A7059" stroke-width="2"/>
+  <rect x="586" y="553" width="272" height="64" rx="26" fill="#D9DDD5" stroke="#697166" stroke-width="2"/>
+  <rect x="72" y="648" width="332" height="52" rx="24" fill="#25221F"/>
+  <rect x="556" y="648" width="332" height="52" rx="24" fill="#25221F"/>
+  <text data-slot="public-source" x="180" y="116" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="600">Public Source</text>
+  <text data-slot="dated-judgment" x="780" y="116" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="600">Dated Judgment</text>
+  <text data-slot="approved-note" x="480" y="249" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="25" font-weight="600">Approved Note</text>
+  <text data-slot="temporal-graph" x="480" y="357" text-anchor="middle" fill="#EEE9DF" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="600">Temporal Perspective Graph</text>
+  <text data-slot="owner-agent" x="238" y="471" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="600">You + Your Agent</text>
+  <text data-slot="other-agents" x="722" y="471" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="24" font-weight="600">People + Their Agents</text>
+  <text data-slot="task-lens" x="238" y="594" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="23" font-weight="600">Relevant Task Lens</text>
+  <text data-slot="grounded-chat" x="722" y="594" text-anchor="middle" fill="#25221F" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="23" font-weight="600">Grounded Coffee Chat</text>
+  <text data-slot="owner-outcome" x="238" y="681" text-anchor="middle" fill="#EEE9DF" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="21" font-weight="600">Work with Your Taste</text>
+  <text data-slot="other-outcome" x="722" y="681" text-anchor="middle" fill="#EEE9DF" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600">Understand or Apply with Limits</text>
+</svg>

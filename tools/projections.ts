@@ -42,6 +42,7 @@ import {
   type KnowledgeGraph,
   type Manifest,
 } from "./knowledge.ts";
+import { validateReadmeAssets, validateReadmeLinks } from "./readme-assets.ts";
 import { renderReadmes } from "./readme.ts";
 import type { DependencyTrackingSnapshot, Snapshot } from "./snapshot.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
@@ -580,6 +581,7 @@ export async function generatedProjectionBytes(
   snapshot: Snapshot,
   graph: KnowledgeGraph,
 ): Promise<Map<string, Buffer>> {
+  await validateReadmeAssets(snapshot);
   const skills = await availableSkills(snapshot);
   const missingSkills = SKILL_NAMES.filter((name) => !skills.includes(name));
   if (missingSkills.length > 0)
@@ -594,7 +596,9 @@ export async function generatedProjectionBytes(
   const values = new Map<string, Buffer>();
   const codex = jsonBytes(codexManifest(manifest));
   const claude = jsonBytes(claudeManifest(manifest));
-  for (const [path, bytes] of renderReadmes(manifest)) values.set(path, bytes);
+  const readmes = renderReadmes(manifest);
+  await validateReadmeLinks(snapshot, readmes);
+  for (const [path, bytes] of readmes) values.set(path, bytes);
   values.set(
     "CONTENT_LICENSE.md",
     isInstanceManifest(manifest)

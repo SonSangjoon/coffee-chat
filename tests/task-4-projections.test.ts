@@ -58,6 +58,8 @@ async function pendingRepository(): Promise<string> {
     "schemas",
     "method",
     "skills",
+    "docs/assets/readme",
+    "docs/testing.md",
     "LICENSE",
     "CONTENT_LICENSE.md",
   ])
@@ -216,8 +218,12 @@ describe("Task 4 deterministic delivery projections", () => {
       expect(next).toBeGreaterThan(offset);
       offset = next;
     }
-    expect(readme.startsWith("[한국어](./README.ko.md)\n")).toBe(true);
-    expect(koreanReadme.startsWith("[English](./README.md)\n")).toBe(true);
+    expect(readme.startsWith("![Coffee Chat — ")).toBe(true);
+    expect(koreanReadme.startsWith("![Coffee Chat — ")).toBe(true);
+    expect(readme).toContain("./docs/assets/readme/coffee-chat-flow.en.svg");
+    expect(koreanReadme).toContain(
+      "./docs/assets/readme/coffee-chat-flow.ko.svg",
+    );
     expect(readme).toContain(
       "Taste here means trained judgment under uncertainty",
     );
@@ -268,6 +274,9 @@ describe("Task 4 deterministic delivery projections", () => {
       "schemas",
       "method",
       "skills",
+      "docs/assets/readme",
+      "docs/testing.md",
+      "LICENSE",
       "CONTENT_LICENSE.md",
     ])
       await cp(resolve(projectRoot, path), resolve(root, path), {
