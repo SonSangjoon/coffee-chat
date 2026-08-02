@@ -18,8 +18,13 @@ const execFileAsync = promisify(execFile);
 const engineBasePath = "/coffee-chat/";
 const instanceBasePath = "/coffee-chat-projection/";
 const noteId = "8a7b6c5d-4e3f-4a21-b098-7c6d5e4f3a2b";
+const laterNoteId = "7c6d5e4f-3a2b-4d1c-8b7a-6f4e2d1c9a80";
 const entityId = "6f4e2d1c-8b7a-4d3e-a291-5c0b9f8e7d6c";
+const longEntityId = "5e4f3a2b-1c9a-4d8b-a706-f4e2d1c8b7a6";
 const sourceUrl = "https://research.example/review-boundaries";
+const firstObservationTitle = "Fictional review-boundary field notes";
+const laterObservationTitle = "Later fictional observation of the same URL";
+const longEntityLabel = `Boundary${"WithoutBreaks".repeat(24)}`;
 const sourceSlug =
   "faa44a82b6b6054537f05d756baaaed4430befc783adac6efe1eca41173eec05";
 const unsafeSentinel = "coffee-chat-e2e-unsafe-executed";
@@ -142,6 +147,52 @@ test("shares perspective and first-recorded filter state across Timeline and Gra
   await expect(page.locator(`li[data-note-id="${noteId}"]`)).toBeHidden();
 });
 
+test("keeps a zero-result Graph consistent across visual and semantic views", async ({
+  page,
+}) => {
+  await page.goto(instanceUrl("graph/?perspective=1900"));
+
+  await expect(page.locator("[data-filter-status]")).toContainText(
+    "0 of 2 records shown",
+  );
+  await expect(page.locator("[data-graph-member]:visible")).toHaveCount(0);
+  await expect(page.locator("[data-graph-canvas]")).toHaveAttribute(
+    "data-visible-node-count",
+    "0",
+  );
+  await expect(page.locator("[data-graph-canvas]")).toHaveAttribute(
+    "data-visible-edge-count",
+    "0",
+  );
+});
+
+test("keeps shared Source observations note-local instead of choosing a canonical title", async ({
+  page,
+}) => {
+  await page.goto(instanceUrl("timeline/"));
+
+  await expect(
+    page.locator(`li[data-note-id="${noteId}"]`).getByRole("link", {
+      name: firstObservationTitle,
+    }),
+  ).toBeVisible();
+  await expect(
+    page.locator(`li[data-note-id="${laterNoteId}"]`).getByRole("link", {
+      name: laterObservationTitle,
+    }),
+  ).toBeVisible();
+
+  await page.goto(instanceUrl(`sources/${sourceSlug}/`));
+  await expect(page.locator("h1")).toHaveText(sourceUrl);
+  await expect(page.locator("main")).toContainText(firstObservationTitle);
+  await expect(page.locator("main")).toContainText(laterObservationTitle);
+
+  await page.goto(instanceUrl("graph/"));
+  await expect(
+    page.locator(`[data-source-url="${sourceUrl}"]`).getByRole("link"),
+  ).toHaveText(sourceUrl);
+});
+
 test("keeps an equivalent semantic graph when JavaScript is disabled", async ({
   browser,
 }) => {
@@ -234,7 +285,13 @@ for (const width of [360, 768, 1440]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    for (const route of ["", "timeline/", "graph/"]) {
+    for (const route of [
+      "",
+      "timeline/",
+      "graph/",
+      `entities/${longEntityId}/`,
+      `sources/${sourceSlug}/`,
+    ]) {
       await page.goto(instanceUrl(route));
       await expect(page.locator("main")).toBeVisible();
       expect(
@@ -322,6 +379,14 @@ async function addSafeToRejectPublicationPayload(
   await writeFile(
     notePath,
     `${note}\n\n<script data-unsafe-e2e>window.${unsafeSentinel} = true</script>\n\n<img data-unsafe-e2e src="/e2e-unsafe.png" onerror="window.${unsafeSentinel} = true">\n`,
+  );
+  await writeFile(
+    resolve(siteFixture.source, `knowledge/notes/${laterNoteId}.md`),
+    `---\nid: "${laterNoteId}"\ntitle: "A later fictional review"\ntemporal_coverage: "2026-01/2026-03"\nrecorded_on: "2026-02-15"\nsources:\n  - url: "${sourceUrl}"\n    title: "${laterObservationTitle}"\n    published_on: "2025-04-01"\n    accessed_on: "2026-02-15"\nentities:\n  - "${longEntityId}"\n---\n\nThis fictional Note observes the same exact Source URL at a later time.\n`,
+  );
+  await writeFile(
+    resolve(siteFixture.source, "knowledge/entities.yml"),
+    `- id: "${entityId}"\n  label: "Review boundary"\n  kind: "concept"\n  same_as:\n    - "https://concepts.example/review-boundary"\n- id: "${longEntityId}"\n  label: "${longEntityLabel}"\n  kind: "concept"\n`,
   );
 
   const snapshot = await createSnapshot(siteFixture.source, "worktree");

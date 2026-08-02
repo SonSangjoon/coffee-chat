@@ -47,11 +47,14 @@ const sources = new Map(graph.sources.map((source) => [source.url, source]));
             {" / "}
             {note.source_urls.map((url, index) => {
               const source = sources.get(url);
+              const observation = source?.observations.find(
+                (candidate) => candidate.note_id === note.id,
+              );
               return source ? (
                 <>
                   {index > 0 ? ", " : ""}
                   <a href={sourceHref(graph.base_path, source.slug)}>
-                    {source.observations[0]?.title ?? "Source"}
+                    {observation?.title ?? source.url}
                   </a>
                 </>
               ) : null;

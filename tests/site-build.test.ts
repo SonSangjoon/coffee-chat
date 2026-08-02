@@ -1,4 +1,4 @@
-import { lstat, readFile, rm } from "node:fs/promises";
+import { lstat, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -97,5 +97,28 @@ describe.sequential("Task 6 static site build", () => {
     expect(home).toContain(fixture.knowledgeDigest);
     expect(timeline).toContain("/coffee-chat-projection/graph/");
     await expect(checkSiteOutput(result)).resolves.toBeUndefined();
+  });
+
+  it("refuses to replace a nonempty ephemeral output directory", async () => {
+    const fixture = await syntheticFixture();
+    const sentinel = resolve(fixture.output, "keep-me.txt");
+    const sentinelBytes = "unmanaged output must survive\n";
+    await mkdir(fixture.output);
+    await writeFile(sentinel, sentinelBytes);
+
+    await expect(
+      buildSite({
+        source_root: fixture.source,
+        output_root: fixture.output,
+        artifact_class: "ephemeral-test",
+      }),
+    ).rejects.toMatchObject({
+      diagnostic: { code: "site-ephemeral-output-not-empty" },
+    });
+
+    await expect(readFile(sentinel, "utf8")).resolves.toBe(sentinelBytes);
+    await expect(
+      lstat(resolve(fixture.output, "index.html")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 });

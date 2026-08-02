@@ -26,7 +26,7 @@ const elements = [
   ...graph.sources.map((source) => ({
     data: {
       id: source.url,
-      label: source.observations[0]?.title ?? source.url,
+      label: source.url,
       kind: "source",
       href: sourceHref(graph.base_path, source.slug),
       noteIds: source.note_ids,
@@ -42,6 +42,10 @@ const elements = [
   })),
 ];
 const serializedElements = JSON.stringify(elements);
+const edgeNoteIds = (edge: InstanceSiteModel["edges"][number]) =>
+  edge.predicate === "links_to"
+    ? [edge.subject, edge.object]
+    : [edge.subject];
 ---
 
 <div
@@ -74,6 +78,9 @@ const serializedElements = JSON.stringify(elements);
           graph.notes.map((note) => (
             <li
               data-temporal-item
+              data-graph-member
+              data-note-ids={JSON.stringify([note.id])}
+              data-note-match="all"
               data-note-id={note.id}
               data-temporal-coverage={note.temporal_coverage}
               data-recorded-on={note.recorded_on}
@@ -93,7 +100,11 @@ const serializedElements = JSON.stringify(elements);
       <ul class="plain-list">
         {
           graph.entities.map((entity) => (
-            <li>
+            <li
+              data-graph-member
+              data-note-ids={JSON.stringify(entity.note_ids)}
+              data-note-match="any"
+            >
               <a href={entityHref(graph.base_path, entity.id)}>{entity.label}</a>
               <span class="quiet"> · {entity.kind}</span>
             </li>
@@ -106,9 +117,14 @@ const serializedElements = JSON.stringify(elements);
       <ul class="plain-list">
         {
           graph.sources.map((source) => (
-            <li>
+            <li
+              data-graph-member
+              data-note-ids={JSON.stringify(source.note_ids)}
+              data-note-match="any"
+              data-source-url={source.url}
+            >
               <a href={sourceHref(graph.base_path, source.slug)}>
-                {source.observations[0]?.title ?? source.url}
+                {source.url}
               </a>
             </li>
           ))
@@ -120,7 +136,11 @@ const serializedElements = JSON.stringify(elements);
   <ul class="plain-list" data-edge-list>
     {
       graph.edges.map((edge) => (
-        <li>
+        <li
+          data-graph-member
+          data-note-ids={JSON.stringify(edgeNoteIds(edge))}
+          data-note-match="all"
+        >
           <code>{edge.subject}</code> — {edge.predicate} → <code>{edge.object}</code>
         </li>
       ))
@@ -193,22 +213,54 @@ const serializedElements = JSON.stringify(elements);
               : "none",
           );
         });
-        graph.fit(graph.elements(":visible"), 36);
+        const visibleNodes = graph
+          .nodes()
+          .filter((node) => node.style("display") !== "none");
+        const visibleEdges = graph
+          .edges()
+          .filter((edge) => edge.style("display") !== "none");
+        canvas.dataset.visibleNodeCount = String(visibleNodes.length);
+        canvas.dataset.visibleEdgeCount = String(visibleEdges.length);
+        if (visibleNodes.length > 0)
+          graph.fit(visibleNodes.union(visibleEdges), 36);
+
+        for (const item of document.querySelectorAll<HTMLElement>(
+          "[data-graph-member]",
+        )) {
+          let noteIds: string[] = [];
+          try {
+            const parsed = JSON.parse(item.dataset.noteIds ?? "[]");
+            if (Array.isArray(parsed))
+              noteIds = parsed.filter(
+                (value): value is string => typeof value === "string",
+              );
+          } catch {
+            noteIds = [];
+          }
+          const matches =
+            item.dataset.noteMatch === "all"
+              ? noteIds.length > 0 && noteIds.every((id) => visible.has(id))
+              : noteIds.some((id) => visible.has(id));
+          item.hidden = !matches;
+        }
       };
 
       document.addEventListener("coffee-chat:temporal-filter", (event) => {
         const detail = (event as CustomEvent<{ visibleNoteIds: string[] }>).detail;
         applyVisibleNotes(detail.visibleNoteIds);
       });
-      const initiallyVisible = Array.from(
-        document.querySelectorAll<HTMLElement>(
-          "[data-temporal-item][data-filtered='visible']",
-        ),
-      )
+      const temporalItems = Array.from(
+        document.querySelectorAll<HTMLElement>("[data-temporal-item]"),
+      );
+      const filterInitialized = temporalItems.every(
+        (item) => item.dataset.filtered === "visible" || item.dataset.filtered === "hidden",
+      );
+      const initiallyVisible = temporalItems
+        .filter((item) => item.dataset.filtered === "visible")
         .map((item) => item.dataset.noteId)
         .filter((id): id is string => Boolean(id));
       applyVisibleNotes(
-        initiallyVisible.length > 0
+        filterInitialized
           ? initiallyVisible
           : elements
               .filter((element: { data: { kind?: string } }) =>

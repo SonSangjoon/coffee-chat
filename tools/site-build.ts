@@ -10,6 +10,7 @@ import {
   type SiteBuildRequest,
 } from "../site/lib/build-context.ts";
 import { loadSiteModel, type SiteModel } from "../site/lib/load-site-model.ts";
+import { ValidationFailure } from "./contracts.ts";
 
 export type SiteBuildResult = {
   role: "engine" | "instance";
@@ -51,10 +52,29 @@ function buildResult(
   };
 }
 
+async function assertEphemeralOutputIsEmpty(
+  request: BoundSiteBuildRequest,
+): Promise<void> {
+  if (request.artifact_class !== "ephemeral-test") return;
+  try {
+    if ((await readdir(request.output_root)).length === 0) return;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+    throw error;
+  }
+  throw new ValidationFailure({
+    code: "site-ephemeral-output-not-empty",
+    path: ".",
+    message:
+      "Ephemeral site output must be absent or empty before a build starts.",
+  });
+}
+
 export async function buildSite(
   request: SiteBuildRequest,
 ): Promise<SiteBuildResult> {
   const bound = await bindSiteBuildRequest(request);
+  await assertEphemeralOutputIsEmpty(bound);
   const model = await loadSiteModel(bound);
   const base = (model.role === "engine" ? model.documentation : model.graph)
     .base_path;

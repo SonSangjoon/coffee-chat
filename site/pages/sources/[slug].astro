@@ -17,7 +17,7 @@ const model = siteModel;
 const graph = instanceGraph(model);
 const source = graph.sources.find((value) => value.slug === sourceSlug);
 if (!source) throw new Error(`Unknown generated Source route: ${sourceSlug}`);
-const title = source.observations[0]?.title ?? "Source";
+const title = source.url;
 ---
 
 <BaseLayout
