@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 import { ValidationFailure } from "./contracts.ts";
 import { isInstanceGraph, type KnowledgeGraph } from "./knowledge.ts";
 
@@ -95,4 +95,14 @@ export function assertReleaseProjectionBundle(
 
 export function sameDirectory(left: string, right: string): boolean {
   return resolve(left) === resolve(right);
+}
+
+export function sameOrDescendant(parent: string, candidate: string): boolean {
+  const fromParent = relative(resolve(parent), resolve(candidate));
+  return (
+    fromParent === "" ||
+    (!isAbsolute(fromParent) &&
+      fromParent !== ".." &&
+      !fromParent.startsWith(`..${sep}`))
+  );
 }

@@ -112,7 +112,7 @@ async function repositoryFixture(
   if (options.ownedStale) {
     const packageName = options.upstreamIdentity
       ? "coffee-chat-upstream"
-      : "coffee-chat-sangjoon";
+      : "coffee-chat-projection";
     await mkdir(resolve(root, `plugins/${packageName}/hooks`), {
       recursive: true,
     });
@@ -176,8 +176,8 @@ function request() {
     instance_configuration: {
       profile: {
         temporary_key: "profile",
-        display_name: "Sangjoon Son",
-        short_name: "Sangjoon",
+        display_name: "Projection Author",
+        short_name: "Projection",
       },
       time_zone: "Asia/Seoul",
       repository: {
@@ -186,13 +186,13 @@ function request() {
       },
       pages_url: "https://example.github.io/coffee-chat-downstream/",
       plugin: {
-        name: "coffee-chat-sangjoon",
+        name: "coffee-chat-projection",
         version: "1.0.0",
         description:
           "Converse with and apply a public, dated perspective graph.",
       },
       content_notice:
-        "# Sangjoon Content Notice\n\nSangjoon Son retains ownership of the authored public Notes.\n",
+        "# Projection Content Notice\n\nProjection Author retains ownership of the authored public Notes.\n",
     },
     entity_changes: [
       {
@@ -432,9 +432,9 @@ describe("Task 4 Candidate projection transaction", () => {
         "./.agents/plugins/marketplace.json",
         "./.claude-plugin/marketplace.json",
         "./skills/coffee-chat/references/method.md",
-        "./plugins/coffee-chat-sangjoon/knowledge/index.json",
-        "./plugins/coffee-chat-sangjoon/knowledge/entities.yml",
-        `./plugins/coffee-chat-sangjoon/knowledge/notes/${IDS[4]}.md`,
+        "./plugins/coffee-chat-projection/knowledge/index.json",
+        "./plugins/coffee-chat-projection/knowledge/entities.yml",
+        `./plugins/coffee-chat-projection/knowledge/notes/${IDS[4]}.md`,
       ]),
     );
     expect(manifest.preview.affected_paths).toEqual(manifest.changed_paths);
@@ -504,7 +504,7 @@ describe("Task 4 Candidate projection transaction", () => {
     ).toBe(false);
     expect(
       manifest.outputs.some((entry) =>
-        entry.path.startsWith("./plugins/coffee-chat-sangjoon/"),
+        entry.path.startsWith("./plugins/coffee-chat-projection/"),
       ),
     ).toBe(true);
 
@@ -526,15 +526,15 @@ describe("Task 4 Candidate projection transaction", () => {
       await readFile(
         resolve(
           fixture.root,
-          "plugins/coffee-chat-sangjoon/.codex-plugin/plugin.json",
+          "plugins/coffee-chat-projection/.codex-plugin/plugin.json",
         ),
         "utf8",
       ),
-    ).toContain('"name": "coffee-chat-sangjoon"');
+    ).toContain('"name": "coffee-chat-projection"');
     expect(
       await readFile(resolve(fixture.root, "CONTENT_LICENSE.md"), "utf8"),
     ).toBe(
-      "# Sangjoon Content Notice\n\nSangjoon Son retains ownership of the authored public Notes.\n",
+      "# Projection Content Notice\n\nProjection Author retains ownership of the authored public Notes.\n",
     );
     expect(
       await readFile(resolve(fixture.root, "unrelated-sentinel.txt"), "utf8"),

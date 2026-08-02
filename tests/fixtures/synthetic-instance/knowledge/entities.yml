@@ -1,0 +1,5 @@
+- id: "6f4e2d1c-8b7a-4d3e-a291-5c0b9f8e7d6c"
+  label: "Review boundary"
+  kind: "concept"
+  same_as:
+    - "https://concepts.example/review-boundary"

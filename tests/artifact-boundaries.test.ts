@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises";
+import { lstat, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -92,14 +92,19 @@ describe("artifact provenance boundaries", () => {
     });
 
     const outputRoot = await mkdtemp(resolve(tmpdir(), "coffee-chat-output-"));
-    const bundle = await buildProjectionBundle(snapshot, graph, {
-      artifact_class: "ephemeral-test",
-      output_root: outputRoot,
-    });
-    expect(bundle.artifact_class).toBe("ephemeral-test");
-    expect(bundle.dependencies).toContain("coffee-chat.json");
-    expect(() => assertReleaseProjectionBundle(bundle)).toThrow(
-      "ephemeral-artifact-not-release-eligible",
-    );
+    try {
+      const bundle = await buildProjectionBundle(snapshot, graph, {
+        artifact_class: "ephemeral-test",
+        output_root: outputRoot,
+      });
+      expect(bundle.artifact_class).toBe("ephemeral-test");
+      expect(bundle.dependencies).toContain("coffee-chat.json");
+      expect(() => assertReleaseProjectionBundle(bundle)).toThrow(
+        "ephemeral-artifact-not-release-eligible",
+      );
+    } finally {
+      await rm(outputRoot, { recursive: true, force: true });
+      await expect(lstat(outputRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    }
   });
 });

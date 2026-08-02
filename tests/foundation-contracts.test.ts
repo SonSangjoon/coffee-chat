@@ -104,7 +104,10 @@ describe("Coffee Chat foundation contracts", () => {
         sources: [{ url: "https://example.com/source", title: "Source title" }],
       },
       "https://coffee-chat.dev/schemas/entity-registry.schema.json": [
-        { id: "48d1c840-5d38-48d0-8e74-7187d9f0c2fd", label: "Taste" },
+        {
+          id: "48d1c840-5d38-48d0-8e74-7187d9f0c2fd",
+          label: "Review boundary",
+        },
       ],
       "https://coffee-chat.dev/schemas/knowledge-index.schema.json": {
         schema_version: "1.0.0",
@@ -120,8 +123,8 @@ describe("Coffee Chat foundation contracts", () => {
         instance_configuration: {
           profile: {
             temporary_key: "owner_profile",
-            display_name: "Sangjoon Son",
-            short_name: "Sangjoon",
+            display_name: "Projection Author",
+            short_name: "Projection",
           },
           time_zone: "Asia/Seoul",
           repository: {
@@ -130,7 +133,7 @@ describe("Coffee Chat foundation contracts", () => {
           },
           pages_url: "https://example.github.io/downstream/",
           plugin: {
-            name: "coffee-chat-sangjoon",
+            name: "coffee-chat-projection",
             version: "1.0.0",
             description: "A public perspective graph.",
           },
@@ -139,8 +142,8 @@ describe("Coffee Chat foundation contracts", () => {
         entity_changes: [
           {
             action: "create",
-            temporary_key: "taste",
-            value: { label: "Taste", kind: "concept" },
+            temporary_key: "review_boundary",
+            value: { label: "Review boundary", kind: "concept" },
           },
         ],
         note_changes: [
@@ -157,7 +160,7 @@ describe("Coffee Chat foundation contracts", () => {
                   retrieval_status: "succeeded",
                 },
               ],
-              entity_refs: ["taste"],
+              entity_refs: ["review_boundary"],
               body: "The complete public body.",
             },
           },
@@ -500,7 +503,11 @@ describe("Coffee Chat foundation contracts", () => {
         {
           action: "update",
           target_id: "48d1c840-5d38-48d0-8e74-7187d9f0c2fd",
-          value: { label: "Iteration", aliases: ["Loop"], kind: "process" },
+          value: {
+            label: "Review boundary",
+            aliases: ["Boundary"],
+            kind: "concept",
+          },
         },
       ],
       note_changes: [],

@@ -7,7 +7,7 @@ import {
   unlink,
   writeFile,
 } from "node:fs/promises";
-import { dirname, posix, relative, resolve, sep } from "node:path";
+import { basename, dirname, posix, relative, resolve, sep } from "node:path";
 import type { Diagnostic } from "./contracts.ts";
 import {
   ValidationFailure,
@@ -21,6 +21,7 @@ import {
   assertReleaseProjectionBundle,
   roleOwnedProjectionPaths as declaredOwnedPaths,
   sameDirectory,
+  sameOrDescendant,
   type ArtifactClass,
   type ProjectionBundle,
   type ProjectionContext,
@@ -499,7 +500,7 @@ export async function buildProjectionBundle(
     });
   if (
     context.artifact_class === "ephemeral-test" &&
-    sameDirectory(context.output_root, snapshot.root)
+    (await outputRootWithinCheckout(snapshot.root, context.output_root))
   )
     throw new ValidationFailure({
       code: "ephemeral-output-must-be-external",
@@ -515,6 +516,38 @@ export async function buildProjectionBundle(
     files,
     dependencies: [...dependencies],
   };
+}
+
+async function canonicalizeOutputRoot(path: string): Promise<string> {
+  let existing = resolve(path);
+  const missingSegments: string[] = [];
+  while (true) {
+    try {
+      return resolve(await realpath(existing), ...missingSegments.reverse());
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      const parent = dirname(existing);
+      if (parent === existing) throw error;
+      missingSegments.push(basename(existing));
+      existing = parent;
+    }
+  }
+}
+
+async function outputRootWithinCheckout(
+  checkoutRoot: string,
+  outputRoot: string,
+): Promise<boolean> {
+  if (sameOrDescendant(checkoutRoot, outputRoot)) return true;
+  try {
+    const [canonicalCheckout, canonicalOutput] = await Promise.all([
+      realpath(checkoutRoot),
+      canonicalizeOutputRoot(outputRoot),
+    ]);
+    return sameOrDescendant(canonicalCheckout, canonicalOutput);
+  } catch {
+    return true;
+  }
 }
 
 export type GeneratedProjectionInspection = {
