@@ -1,6 +1,6 @@
 # Coffee Chat README Redesign
 
-**Status:** Revised after visual-system approval; awaiting final review
+**Status:** Revised after core-thesis clarification; awaiting final review
 
 **Date:** 2026-08-02
 
@@ -8,38 +8,54 @@
 
 This specification supersedes the README language-layout and section-order requirements in section 9.1 of the approved v1 design. All knowledge, Candidate, agent-behavior, plugin, safety, and Pages contracts remain unchanged.
 
-## 1. Product message
+## 1. Product thesis
 
-Coffee Chat is not presented as a generic personal knowledge base, an AI clone, or a hiring evaluator.
+Coffee Chat begins from a scarcity shift:
 
-Its public promise is:
+> **AI makes execution abundant. Taste decides what is worth making.**
 
-> Coffee Chat makes a person's documented judgment inspectable by other people and selectively usable by agents.
+Taste is not newly important because of AI. As implementation and iteration become cheaper, the bottleneck becomes the judgment that chooses a problem, defines quality, selects trade-offs, recognizes meaningful failure, decides what to remove, and knows when to continue or stop.
 
-The first reader is someone who received a Coffee Chat URL: a collaborator, hiring-team member, peer, client, or reader who wants to understand how the author approaches a relevant problem before speaking or working with them.
+In Coffee Chat, Taste means this trained judgment under uncertainty. It is not a personality label, aesthetic profile, self-assigned strength, or canonical ontology object.
 
-The core headline is:
+Coffee Chat stores the public evidence from which relevant perspective can emerge:
 
-> **Meet the thinking before you meet the person.**
+- public Sources;
+- dated, author-approved Notes;
+- neutral Entities and temporal relationships.
 
-The supporting product category remains:
+It does not store a fixed POV, Mental Model, Taste profile, or Task Lens. For each question or named task, an agent retrieves the relevant temporal subgraph and derives a bounded Perspective and optional Task Lens. That synthesis ends with the question or task and is never written back.
 
-> An open, portable perspective layer for AI agents.
+The same graph serves two equal needs:
+
+| For you and your agents                                                             | For other people and their agents                                              |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Build a durable, source-grounded record of your judgment.                           | Understand how your documented judgment formed and changed.                    |
+| Recover relevant POV and Mental Models without re-explaining them in every session. | Ask their own questions instead of reading every Note or relying on a profile. |
+| Apply your Taste to a named task while keeping the supporting record visible.       | Carefully apply a relevant perspective with attribution, limits, and Unknowns. |
+
+This is why the project is called Coffee Chat. A coffee chat is not a static profile or a fact lookup. It is a question-led way to understand how someone sees, chooses, and reasons. Coffee Chat makes that interaction asynchronous, source-grounded, time-aware, and agent-readable:
+
+- your own agent can have a Coffee Chat with your public record before beginning work;
+- another person or their agent can have a Coffee Chat with the same record before meeting, collaborating with, learning from, or evaluating your work.
+
+Recruiting is one useful example, not the product identity. A recruiter, collaborator, peer, client, or reader may use Coffee Chat to understand the record and prepare better questions. Coffee Chat never replaces the person or produces a personality, compatibility, hiring, or fit score.
+
+The supporting product category is:
+
+> An open, portable perspective layer for people and AI agents.
 
 The README must explain that Coffee Chat:
 
+- makes Taste legible through evidence without reducing it to a fixed field;
 - starts from public Sources and dated, author-approved Notes;
 - preserves how documented judgment formed and changed;
 - distinguishes Authored, Sourced, Inferred, and Unknown;
-- allows a visitor to ask questions by URL without installing anything;
+- lets the owner and their agents work from a relevant derived perspective;
+- lets other people and their agents ask questions by URL without installing anything;
 - may compare the public record with a named role or project by surfacing documented alignment, tension, and Unknown;
 - never produces a personality, compatibility, hiring, or fit score;
-- allows a trusted perspective to be applied to a relevant named task;
-- never stores a fixed POV, Mental Model, or Task Lens.
-
-The recruiter and collaborator boundary is:
-
-> Use Coffee Chat to understand the record, prepare better questions, and identify supported alignment, tension, and Unknown. Do not use it to replace the person or make a hiring decision.
+- never persists a fixed POV, Mental Model, Taste profile, or Task Lens.
 
 ## 2. Honest differentiation
 
@@ -57,7 +73,7 @@ Coffee Chat differs through its product and epistemic contract:
 
 The README compresses this into:
 
-> A knowledge base tells you what someone has saved. Coffee Chat helps you understand how their documented judgment has evolved.
+> A knowledge base retrieves what someone knows. Coffee Chat lets people and agents work with how that person's documented judgment has evolved.
 
 ## 3. README surfaces
 
@@ -77,52 +93,84 @@ The generator remains the source of README output. Hand-editing either generated
 
 ### 3.1 Engine README
 
-The engine represents no person. Its first action invites a visitor to provide an initialized Coffee Chat instance URL. It never treats the engine maintainer or test fixtures as a perspective target.
+The engine represents no person. It presents two equal entry points:
 
-Its secondary action is **Create yours**.
+- **Have a Coffee Chat:** provide an initialized instance URL;
+- **Build your Coffee Chat:** create a separate personal instance beginning with one public Source and one dated thought.
+
+It never treats the engine maintainer or test fixtures as a perspective target.
 
 ### 3.2 Instance README
 
-An initialized instance renders the same reader-first structure with:
+An initialized instance renders the same balanced owner-and-conversation structure with:
 
 - the author's approved public display name;
 - its canonical instance URL in the copyable prompt;
+- an explicit path for the owner and their agents to use the graph in their own work;
 - direct links to the instance Timeline and Graph when Pages are configured;
 - its namespaced plugin installation and removal commands;
-- a link back to the neutral engine for **Create yours**.
+- a link back to the neutral engine for **Build your Coffee Chat**.
 
 ## 4. Markdown information architecture
 
-The README section order is fixed because it represents the visitor journey.
+The README section order is fixed because it must establish the Taste thesis, explain the Coffee Chat metaphor, and give equal visibility to the owner's compounding loop and another person's conversation path.
 
 ### 4.1 Cover and hero
 
 1. Local cover image
 2. Language switch
 3. # Coffee Chat
-4. ## Meet the thinking before you meet the person.
-5. Two short paragraphs:
-   - what the reader can learn;
-   - the explicit non-impersonation and public-record boundary.
+4. ## AI makes execution abundant. Taste decides what is worth making.
+5. Three short paragraphs:
+   - the operational definition of Taste;
+   - how Coffee Chat makes documented judgment usable by people and agents;
+   - the explicit non-impersonation and query-time synthesis boundary.
 6. Two ordinary Markdown links:
-   - **Start a Coffee Chat — no install**
-   - **Create yours**
+   - **Have a Coffee Chat — no install**
+   - **Build your Coffee Chat**
 
 No badges appear above the first action.
 
 Recommended English copy:
 
-> Coffee Chat turns public Sources and dated, author-approved thinking into a point of view you can question by URL—and, after it earns your trust, apply to relevant work in Codex or Claude Code.
+> AI makes execution abundant. Taste decides what is worth making.
 >
-> It does not speak as the person. It shows what the public record supports, how it changed, and where it stops.
+> Taste here means judgment under uncertainty: what you notice, value, choose, refine, reject, and stop. Coffee Chat turns public Sources and dated, author-approved thinking into a temporal perspective graph that people and agents can question and use.
+>
+> It does not clone a person or store a fixed Mental Model. It derives only the perspective relevant to the current question or task, shows what supports it, and makes the boundary of the public record visible.
 
 Recommended Korean copy:
 
-> Coffee Chat은 공개 Source와 날짜가 있는 작성자 승인 기록을, URL로 질문할 수 있는 관점으로 만듭니다. 그 관점이 신뢰를 얻은 뒤에는 Codex나 Claude Code의 관련 업무에도 적용할 수 있습니다.
+> AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.
 >
-> Coffee Chat은 본인인 것처럼 말하지 않습니다. 공개 기록이 뒷받침하는 생각, 그 변화, 그리고 기록만으로 알 수 없는 경계를 보여줍니다.
+> 여기서 Taste는 미적 취향이나 성격이 아니라 불확실성 속에서 무엇을 보고·선택하고·다듬고·버리며·멈출지를 정하는 판단입니다. Coffee Chat은 공개 Source와 날짜가 있는 작성자 승인 기록을, 사람과 Agent가 질문하고 활용할 수 있는 시계열 관점 그래프로 만듭니다.
+>
+> Coffee Chat은 사람을 복제하거나 고정된 Mental Model을 저장하지 않습니다. 현재 질문이나 작업에 필요한 관점만 도출하고, 무엇이 그 관점을 뒷받침하는지와 공개 기록의 경계를 함께 보여줍니다.
 
-### 4.2 Start without installing
+### 4.2 Why Coffee Chat
+
+This section makes the name explicit:
+
+> A coffee chat helps you understand how someone sees and decides through your own questions. Coffee Chat gives people and agents that same entry point into a documented point of view—with Sources, dates, and visible limits.
+
+It immediately names both forms:
+
+- **Your agent has a Coffee Chat with you:** it reads the relevant record before a task and derives a temporary POV, Mental Model, or Task Lens.
+- **Someone else has a Coffee Chat with you:** they or their agent ask their own questions to understand, compare, or carefully apply the recorded perspective.
+
+The section states that this is an interface to the documented public record, not a claim that the model is the person.
+
+### 4.3 Two needs, one graph
+
+A short native Markdown table gives the two product loops equal weight:
+
+| Build and use your Taste                                                 | Understand and use another perspective                                   |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Add one public Source and your dated thought through an agent interview. | Open an instance URL and ask a question without installing.              |
+| Let your own Agent retrieve the relevant record before a named task.     | Trace the response to dated Notes and public Sources.                    |
+| Derive a temporary POV, Mental Model, or Task Lens without storing it.   | Surface alignment, tension, and Unknown without impersonation or scores. |
+
+### 4.4 Have a Coffee Chat without installing
 
 The first executable example is a one-time, zero-install prompt:
 
@@ -135,7 +183,7 @@ The first executable example is a one-time, zero-install prompt:
     Distinguish Authored, Sourced, Inferred, and Unknown.
     Do not score the person or make a hiring decision.
 
-The instance version substitutes its canonical URL. The engine version retains the explicit placeholder and explains that the URL must identify an initialized instance.
+The conversation partner may be the owner's own agent, another person's agent, or a person working through an agent. The instance version substitutes its canonical URL. The engine version retains the explicit placeholder and explains that the URL must identify an initialized instance.
 
 Suggested questions immediately follow:
 
@@ -145,21 +193,23 @@ Suggested questions immediately follow:
 - Where might this role or project align with or challenge the documented view?
 - What should I ask the person directly because the public record cannot answer it?
 
-### 4.3 One record, two interfaces
+Role or hiring comparison is only one optional question pattern. It does not define the section or the product.
+
+### 4.5 One record, two directions
 
 One local SVG diagram explains the complete product without requiring ontology vocabulary first:
 
-    Public Source + dated thought
-                |
-         approved public record
-                |
-          temporal graph
-            /        \
-     question by URL  named task
-           |             |
-     grounded answer   temporary Task Lens
-           |             |
-     better questions  relevant work
+    Public Source + dated judgment
+                  |
+            approved Note
+                  |
+      temporal perspective graph
+           /                 \
+    you + your Agent    people + their Agents
+           |                 |
+    relevant Task Lens  grounded Coffee Chat
+           |                 |
+    work with your Taste  understand or apply with limits
 
 The diagram includes a small footer:
 
@@ -167,11 +217,12 @@ The diagram includes a small footer:
 
 The surrounding Markdown explains:
 
-- **Talk:** acquisition and understanding; no installation;
-- **Apply:** repeated, task-scoped use after the perspective earns trust;
-- **Build:** the author's compounding loop, beginning with one public reference and one dated thought.
+- **Build:** the author's compounding loop, beginning with one public Source and one dated thought;
+- **Use:** the owner and their agents recover relevant judgment for a named task;
+- **Talk:** another person or agent explores the documented point of view without installation;
+- **Apply:** a trusted perspective may inform a relevant task with attribution and limits.
 
-### 4.4 Why this is not another knowledge base
+### 4.6 Why this is not another knowledge base
 
 Use a concise Markdown comparison rather than another image. The graph is described as the trust substrate, not the headline feature.
 
@@ -179,9 +230,9 @@ The comparison remains a native Markdown table. Semantic tables are not rasteriz
 
 The section leads with:
 
-> Other systems make information retrievable or teach an AI to remember or represent a user. Coffee Chat makes documented judgment inspectable by other people and selectively usable by agents.
+> Other systems make information retrievable or teach an AI to remember or represent a user. Coffee Chat makes documented judgment usable by its owner and their agents, inspectable by other people, and selectively applicable by their agents.
 
-### 4.5 How it earns trust
+### 4.7 How it earns trust
 
 The section begins with the localized trust-layer SVG defined in section 5.4. Its meaning is repeated in Markdown immediately below it.
 
@@ -196,11 +247,11 @@ Keep six compact bullets:
 
 The section ends with:
 
-> Use it to prepare a better conversation, not to replace one.
+> Use it to make work more consistent and conversations more informed—not to freeze or replace a person.
 
-### 4.6 Put a point of view to work
+### 4.8 Put Taste to work
 
-This section appears only after the zero-install experience and trust contract.
+This section appears after the two-sided product model and trust contract. It covers the owner using their own Taste as well as another user applying a perspective after it earns trust.
 
 It explains that:
 
@@ -210,9 +261,18 @@ It explains that:
 - only explicitly named task targets may be changed;
 - Coffee Chat canonical knowledge and installed plugin data remain untouched.
 
+It includes an owner-and-Agent prompt with equal prominence to the zero-install conversation:
+
+    Use <YOUR_COFFEE_CHAT_URL> as the perspective source for <TASK>.
+    Retrieve only the public, dated records relevant to the task.
+    Derive a temporary POV, Mental Model, and Task Lens.
+    Explain which judgment criteria affect the work and cite the supporting Notes.
+    Work only on <TARGET>.
+    Do not write the synthesis back to Coffee Chat.
+
 The engine README explains the generic workflow. The instance README supplies its exact plugin commands.
 
-### 4.7 Create yours
+### 4.9 Build your Coffee Chat
 
 The creation flow is short and outcome-led:
 
@@ -224,7 +284,9 @@ The creation flow is short and outcome-led:
 
 It states that authors do not fill in a personality profile or write a fixed Mental Model. The first useful result is one approved Note that can immediately support a question or relevant task.
 
-### 4.8 Install, remove, contribute, and license
+The primary retention loop is the owner using the graph with their own agents. Public conversation and careful reuse by others are distribution and collaboration loops built from the same record.
+
+### 4.10 Install, remove, contribute, and license
 
 Technical commands remain near the bottom:
 
@@ -305,8 +367,8 @@ Contract:
 - same off-white, charcoal, coffee-brown, clay, and muted-sage palette as the cover;
 - matte flat shapes, thin curved connectors, generous spacing;
 - viewBox 0 0 960 720, a 4:3 stacked layout rather than a desktop-only ultra-wide flow;
-- English labels: Public Source, Dated Thought, Approved Record, Temporal Graph, Question by URL, Named Task, Grounded Answer, Temporary Task Lens, Better Questions, and Relevant Work;
-- Korean labels: 공개 Source, 날짜가 있는 생각, 승인된 공개 기록, 시계열 그래프, URL 질문, 명시된 작업, 근거 기반 답변, 임시 Task Lens, 더 나은 질문, and 관련 업무;
+- English labels: Public Source, Dated Judgment, Approved Note, Temporal Perspective Graph, You + Your Agent, People + Their Agents, Relevant Task Lens, Grounded Coffee Chat, Work with Your Taste, and Understand or Apply with Limits;
+- Korean labels: 공개 Source, 날짜가 있는 판단, 승인된 Note, 시계열 관점 그래프, 나와 나의 Agent, 다른 사람과 그들의 Agent, 관련 Task Lens, 근거 기반 Coffee Chat, 내 Taste를 반영한 업무, and 경계가 있는 이해·활용;
 - matching geometry, reading order, color roles, and semantics across locales;
 - the same meaning repeated in localized Markdown so the image is never the only explanation;
 - responsive viewBox, readable at narrow GitHub widths;
@@ -363,6 +425,7 @@ Generation fails without modifying tracked outputs when:
 - any SVG contains scripts, event handlers, remote references, animation, or embedded raster data;
 - the English and Korean SVG pairs differ in geometry, semantic order, or color roles;
 - a generated README links to a missing local path;
+- a generated README omits either **Have a Coffee Chat** or **Build your Coffee Chat**;
 - engine copy implies that the engine represents a person;
 - instance copy leaves engine placeholders in public actions.
 
@@ -372,16 +435,19 @@ generate --check and check must detect byte drift for both README files and all 
 
 The change is complete when:
 
-1. engine README.md and README.ko.md are separate, reciprocal, and reader-first;
-2. initialized instance projections render the same two-language contract with exact instance identity and URL;
-3. the first action is a valid zero-install Coffee Chat prompt;
-4. recruiter and collaborator copy permits alignment, tension, and Unknown but forbids scores and hiring decisions;
-5. the comparison section distinguishes Coffee Chat from a generic KB without claiming that graph or temporal storage is unique;
-6. the cover renders in GitHub Markdown, is 1280 × 640, and remains below 1 MB;
-7. both localized SVG pairs remain legible at narrow and wide widths, contain no unsafe or remote content, and preserve matching semantics and geometry;
-8. all local Markdown links and image paths resolve;
-9. generation is byte-identical on two consecutive runs;
-10. existing engine, instance, Candidate, validation, plugin, and Pages tests continue to pass.
+1. engine README.md and README.ko.md are separate and reciprocal;
+2. the hero leads with the AI-abundance and Taste thesis, then defines Taste as judgment rather than personality or aesthetic preference;
+3. building and using one's own Taste and understanding or carefully applying another person's perspective receive equal first-page visibility;
+4. the README explicitly explains why an owner Agent and another person or Agent can each have a Coffee Chat with the same record;
+5. initialized instance projections render the same two-language contract with exact instance identity and URL;
+6. the zero-install Coffee Chat action is valid while the owner-and-Agent task path remains equally discoverable;
+7. recruiter and collaborator copy is an example rather than the product identity, permits alignment, tension, and Unknown, and forbids scores and hiring decisions;
+8. the comparison section distinguishes Coffee Chat from a generic KB without claiming that graph or temporal storage is unique;
+9. the cover renders in GitHub Markdown, is 1280 × 640, and remains below 1 MB;
+10. both localized SVG pairs remain legible at narrow and wide widths, contain no unsafe or remote content, and preserve matching semantics and geometry;
+11. all local Markdown links and image paths resolve;
+12. generation is byte-identical on two consecutive runs;
+13. existing engine, instance, Candidate, validation, plugin, and Pages tests continue to pass.
 
 Visual review covers GitHub-like light and dark surroundings at desktop and mobile content widths. The solid cover background must remain intentional on both. Review also confirms that every visual inherits the approved cover and that no generated glyph artifact can be mistaken for text.
 
@@ -390,6 +456,7 @@ Visual review covers GitHub-like light and dark surroundings at desktop and mobi
 - hosted chat UI;
 - automatic hiring or compatibility evaluation;
 - personality inference;
+- a stored Taste type, Taste score, fixed Mental Model, or self-authored personality profile;
 - private-source ingestion;
 - an automatic GitHub Social Preview upload;
 - redesigning GitHub Pages;
