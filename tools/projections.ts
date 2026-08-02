@@ -18,9 +18,11 @@ import { compareCodePoints, generatedIndexBytes } from "./generate.ts";
 import {
   GENERATED_OWNERSHIP_MARKER,
   assertArtifactBoundary as assertBoundary,
+  assertReleaseProjectionBundle,
   roleOwnedProjectionPaths as declaredOwnedPaths,
   sameDirectory,
   type ArtifactClass,
+  type ProjectionBundle,
   type ProjectionContext,
 } from "./artifact-inventory.ts";
 import {
@@ -36,13 +38,16 @@ import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
 const SKILL_NAMES = ["coffee-chat", "apply-perspective", "build-kg"] as const;
 
 export type { ArtifactClass, ProjectionContext } from "./artifact-inventory.ts";
-export { roleOwnedProjectionPaths } from "./artifact-inventory.ts";
+export {
+  assertReleaseProjectionBundle,
+  roleOwnedProjectionPaths,
+} from "./artifact-inventory.ts";
+export type {
+  EphemeralProjectionBundle,
+  ProjectionBundle,
+  ReleaseProjectionBundle,
+} from "./artifact-inventory.ts";
 export type { DependencyTrackingSnapshot } from "./snapshot.ts";
-
-export type ProjectionBundle = {
-  files: Map<string, Buffer>;
-  dependencies: string[];
-};
 
 function ownerName(manifest: Manifest): string {
   return isInstanceManifest(manifest)
@@ -428,6 +433,7 @@ export async function generatedProjectionBytes(
       generated_by: "coffee-chat",
       schema_version: "1.0.0",
       repository_role: manifest.repository_role,
+      package_name: manifest.plugin.name,
       owned_paths: [...values.keys()]
         .filter((path) => path.startsWith(`${packageRoot}/`))
         .sort(compareCodePoints),
@@ -435,7 +441,7 @@ export async function generatedProjectionBytes(
   );
   if (isEngineManifest(manifest)) {
     const actual = [...values.keys()].sort(compareCodePoints);
-    const declared = declaredOwnedPaths(manifest);
+    const declared = declaredOwnedPaths(graph);
     if (actual.join("\0") !== declared.join("\0"))
       throw new Error(
         "Engine projection escaped its closed artifact inventory",
@@ -481,7 +487,11 @@ export async function buildProjectionBundle(
   const files = await generatedProjectionBytes(snapshot, graph);
   const dependencies = snapshot.dependencies();
   await assertBoundary(context, dependencies);
-  return { files, dependencies: [...dependencies] };
+  return {
+    artifact_class: context.artifact_class,
+    files,
+    dependencies: [...dependencies],
+  };
 }
 
 export type GeneratedProjectionInspection = {
@@ -504,13 +514,13 @@ function record(value: unknown): Record<string, unknown> | undefined {
     : undefined;
 }
 
-async function isOwnedCoffeeChatPackage(
+async function ownedCoffeeChatPackagePaths(
   snapshot: Snapshot,
   packageName: string,
-): Promise<boolean> {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(packageName)) return false;
+): Promise<Set<string> | undefined> {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(packageName)) return undefined;
   const markerPath = `plugins/${packageName}/${GENERATED_OWNERSHIP_MARKER}`;
-  if (!(await snapshot.exists(markerPath))) return false;
+  if (!(await snapshot.exists(markerPath))) return undefined;
   try {
     const marker = record(
       parseStrictJson(
@@ -518,38 +528,57 @@ async function isOwnedCoffeeChatPackage(
         markerPath,
       ),
     );
-    return (
+    const pluginPath = `plugins/${packageName}/.codex-plugin/plugin.json`;
+    if (!(await snapshot.exists(pluginPath))) return undefined;
+    const plugin = record(
+      parseStrictJson(
+        decodeCanonicalText(await snapshot.read(pluginPath), pluginPath),
+        pluginPath,
+      ),
+    );
+    const prefix = `plugins/${packageName}/`;
+    const ownedPaths = marker?.owned_paths;
+    const validPath = (path: unknown): path is string =>
+      typeof path === "string" &&
+      path.startsWith(prefix) &&
+      path.length > prefix.length &&
+      !path.includes("\\") &&
+      !path.split("/").includes("..") &&
+      posix.normalize(path) === path;
+    if (
       marker?.generated_by === "coffee-chat" &&
       marker?.schema_version === "1.0.0" &&
-      Array.isArray(marker?.owned_paths) &&
-      marker.owned_paths.every(
-        (path) =>
-          typeof path === "string" &&
-          path.startsWith(`plugins/${packageName}/`),
-      )
-    );
+      (marker?.repository_role === "engine" ||
+        marker?.repository_role === "instance") &&
+      marker?.package_name === packageName &&
+      plugin?.name === packageName &&
+      Array.isArray(plugin?.keywords) &&
+      plugin.keywords.includes("coffee-chat") &&
+      Array.isArray(ownedPaths) &&
+      ownedPaths.every(validPath) &&
+      new Set(ownedPaths).size === ownedPaths.length
+    )
+      return new Set([...ownedPaths, markerPath]);
+    return undefined;
   } catch {
-    return false;
+    return undefined;
   }
 }
 
-async function ownedPackageRoots(
+async function ownedPackagePaths(
   snapshot: Snapshot,
-  currentPackageName: string,
-): Promise<string[]> {
-  const roots = new Set<string>([currentPackageName]);
+): Promise<Map<string, Set<string>>> {
+  const packages = new Map<string, Set<string>>();
   const packageNames = new Set(
     (await snapshot.list("plugins"))
       .map((path) => path.split("/")[1])
       .filter((value): value is string => Boolean(value)),
   );
-  for (const packageName of packageNames)
-    if (
-      packageName !== currentPackageName &&
-      (await isOwnedCoffeeChatPackage(snapshot, packageName))
-    )
-      roots.add(packageName);
-  return [...roots].sort(compareCodePoints);
+  for (const packageName of packageNames) {
+    const paths = await ownedCoffeeChatPackagePaths(snapshot, packageName);
+    if (paths) packages.set(packageName, paths);
+  }
+  return packages;
 }
 
 async function stalePathIsSafe(
@@ -569,11 +598,11 @@ async function stalePathIsSafe(
 }
 
 export async function inspectGeneratedProjections(
-  snapshot: Snapshot,
+  snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
 ): Promise<GeneratedProjectionInspection> {
   const expected = (
-    await buildProjectionBundle(snapshot as DependencyTrackingSnapshot, graph, {
+    await buildProjectionBundle(snapshot, graph, {
       artifact_class: "release",
       output_root: snapshot.root,
     })
@@ -581,12 +610,18 @@ export async function inspectGeneratedProjections(
   const diagnostics: Diagnostic[] = [];
   const blockingDiagnostics: Diagnostic[] = [];
   const ownedStalePaths = new Set<string>();
+  const ownedPackages = await ownedPackagePaths(snapshot);
 
   for (const [path, bytes] of expected) {
     let matches = false;
     if (await snapshot.exists(path))
       matches = (await snapshot.read(path)).equals(bytes);
-    if (!matches) {
+    const packageName = /^plugins\/([^/]+)\/.coffee-chat-generated\.json$/.exec(
+      path,
+    )?.[1];
+    const isPriorOwnedMarker =
+      packageName !== undefined && ownedPackages.has(packageName);
+    if (!matches && !isPriorOwnedMarker) {
       const diagnostic = {
         code: "stale-generated-projection",
         path: repositoryPath(path),
@@ -626,13 +661,11 @@ export async function inspectGeneratedProjections(
     }
   }
 
-  for (const packageName of await ownedPackageRoots(
-    snapshot,
-    graph.manifest.plugin.name,
-  )) {
+  for (const [packageName, ownedPaths] of ownedPackages) {
     const packageRoot = `plugins/${packageName}`;
     for (const path of await snapshot.list(packageRoot)) {
       if (expected.has(path)) continue;
+      if (!ownedPaths.has(path)) continue;
       if (!(await stalePathIsSafe(snapshot, path))) {
         const diagnostic = {
           code: "unsafe-generated-projection",
@@ -667,14 +700,14 @@ export async function inspectGeneratedProjections(
 }
 
 export async function generatedProjectionStatePaths(
-  snapshot: Snapshot,
+  snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
 ): Promise<string[]> {
   return (await inspectGeneratedProjections(snapshot, graph)).statePaths;
 }
 
 export async function checkGeneratedProjections(
-  snapshot: Snapshot,
+  snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
 ): Promise<Diagnostic[]> {
   return (await inspectGeneratedProjections(snapshot, graph)).diagnostics;
@@ -717,7 +750,7 @@ async function assertSafeOutput(root: string, path: string): Promise<string> {
 
 export async function writeGeneratedProjections(
   root: string,
-  snapshot: Snapshot,
+  snapshot: DependencyTrackingSnapshot,
   graph: KnowledgeGraph,
 ): Promise<void> {
   const inspection = await inspectGeneratedProjections(snapshot, graph);
@@ -751,12 +784,12 @@ export async function writeGeneratedProjections(
         throw error;
     }
   }
-  const projections = (
-    await buildProjectionBundle(snapshot as DependencyTrackingSnapshot, graph, {
-      artifact_class: "release",
-      output_root: root,
-    })
-  ).files;
+  const bundle = await buildProjectionBundle(snapshot, graph, {
+    artifact_class: "release",
+    output_root: root,
+  });
+  assertReleaseProjectionBundle(bundle);
+  const projections = bundle.files;
   for (const [path, bytes] of projections) {
     const target = await assertSafeOutput(root, path);
     await mkdir(dirname(target), { recursive: true });

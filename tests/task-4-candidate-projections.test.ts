@@ -130,6 +130,18 @@ async function repositoryFixture(
       ),
       "stale\n",
     );
+    const markerPath = resolve(
+      root,
+      `plugins/${packageName}/.coffee-chat-generated.json`,
+    );
+    const marker = JSON.parse(await readFile(markerPath, "utf8")) as {
+      owned_paths: string[];
+    };
+    marker.owned_paths.push(
+      `plugins/${packageName}/hooks/hooks.json`,
+      `plugins/${packageName}/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md`,
+    );
+    await writeFile(markerPath, `${JSON.stringify(marker, null, 2)}\n`);
     await mkdir(resolve(root, "plugins/unrelated"), { recursive: true });
     await writeFile(
       resolve(root, "plugins/unrelated/sentinel.txt"),

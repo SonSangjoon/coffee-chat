@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  assertReleaseProjectionBundle,
   buildProjectionBundle,
   roleOwnedProjectionPaths,
 } from "../tools/projections.ts";
@@ -41,7 +42,7 @@ describe("artifact provenance boundaries", () => {
         "plugins/coffee-chat/skills/coffee-chat/references/method.md",
       ]),
     );
-    expect(roleOwnedProjectionPaths(graph.manifest)).toContain(
+    expect(roleOwnedProjectionPaths(graph)).toContain(
       "plugins/coffee-chat/.coffee-chat-generated.json",
     );
     expect(
@@ -94,6 +95,10 @@ describe("artifact provenance boundaries", () => {
       artifact_class: "ephemeral-test",
       output_root: outputRoot,
     });
+    expect(bundle.artifact_class).toBe("ephemeral-test");
     expect(bundle.dependencies).toContain("coffee-chat.json");
+    expect(() => assertReleaseProjectionBundle(bundle)).toThrow(
+      "ephemeral-artifact-not-release-eligible",
+    );
   });
 });

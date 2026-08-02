@@ -19,6 +19,7 @@ import { parse as parseYaml } from "yaml";
 import {
   checkGeneratedProjections,
   generatedProjectionBytes,
+  roleOwnedProjectionPaths,
 } from "../tools/projections.ts";
 import { validateKnowledge } from "../tools/knowledge.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
@@ -304,6 +305,14 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(combined).not.toContain("Sangjoon Son");
     expect(combined).not.toContain("SonSangjoon/coffee-chat");
     expect(combined).not.toContain("coffee-chat-sangjoon");
+    expect(roleOwnedProjectionPaths(graph)).toEqual(
+      expect.arrayContaining([
+        "plugins/coffee-chat-fork-owner/knowledge/coffee-chat.json",
+        "plugins/coffee-chat-fork-owner/knowledge/index.json",
+        "plugins/coffee-chat-fork-owner/knowledge/entities.yml",
+        "plugins/coffee-chat-fork-owner/knowledge/notes/a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61.md",
+      ]),
+    );
   });
 
   it("reports projection drift with stable diagnostics", async () => {
@@ -374,6 +383,23 @@ describe("Task 4 deterministic delivery projections", () => {
     await mkdir(resolve(currentPackage, "hooks"), { recursive: true });
     await writeFile(staleNote, "stale\n");
     await writeFile(forbiddenHook, "{}\n");
+    const currentMarker = resolve(
+      currentPackage,
+      ".coffee-chat-generated.json",
+    );
+    const currentMarkerValue = JSON.parse(
+      await readFile(currentMarker, "utf8"),
+    ) as {
+      owned_paths: string[];
+    };
+    currentMarkerValue.owned_paths.push(
+      "plugins/coffee-chat/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
+      "plugins/coffee-chat/hooks/hooks.json",
+    );
+    await writeFile(
+      currentMarker,
+      `${JSON.stringify(currentMarkerValue, null, 2)}\n`,
+    );
 
     const obsoletePackage = resolve(root, "plugins/coffee-chat-obsolete");
     await cp(currentPackage, obsoletePackage, { recursive: true });
@@ -382,8 +408,10 @@ describe("Task 4 deterministic delivery projections", () => {
       ".coffee-chat-generated.json",
     );
     const marker = JSON.parse(await readFile(obsoleteMarker, "utf8")) as {
+      package_name: string;
       owned_paths: string[];
     };
+    marker.package_name = "coffee-chat-obsolete";
     marker.owned_paths = marker.owned_paths.map((path) =>
       path.replace("plugins/coffee-chat/", "plugins/coffee-chat-obsolete/"),
     );
@@ -399,9 +427,25 @@ describe("Task 4 deterministic delivery projections", () => {
       else value.plugin!.name = "coffee-chat-obsolete";
       await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
     }
+    const unlisted = resolve(obsoletePackage, "user-content/keep.txt");
+    await mkdir(resolve(obsoletePackage, "user-content"), { recursive: true });
+    await writeFile(unlisted, "do not delete\n");
     const sentinel = resolve(root, "plugins/unrelated/sentinel.txt");
     await mkdir(resolve(root, "plugins/unrelated"), { recursive: true });
     await writeFile(sentinel, "keep me\n");
+    const foreignMarker = resolve(
+      root,
+      "plugins/unrelated/.coffee-chat-generated.json",
+    );
+    await writeFile(
+      foreignMarker,
+      `${JSON.stringify({
+        generated_by: "foreign-plugin",
+        schema_version: "1.0.0",
+        package_name: "unrelated",
+        owned_paths: ["plugins/unrelated/sentinel.txt"],
+      })}\n`,
+    );
 
     const staleCheck = await runCli(root, "check", "--format", "json");
     expect(staleCheck.exitCode).toBe(1);
@@ -432,10 +476,9 @@ describe("Task 4 deterministic delivery projections", () => {
     await expect(
       readFile(resolve(obsoletePackage, ".codex-plugin/plugin.json")),
     ).rejects.toMatchObject({ code: "ENOENT" });
-    await expect(readdir(obsoletePackage)).rejects.toMatchObject({
-      code: "ENOENT",
-    });
+    expect(await readFile(unlisted, "utf8")).toBe("do not delete\n");
     expect(await readFile(sentinel, "utf8")).toBe("keep me\n");
+    expect(await readFile(foreignMarker, "utf8")).toContain("foreign-plugin");
     expect(await runCli(root, "check", "--format", "json")).toEqual({
       exitCode: 0,
       stdout: "[]\n",

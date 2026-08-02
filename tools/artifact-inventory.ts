@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { ValidationFailure } from "./contracts.ts";
-import type { Manifest } from "./knowledge.ts";
+import { isInstanceGraph, type KnowledgeGraph } from "./knowledge.ts";
 
 export type ArtifactClass = "release" | "ephemeral-test";
 
@@ -9,14 +9,32 @@ export type ProjectionContext = {
   output_root: string;
 };
 
+type BundleFields = {
+  files: Map<string, Buffer>;
+  dependencies: string[];
+};
+
+export type ReleaseProjectionBundle = BundleFields & {
+  artifact_class: "release";
+};
+
+export type EphemeralProjectionBundle = BundleFields & {
+  artifact_class: "ephemeral-test";
+};
+
+export type ProjectionBundle =
+  | ReleaseProjectionBundle
+  | EphemeralProjectionBundle;
+
 export const GENERATED_OWNERSHIP_MARKER = ".coffee-chat-generated.json";
 
 const SKILL_NAMES = ["coffee-chat", "apply-perspective", "build-kg"] as const;
 
 /** The complete generated inventory for a role. It is deliberately closed. */
-export function roleOwnedProjectionPaths(manifest: Manifest): string[] {
+export function roleOwnedProjectionPaths(graph: KnowledgeGraph): string[] {
+  const manifest = graph.manifest;
   const packageRoot = `plugins/${manifest.plugin.name}`;
-  return [
+  const paths = [
     "README.md",
     "CONTENT_LICENSE.md",
     "AGENTS.md",
@@ -34,7 +52,15 @@ export function roleOwnedProjectionPaths(manifest: Manifest): string[] {
       `${packageRoot}/skills/${name}/SKILL.md`,
       `${packageRoot}/skills/${name}/references/method.md`,
     ]),
-  ].sort();
+  ];
+  if (isInstanceGraph(graph))
+    paths.push(
+      `${packageRoot}/knowledge/coffee-chat.json`,
+      `${packageRoot}/knowledge/index.json`,
+      `${packageRoot}/knowledge/entities.yml`,
+      ...graph.notes.map((note) => `${packageRoot}/${note.path}`),
+    );
+  return paths.sort();
 }
 
 export async function assertArtifactBoundary(
@@ -52,6 +78,18 @@ export async function assertArtifactBoundary(
       path: `./${fixture}`,
       message:
         "Release artifacts cannot depend on tests/fixtures or examples inputs.",
+    });
+}
+
+/** Rejects non-release bytes at a tracked, packaged, uploaded, or write boundary. */
+export function assertReleaseProjectionBundle(
+  bundle: ProjectionBundle,
+): asserts bundle is ReleaseProjectionBundle {
+  if (bundle.artifact_class !== "release")
+    throw new ValidationFailure({
+      code: "ephemeral-artifact-not-release-eligible",
+      path: ".",
+      message: "ephemeral-artifact-not-release-eligible",
     });
 }
 
