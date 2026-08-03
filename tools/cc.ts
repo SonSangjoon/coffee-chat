@@ -34,14 +34,24 @@ type HookOptions = {
   command: "inspect" | "install" | "uninstall";
   format: "human" | "json";
 };
-type Options = KnowledgeOptions | CandidateOptions | HookOptions;
+type EngineUpdateOptions = {
+  kind: "engine-update";
+  target: string;
+  source: string;
+  format: "human" | "json";
+};
+type Options =
+  | KnowledgeOptions
+  | CandidateOptions
+  | HookOptions
+  | EngineUpdateOptions;
 
 function usageFailure(): UnableToComplete {
   return new UnableToComplete({
     code: "cli-usage",
     path: ".",
     message:
-      "Usage: cc <validate|generate|check> [...], cc candidate prepare --request FILE --out DIR, cc candidate apply --dir DIR --approve DIGEST, or cc hooks inspect|install|uninstall [--format human|json].",
+      "Usage: cc <validate|generate|check> [...], cc candidate prepare --request FILE --out DIR, cc candidate apply --dir DIR --approve DIGEST, cc hooks inspect|install|uninstall [--format human|json], or cc engine update inspect --target PATH --source PATH --format human|json.",
   });
 }
 
@@ -87,6 +97,26 @@ function parseArguments(args: string[]): Options {
       format = args[1];
     }
     return { kind: "hooks", command: action, format };
+  }
+  if (command === "engine") {
+    if (
+      args.length === 8 &&
+      args[0] === "update" &&
+      args[1] === "inspect" &&
+      args[2] === "--target" &&
+      args[3] &&
+      args[4] === "--source" &&
+      args[5] &&
+      args[6] === "--format" &&
+      (args[7] === "human" || args[7] === "json")
+    )
+      return {
+        kind: "engine-update",
+        target: args[3],
+        source: args[5],
+        format: args[7],
+      };
+    throw usageFailure();
   }
   if (command !== "validate" && command !== "generate" && command !== "check")
     throw usageFailure();
@@ -280,6 +310,61 @@ async function main(): Promise<void> {
             });
       render([failure.diagnostic], options.format);
       process.exitCode = failure instanceof ValidationFailure ? 1 : 2;
+    }
+    return;
+  }
+
+  if (options.kind === "engine-update") {
+    try {
+      const snapshot = await createSnapshot(cwd(), "worktree");
+      const validation = await validateKnowledge(snapshot, {
+        validateIndex: false,
+      });
+      if (!validation.graph || validation.diagnostics.length > 0) {
+        render(validation.diagnostics, options.format);
+        process.exitCode = 1;
+        return;
+      }
+      if (validation.graph.manifest.repository_role !== "engine") {
+        render(
+          [
+            {
+              code: "engine-update-engine-role-required",
+              path: "./coffee-chat.json",
+              message:
+                "Engine update inspection is available only from an engine checkout.",
+            },
+          ],
+          options.format,
+        );
+        process.exitCode = 1;
+        return;
+      }
+      const result = await runEngineDelivery([
+        "update",
+        "inspect",
+        "--target",
+        options.target,
+        "--source",
+        options.source,
+        "--format",
+        options.format,
+      ]);
+      if (result.stdout) process.stdout.write(result.stdout);
+      if (result.stderr) process.stderr.write(result.stderr);
+      process.exitCode = result.code;
+    } catch {
+      render(
+        [
+          {
+            code: "engine-update-unavailable",
+            path: ".",
+            message: "Engine update inspection could not be started.",
+          },
+        ],
+        options.format,
+      );
+      process.exitCode = 2;
     }
     return;
   }

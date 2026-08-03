@@ -45,7 +45,7 @@
     },
     {
       "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
-      "digest": "sha256:2eae32711979c459b07b77a4dd3abc126dea344230ddadcc0263616cde044132"
+      "digest": "sha256:4c036690c225380d9c53b077f2eb6ccd79daecb3195a8bb028dee52639d57c12"
     },
     {
       "path": "./plugins/coffee-chat/LICENSE",
@@ -93,7 +93,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
-      "digest": "sha256:ca3d93dc1dbbe95ed3f0ca6a8109325ce164e89b7fef7645050f826d0483dd3d"
+      "digest": "sha256:cfdf298a83aa2590cf3427720b6b092759a688bf68e36169c854a963c2f9a453"
     },
     {
       "path": "./skills/apply-perspective/references/method.md",
@@ -121,7 +121,7 @@
     },
     {
       "path": "./skills/create-coffee-chat/references/release.json",
-      "digest": "sha256:ca3d93dc1dbbe95ed3f0ca6a8109325ce164e89b7fef7645050f826d0483dd3d"
+      "digest": "sha256:cfdf298a83aa2590cf3427720b6b092759a688bf68e36169c854a963c2f9a453"
     }
   ]
 }

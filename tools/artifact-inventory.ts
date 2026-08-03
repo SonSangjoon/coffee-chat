@@ -160,15 +160,23 @@ const MANAGED_PATHS = [
 ] as const;
 
 const DELIVERY_PATHS = [
+  "schemas/engine-migration-document.schema.json",
   "schemas/engine-migration-registry.schema.json",
   "schemas/engine-release-config.schema.json",
   "schemas/engine-release.schema.json",
   "schemas/engine-template-surface.schema.json",
+  "schemas/engine-update-advisory.schema.json",
+  "tests/engine-update-cli.test.ts",
+  "tests/engine-update.test.ts",
+  "tests/helpers/engine-update-fixture.ts",
   "tests/engine-generation-cli.test.ts",
   "tests/engine-release.test.ts",
   "tests/release-dependency-closure.test.ts",
   "tools/engine-cli.ts",
   "tools/engine-release.ts",
+  "tools/engine-update.ts",
+  "tools/migrations.ts",
+  "tools/update-advisory.ts",
 ] as const;
 
 const EXCLUDED_PATHS = [

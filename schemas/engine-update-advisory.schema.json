@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-advisory.schema.json",
+  "title": "Coffee Chat Engine Update Advisory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "target",
+    "registry_digest",
+    "reference_schemas",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "repository": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/github_repository"
+    },
+    "target": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/identity"
+    },
+    "registry_digest": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/digest"
+    },
+    "reference_schemas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release",
+        "migration_registry",
+        "advisory",
+        "migration_document"
+      ],
+      "properties": {
+        "release": { "$ref": "#/$defs/reference" },
+        "migration_registry": { "$ref": "#/$defs/reference" },
+        "advisory": { "$ref": "#/$defs/reference" },
+        "migration_document": { "$ref": "#/$defs/reference" }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["current", "migration_edge_ids"],
+        "properties": {
+          "current": {
+            "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/identity"
+          },
+          "migration_edge_ids": {
+            "type": "array",
+            "items": { "type": "string" },
+            "minItems": 1
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^\\./references/[A-Za-z0-9._-]+\\.schema\\.json$"
+        },
+        "digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/digest"
+        }
+      }
+    }
+  }
+}

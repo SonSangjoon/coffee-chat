@@ -1,4 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { lstat, readFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import type { Diagnostic } from "./contracts.ts";
 import {
@@ -34,8 +36,15 @@ import type {
   EngineReleaseConfig,
   RepositoryProjection,
 } from "./engine-contracts.ts";
+import { inspectEngineUpdate } from "./engine-update.ts";
 
 type EngineCommand = "generate" | "check";
+type UpdateOptions = {
+  kind: "update";
+  target: string;
+  source: string;
+  format: "human" | "json";
+};
 
 function usage(): never {
   throw new UnableToComplete({
@@ -46,12 +55,33 @@ function usage(): never {
   });
 }
 
-function parseArgs(args: string[]): {
-  command: EngineCommand;
-  snapshot: "worktree" | "staged";
-  format: "human" | "json";
-} {
+function parseArgs(args: string[]):
+  | {
+      command: EngineCommand;
+      snapshot: "worktree" | "staged";
+      format: "human" | "json";
+    }
+  | UpdateOptions {
   const initialCommand = args.shift();
+  if (initialCommand === "update") {
+    if (
+      args.length === 7 &&
+      args[0] === "inspect" &&
+      args[1] === "--target" &&
+      args[2] &&
+      args[3] === "--source" &&
+      args[4] &&
+      args[5] === "--format" &&
+      (args[6] === "human" || args[6] === "json")
+    )
+      return {
+        kind: "update",
+        target: args[2],
+        source: args[4],
+        format: args[6],
+      };
+    usage();
+  }
   if (initialCommand !== "generate" && initialCommand !== "check") usage();
   let command: EngineCommand = initialCommand;
   let snapshot: "worktree" | "staged" = "worktree";
@@ -72,6 +102,35 @@ function parseArgs(args: string[]): {
     } else usage();
   }
   return { command, snapshot, format };
+}
+
+function runGitReadonly(cwd: string, args: string[]): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile("git", args, { cwd, encoding: "utf8" }, (error, stdout) => {
+      if (error) reject(error);
+      else resolve(String(stdout));
+    });
+  });
+}
+
+function renderUpdate(
+  result: Awaited<ReturnType<typeof inspectEngineUpdate>>,
+  format: "human" | "json",
+): void {
+  if (format === "json") {
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+    return;
+  }
+  if (result.status === "current")
+    process.stdout.write("Coffee Chat engine is current.\n");
+  else if (result.status === "update_available")
+    process.stdout.write(
+      `Coffee Chat engine update available: ${result.target.version}.\n`,
+    );
+  else
+    process.stdout.write(
+      `Coffee Chat engine update ${result.status}: ${result.reason_code}.\n`,
+    );
 }
 
 function jsonBytes(value: unknown): Buffer {
@@ -384,6 +443,19 @@ async function main(): Promise<void> {
   let options: ReturnType<typeof parseArgs>;
   try {
     options = parseArgs(process.argv.slice(2));
+    if ("kind" in options) {
+      const result = await inspectEngineUpdate(
+        { target_root: options.target, source_root: options.source },
+        {
+          read_file: readFile,
+          lstat: (path) => lstat(path, { bigint: true }),
+          run_git_readonly: runGitReadonly,
+        },
+      );
+      renderUpdate(result, options.format);
+      process.exitCode = 0;
+      return;
+    }
     const root = process.cwd();
     const snapshot = await createSnapshot(root, options.snapshot);
     const projection = await expectedProjection(root, snapshot);
