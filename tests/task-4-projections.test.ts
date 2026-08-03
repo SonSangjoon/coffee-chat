@@ -84,7 +84,7 @@ afterEach(async () => {
 });
 
 describe("Task 4 deterministic delivery projections", () => {
-  it("exports the three instance Skills plus one engine provisioning Skill without a runtime surface", async () => {
+  it("exports the three instance Skills plus engine lifecycle Skills without a runtime surface", async () => {
     const skillNames = (
       await readdir(resolve(projectRoot, "skills"), {
         withFileTypes: true,
@@ -98,6 +98,7 @@ describe("Task 4 deterministic delivery projections", () => {
       "build-kg",
       "coffee-chat",
       "create-coffee-chat",
+      "update-coffee-chat",
     ]);
 
     for (const name of [
@@ -105,6 +106,7 @@ describe("Task 4 deterministic delivery projections", () => {
       "apply-perspective",
       "build-kg",
       "create-coffee-chat",
+      "update-coffee-chat",
     ]) {
       const skill = await readFile(
         resolve(projectRoot, "skills", name, "SKILL.md"),
@@ -143,6 +145,20 @@ describe("Task 4 deterministic delivery projections", () => {
         "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
       ),
     ).toBe(true);
+    for (const name of [
+      "engine-release.schema.json",
+      "engine-migration-registry.schema.json",
+      "engine-update-advisory.schema.json",
+      "engine-migration-document.schema.json",
+      "release.json",
+      "migration-registry.json",
+      "advisory.json",
+    ])
+      expect(
+        generated.has(
+          `plugins/coffee-chat/skills/update-coffee-chat/references/${name}`,
+        ),
+      ).toBe(true);
     expect(
       [...generated.keys()].filter((path) =>
         /(?:^|\/)(?:hooks|agents|apps|settings|bin|lspServers|mcpServers)(?:\/|$)/.test(

@@ -179,6 +179,7 @@ const DELIVERY_PATHS = [
   "schemas/engine-update-publication-journal.schema.json",
   "tests/engine-review-setup-skill.test.ts",
   "tests/engine-review-setup.test.ts",
+  "tests/engine-update-skill.test.ts",
   "tests/engine-publication-cli.test.ts",
   "tests/engine-publication.test.ts",
   "tests/engine-update-acceptance.test.ts",
@@ -240,6 +241,15 @@ const EXCLUDED_PATHS = [
   "plugins/coffee-chat/skills/create-coffee-chat/references/method.md",
   "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
   "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/SKILL.md",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/method.md",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-release.schema.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-registry.schema.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-update-advisory.schema.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-document.schema.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/release.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/migration-registry.json",
+  "plugins/coffee-chat/skills/update-coffee-chat/references/advisory.json",
   "skills/create-coffee-chat/SKILL.md",
   "skills/create-coffee-chat/references/engine-release.schema.json",
   "skills/create-coffee-chat/references/engine-template-surface.schema.json",
@@ -249,8 +259,13 @@ const EXCLUDED_PATHS = [
   "skills/update-coffee-chat/SKILL.md",
   "skills/update-coffee-chat/references/method.md",
   "skills/update-coffee-chat/references/release.json",
-  "skills/update-coffee-chat/references/release.schema.json",
-  "skills/update-coffee-chat/references/template-surface.json",
+  "skills/update-coffee-chat/references/engine-release.schema.json",
+  "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
+  "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
+  "skills/update-coffee-chat/references/engine-migration-document.schema.json",
+  "skills/update-coffee-chat/references/release.json",
+  "skills/update-coffee-chat/references/migration-registry.json",
+  "skills/update-coffee-chat/references/advisory.json",
 ] as const;
 
 const FIXTURE_PATH_PREFIX = "tests/fixtures/";
@@ -379,11 +394,17 @@ export const INSTANCE_SKILLS = [
   "build-kg",
 ] as const;
 
+export const ENGINE_ONLY_SKILLS = [
+  "create-coffee-chat",
+  "update-coffee-chat",
+] as const;
+
+/** Backwards-compatible name for callers that only need the provisioning subset. */
 export const ENGINE_PROVISIONING_SKILLS = ["create-coffee-chat"] as const;
 
 export const ENGINE_PLUGIN_SKILLS = [
   ...INSTANCE_SKILLS,
-  ...ENGINE_PROVISIONING_SKILLS,
+  ...ENGINE_ONLY_SKILLS,
 ] as const;
 
 /** The complete generated inventory for a role. It is deliberately closed. */
@@ -426,6 +447,20 @@ export function roleOwnedProjectionPaths(graph: KnowledgeGraph): string[] {
         "plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
         "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
         "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+        "skills/update-coffee-chat/references/engine-release.schema.json",
+        "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
+        "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
+        "skills/update-coffee-chat/references/engine-migration-document.schema.json",
+        "skills/update-coffee-chat/references/release.json",
+        "skills/update-coffee-chat/references/migration-registry.json",
+        "skills/update-coffee-chat/references/advisory.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-release.schema.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-registry.schema.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-update-advisory.schema.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-document.schema.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/release.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/migration-registry.json",
+        "plugins/coffee-chat/skills/update-coffee-chat/references/advisory.json",
       ],
     );
   if (isInstanceGraph(graph))

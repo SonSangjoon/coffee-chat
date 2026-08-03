@@ -27,6 +27,7 @@ import { compareCodePoints, generatedIndexBytes } from "./generate.ts";
 import {
   GENERATED_OWNERSHIP_MARKER,
   ENGINE_PLUGIN_SKILLS,
+  ENGINE_ONLY_SKILLS,
   ENGINE_PROVISIONING_SKILLS,
   INSTANCE_SKILLS,
   assertArtifactBoundary as assertBoundary,
@@ -57,6 +58,12 @@ import {
   type KnowledgeGraph,
   type Manifest,
 } from "./knowledge.ts";
+import { buildEngineRelease, engineReleaseBytes } from "./engine-release.ts";
+import {
+  buildEngineUpdateAdvisory,
+  type MigrationRegistry,
+} from "./migrations.ts";
+import type { EngineReleaseConfig } from "./engine-contracts.ts";
 import { validateReadmeAssets, validateReadmeLinks } from "./readme-assets.ts";
 import { renderReadmes } from "./readme.ts";
 import type { DependencyTrackingSnapshot, Snapshot } from "./snapshot.ts";
@@ -124,9 +131,16 @@ export async function hasDeliveryProjectionInputs(
   );
 }
 
-async function methodReference(snapshot: Snapshot): Promise<Buffer> {
+async function methodReference(
+  snapshot: Snapshot,
+  includeEngineUpdate = false,
+): Promise<Buffer> {
   const paths = (await snapshot.list("method"))
-    .filter((path) => path.endsWith(".md"))
+    .filter(
+      (path) =>
+        path.endsWith(".md") &&
+        (includeEngineUpdate || path !== "method/engine-update.md"),
+    )
     .sort(compareCodePoints);
   if (paths.length === 0)
     throw new ValidationFailure({
@@ -250,6 +264,7 @@ function agentRouter(manifest: Manifest): Buffer {
     : [
         "Verify this initialized public instance by matching its explicit locator to `coffee-chat.json` `repository.url` or `pages_url`, then matching `repository_role` and profile id to `knowledge/index.json` before treating it as a target.",
         "At instance entry, ask the user to choose **one-time Coffee Chat** or **install instance plugin**, then wait before continuing.",
+        "When the installed generic plugin exposes `update-coffee-chat`, it may perform one read-only advisory check against the instance engine tuple. If one locally consistent candidate exists, offer **Review Coffee Chat update** and stop; never fetch, write, install, branch, publish, or merge during discovery.",
       ];
   return textBytes(
     [
@@ -259,7 +274,7 @@ function agentRouter(manifest: Manifest): Buffer {
       "",
       ...roleEntry,
       "",
-      "Route conversation requests to `skills/coffee-chat/SKILL.md`, named external task application to `skills/apply-perspective/SKILL.md`, Create yours to `skills/create-coffee-chat/SKILL.md`, and Make mine or public graph updates to `skills/build-kg/SKILL.md`. Read only the selected Skill and its generated references.",
+      "Route conversation requests to `skills/coffee-chat/SKILL.md`, named external task application to `skills/apply-perspective/SKILL.md`, Create yours to `skills/create-coffee-chat/SKILL.md`, engine update review to `skills/update-coffee-chat/SKILL.md`, and Make mine or public graph updates to `skills/build-kg/SKILL.md`. Read only the selected Skill and its generated references.",
     ].join("\n"),
   );
 }
@@ -292,7 +307,7 @@ export async function generatedProjectionBytes(
           ? "All instance and engine provisioning Skills are required."
           : "All three instance Coffee Chat Skills are required.",
     });
-  const method = await methodReference(snapshot);
+  const method = await methodReference(snapshot, isEngineManifest(manifest));
   const packageRoot = `plugins/${manifest.plugin.name}`;
   const values = new Map<string, Buffer>();
   const codex = jsonBytes(codexManifest(manifest));
@@ -352,6 +367,84 @@ export async function generatedProjectionBytes(
         `${packageRoot}/skills/create-coffee-chat/references/${name}`,
         bytes,
       );
+    }
+    const updaterReady = (
+      await Promise.all(
+        [
+          "engine/release-config.json",
+          "engine/migrations/registry.json",
+          "schemas/engine-release.schema.json",
+          "schemas/engine-migration-registry.schema.json",
+          "schemas/engine-update-advisory.schema.json",
+          "schemas/engine-migration-document.schema.json",
+        ].map((path) => snapshot.exists(path)),
+      )
+    ).every(Boolean);
+    if (!updaterReady) {
+      // Disposable legacy engine fixtures may not contain the updater inputs.
+      // The maintained engine release always does.
+    } else {
+      const releaseConfig = parseStrictJson(
+        decodeCanonicalText(
+          await snapshot.read("engine/release-config.json"),
+          "engine/release-config.json",
+        ),
+        "engine/release-config.json",
+      ) as EngineReleaseConfig;
+      const release = await buildEngineRelease(
+        snapshot,
+        manifest,
+        releaseConfig,
+      );
+      const migrationRegistryBytes = await snapshot.read(
+        "engine/migrations/registry.json",
+      );
+      const migrationRegistry = parseStrictJson(
+        decodeCanonicalText(
+          migrationRegistryBytes,
+          "engine/migrations/registry.json",
+        ),
+        "engine/migrations/registry.json",
+      ) as MigrationRegistry;
+      const advisorySchemas = {
+        release: await snapshot.read("schemas/engine-release.schema.json"),
+        migration_registry: await snapshot.read(
+          "schemas/engine-migration-registry.schema.json",
+        ),
+        advisory: await snapshot.read(
+          "schemas/engine-update-advisory.schema.json",
+        ),
+        migration_document: await snapshot.read(
+          "schemas/engine-migration-document.schema.json",
+        ),
+      };
+      const advisory = buildEngineUpdateAdvisory(
+        release,
+        migrationRegistry,
+        advisorySchemas,
+      );
+      const updaterReferences = new Map<string, Buffer>([
+        ["release.json", engineReleaseBytes(release)],
+        ["migration-registry.json", migrationRegistryBytes],
+        ["advisory.json", jsonBytes(advisory)],
+        ["engine-release.schema.json", advisorySchemas.release],
+        [
+          "engine-migration-registry.schema.json",
+          advisorySchemas.migration_registry,
+        ],
+        ["engine-update-advisory.schema.json", advisorySchemas.advisory],
+        [
+          "engine-migration-document.schema.json",
+          advisorySchemas.migration_document,
+        ],
+      ]);
+      for (const [name, bytes] of updaterReferences) {
+        values.set(`skills/update-coffee-chat/references/${name}`, bytes);
+        values.set(
+          `${packageRoot}/skills/update-coffee-chat/references/${name}`,
+          bytes,
+        );
+      }
     }
   }
   if (isInstanceGraph(graph)) {
@@ -920,6 +1013,13 @@ export async function inspectGeneratedProjections(
           "skills/create-coffee-chat/references/engine-template-surface.schema.json",
           "skills/create-coffee-chat/references/release.json",
           "skills/create-coffee-chat/references/template-surface.json",
+          "skills/update-coffee-chat/references/engine-release.schema.json",
+          "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
+          "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
+          "skills/update-coffee-chat/references/engine-migration-document.schema.json",
+          "skills/update-coffee-chat/references/release.json",
+          "skills/update-coffee-chat/references/migration-registry.json",
+          "skills/update-coffee-chat/references/advisory.json",
         ]
       : []),
   ]);
@@ -930,7 +1030,7 @@ export async function inspectGeneratedProjections(
       path: repositoryPath(path),
       message:
         graph.manifest.repository_role === "engine"
-          ? "Engine root Skills are closed to the three instance Skills and create-coffee-chat."
+          ? "Engine root Skills are closed to the three instance Skills and engine provisioning/update Skills."
           : "Instance root Skills are closed to coffee-chat, apply-perspective, and build-kg.",
     };
     diagnostics.push(diagnostic);

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json",
+  "title": "Coffee Chat Engine Migration Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "edges"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/edge"
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "github_repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "release_digest"],
+      "properties": {
+        "repository": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/github_repository"
+        },
+        "version": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/semver"
+        },
+        "release_digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/digest"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "from",
+        "to",
+        "document",
+        "document_digest",
+        "write_scopes"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "from": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/identity"
+        },
+        "to": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/identity"
+        },
+        "document": {
+          "type": "string",
+          "pattern": "^\\./engine/migrations/[A-Za-z0-9._-]+\\.json$"
+        },
+        "document_digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-migration-registry.schema.json#/$defs/digest"
+        },
+        "write_scopes": { "const": ["manifest"] }
+      }
+    }
+  }
+}

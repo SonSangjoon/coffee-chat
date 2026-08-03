@@ -281,7 +281,7 @@
     },
     {
       "path": "./skills/apply-perspective/references/method.md",
-      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f",
+      "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -293,7 +293,7 @@
     },
     {
       "path": "./skills/build-kg/references/method.md",
-      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f",
+      "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -305,7 +305,7 @@
     },
     {
       "path": "./skills/coffee-chat/references/method.md",
-      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f",
+      "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -437,7 +437,7 @@
     },
     {
       "path": "./tests/skill-contracts.test.ts",
-      "digest": "sha256:ae5e0fa6382f8c58c3997c19e902169b85fe238383787f53170beef483cfa82f",
+      "digest": "sha256:974d82299832bfd0ca11464b0a031c4cbd39f07ddede3736d9b903b4595b3442",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -479,7 +479,7 @@
     },
     {
       "path": "./tests/task-4-projections.test.ts",
-      "digest": "sha256:30806b4e2b783896383c9f7827e3bc2b299c52687493f92ad38e744b48fe0f1c",
+      "digest": "sha256:73b0236129aa7e742b79e278231f1f11437b327062b68bbcecfc573df5caaebe",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -497,7 +497,7 @@
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:e087b7c8fe3d0c5d726f8e512f82635f08bb7a44e6d809f8dae7a5ea682b007b",
+      "digest": "sha256:c0fd096099202031c36874e0c02d8078244baa37f2ec739d1a3c7070964975cc",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -563,7 +563,7 @@
     },
     {
       "path": "./tools/projections.ts",
-      "digest": "sha256:4b021fae0416bd90f3dfdf0f6ecc05b26a540ab677a69312cc9a62f252c9e4ac",
+      "digest": "sha256:ecbcfd5fe73a11ba313a885c5f7ab608ac5225c890c660f603a49016c06820c5",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -768,6 +768,12 @@
       "class": "engine-delivery"
     },
     {
+      "path": "./tests/engine-update-skill.test.ts",
+      "digest": "sha256:e108d876546f9afbfad00372315f73dffd9f624bafce5795e51c1c053eb11ac4",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
       "path": "./tests/engine-update.test.ts",
       "digest": "sha256:a5fa6588dc65b43a6c8e7ddb4092be57a87e3e5b1b09ce09730916e6580c024e",
       "mode": "100644",
@@ -816,5 +822,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:fa86efc01aa158eca06f1cef340cd2711a91f3c88cab8f4624894323171a09f2"
+  "release_digest": "sha256:63dc3bab69fb4d79012b5cd6407f372e326b7f35b123971f744da48653f9bb31"
 }

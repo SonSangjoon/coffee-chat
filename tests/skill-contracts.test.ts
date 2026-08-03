@@ -13,7 +13,11 @@ const instanceSkillNames = [
   "apply-perspective",
   "build-kg",
 ] as const;
-const engineSkillNames = [...instanceSkillNames, "create-coffee-chat"] as const;
+const engineSkillNames = [
+  ...instanceSkillNames,
+  "create-coffee-chat",
+  "update-coffee-chat",
+] as const;
 const temporaryRoots: string[] = [];
 
 afterEach(async () => {
@@ -104,7 +108,19 @@ describe("Task 4 Agent Skill contracts", () => {
               "references/release.json",
               "references/template-surface.json",
             ]
-          : ["references", "references/method.md"];
+          : name === "update-coffee-chat"
+            ? [
+                "references",
+                "references/advisory.json",
+                "references/engine-migration-document.schema.json",
+                "references/engine-migration-registry.schema.json",
+                "references/engine-release.schema.json",
+                "references/engine-update-advisory.schema.json",
+                "references/method.md",
+                "references/migration-registry.json",
+                "references/release.json",
+              ]
+            : ["references", "references/method.md"];
       expect(entries.sort()).toEqual(["SKILL.md", ...expectedReferences]);
     },
   );
