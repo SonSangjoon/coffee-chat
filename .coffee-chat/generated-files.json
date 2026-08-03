@@ -21,7 +21,7 @@
     },
     {
       "path": "./AGENTS.md",
-      "digest": "sha256:aaaf3985f33ca7cc4d236a82bc3da5c85cb7a6c432a281663e25acc87efa8fe9"
+      "digest": "sha256:55bcfdf52f714d756e1155a6cbb2ce1b8c7c1cd9dcefb014b31b1174e0f1f7ea"
     },
     {
       "path": "./CLAUDE.md",
@@ -45,7 +45,7 @@
     },
     {
       "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
-      "digest": "sha256:8556710d7971be5f2474b44ef312956016d45ee43578b65e4a1076b69f217d30"
+      "digest": "sha256:2eae32711979c459b07b77a4dd3abc126dea344230ddadcc0263616cde044132"
     },
     {
       "path": "./plugins/coffee-chat/LICENSE",
@@ -93,7 +93,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
-      "digest": "sha256:6171dbb9adc06bc901a29132951f5ed899e66ff76c7b0ca4889a229570dbb8d0"
+      "digest": "sha256:ca3d93dc1dbbe95ed3f0ca6a8109325ce164e89b7fef7645050f826d0483dd3d"
     },
     {
       "path": "./skills/apply-perspective/references/method.md",
@@ -121,7 +121,7 @@
     },
     {
       "path": "./skills/create-coffee-chat/references/release.json",
-      "digest": "sha256:6171dbb9adc06bc901a29132951f5ed899e66ff76c7b0ca4889a229570dbb8d0"
+      "digest": "sha256:ca3d93dc1dbbe95ed3f0ca6a8109325ce164e89b7fef7645050f826d0483dd3d"
     }
   ]
 }

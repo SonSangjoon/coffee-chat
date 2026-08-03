@@ -46,7 +46,7 @@ The analysis itself runs only on GitHub-hosted runners as `CodeQL / Analyze (jav
 | Local commit and CI-style secret rejection without value disclosure | `gitleaks-contracts`, workflow contracts                        |
 | Co-installed engine plus two fictional instance plugins             | `plugin-lifecycle`                                              |
 
-The Son fixture under `tests/fixtures/son-input/` is input-only and non-canonical. Release inventory tests prove that its bytes and the synthetic instance bytes do not enter the engine Profile, knowledge graph, plugin, README, or Pages.
+The fictional fixture under `tests/fixtures/example-input/` is input-only and non-canonical. Release inventory tests prove that its bytes and the synthetic instance bytes do not enter the engine Profile, knowledge graph, plugin, README, or Pages.
 
 ## Create yours Skill evaluation
 
@@ -58,15 +58,24 @@ credential redaction, safe empty checkout paths, timeout reconciliation,
 Build KG handoff, pre-conversion non-recursion, and the separate
 commit/push/PR/merge publication boundary.
 
-The pre-Skill diagnostic runs used isolated temporary homes and a hermetic
+The pre-Skill diagnostic runs use isolated temporary homes and a hermetic
 temporary repository with a recording fake `gh`; no GitHub credential or
-personal content was retained. Codex baseline: `codex` host available,
-creation flow not loaded, diagnostic only (no deterministic pass/fail gate).
-Claude Code baseline: host executable unavailable in this environment, so no
-session was claimed. Post-Skill host runs remain diagnostic and must stop before
-the fake POST without the exact Preview digest, route one verified checkout to
-repo-local Build KG, and expose no credential. The deterministic gate is the
-static Vitest contract above.
+personal content is retained. The required host evidence is recorded here as
+non-secret receipts:
+
+| phase      | host        | observed version/result                                                                                                   | receipt                                                                                 |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| baseline   | Codex CLI   | `codex-cli 0.146.0-alpha.9.2`; unavailable before model turn because the isolated home could not resolve `api.openai.com` | `rc=1`, no POST/clone/dependency write, only transport/DNS errors, no credential output |
+| baseline   | Claude Code | executable absent (`command -v claude` returned no path)                                                                  | unsupported host; no session claimed                                                    |
+| post-Skill | Codex CLI   | same isolated invocation; unavailable before model turn for the same DNS failure                                          | `rc=1`, no POST/clone/dependency write, no credential output                            |
+| post-Skill | Claude Code | executable absent                                                                                                         | unsupported host; no session claimed                                                    |
+
+These are explicit environment limitations rather than model pass claims. The
+reproducible static contract remains the deterministic gate: it requires the
+complete Preview before POST, separate publication approval, exactly-once
+pre-conversion Build KG routing, and credential-free behavior. A live host
+evaluation must be repeated in an environment with the corresponding host and
+network access before claiming runtime model compliance.
 
 README asset tests parse PNG signatures and IHDR dimensions directly, enforce byte ceilings and approved SHA-256 digests for the three shared visuals, and walk inline, reference-style, and angle-bracket local Markdown targets through `mdast`. Candidate projection tests prove that both localized READMEs and those three support assets materialize transactionally without entering plugin payloads or the knowledge graph.
 

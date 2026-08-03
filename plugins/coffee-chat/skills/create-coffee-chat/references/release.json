@@ -437,7 +437,7 @@
     },
     {
       "path": "./tests/skill-contracts.test.ts",
-      "digest": "sha256:f231fd804113f2457222bcdf055b82b747b5656900f4d82426635dc7a0dcb30b",
+      "digest": "sha256:ae5e0fa6382f8c58c3997c19e902169b85fe238383787f53170beef483cfa82f",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -557,7 +557,7 @@
     },
     {
       "path": "./tools/projections.ts",
-      "digest": "sha256:717d360d8754fe6ac941e32d5d1a6c34cdcecf99d55eecadf06d6e07e0a2e9e9",
+      "digest": "sha256:e5235118cd80272bd271e550e3a315264d89529be97452d306e55ad1ead7236f",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -666,5 +666,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:f47a894dd6b0853122a64a20e772f712234ae6c8ab9f98f9356791dc07caa764"
+  "release_digest": "sha256:351eb18ef74b5abf31ba7eb99baf450093801539f76442225aa54c6ea1f5be72"
 }

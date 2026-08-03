@@ -156,6 +156,12 @@ describe("Task 4 Agent Skill contracts", () => {
     expect(agents).toContain("origin and target-fingerprint rules");
     expect(agents).toContain("maintained engine checkout");
     expect(agents).toContain(
+      "After the user explicitly chooses **Create yours**, route to `skills/create-coffee-chat/SKILL.md`",
+    );
+    expect(agents).toContain(
+      "Create yours to `skills/create-coffee-chat/SKILL.md`",
+    );
+    expect(agents).toContain(
       "`contribute` and `update` require an initialized authoritative instance checkout",
     );
     expect(agents).not.toContain(
