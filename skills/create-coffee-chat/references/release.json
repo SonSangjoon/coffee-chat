@@ -197,7 +197,7 @@
     },
     {
       "path": "./site/layouts/BaseLayout.astro",
-      "digest": "sha256:1b0149848765b8ed2ae91ed7b11604c1e1b5ed7fbc7ceeab600afe1cfc84b6dd",
+      "digest": "sha256:d00c0c7850a5038a8aae61705baa2a73fd0db3741f2ffcd97caa2a43f82a0dda",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -209,7 +209,7 @@
     },
     {
       "path": "./site/lib/load-site-model.ts",
-      "digest": "sha256:60a840cba8a58504fa7edfdda7292eacfc36681e64feb30d51873de024f5f3e6",
+      "digest": "sha256:7fe8c47094857cc4f276efc19fb20b08351d73fb19dd31d236b024e8b07ca50c",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -245,7 +245,7 @@
     },
     {
       "path": "./site/pages/index.astro",
-      "digest": "sha256:be23d0e443aaede7dda70d9a153f2d808d3a85294c3c351baccd2c1760585935",
+      "digest": "sha256:454a45656854ccd78d6e5081bbd69127712e1eddab4432f98a14dd92e980252f",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -323,7 +323,7 @@
     },
     {
       "path": "./tests/e2e/site.spec.ts",
-      "digest": "sha256:0856ddd20645c5f9c706ac08795c03c3a3f9001c82b036b7def21506b00da10f",
+      "digest": "sha256:a903d92db647fe47a5019c0808636f8eb0c2cc452464f8f1f527b068c4ce168f",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -401,7 +401,7 @@
     },
     {
       "path": "./tests/readme-projections.test.ts",
-      "digest": "sha256:0654b9ccc3abeef893f3022e9b1867a0a3f3dc22d77e9551a66428251fa252e7",
+      "digest": "sha256:6d7218b556474542487970558e40513c0cca13471d6f0358ca40ee98add2f028",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -425,7 +425,7 @@
     },
     {
       "path": "./tests/site-model.test.ts",
-      "digest": "sha256:66e7bdacc063fca686cfd44f2a8cf59a6e4b9e7bb0adbc32cb8b1bdacfccbe22",
+      "digest": "sha256:9be2b04ae671e7183aebd4dfed8596d4fb88a092a9dba8f31794f2e3a352be20",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -575,7 +575,7 @@
     },
     {
       "path": "./tools/readme.ts",
-      "digest": "sha256:fc8f634a6c34f83575856fea1c4cd266c256ebfe4cdf7d99a51ba1c760727d04",
+      "digest": "sha256:c02c10ca81f3bcc63a41a1487559e9123fb59e9544ec42a308c1590b27823800",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -822,5 +822,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:63dc3bab69fb4d79012b5cd6407f372e326b7f35b123971f744da48653f9bb31"
+  "release_digest": "sha256:edc8559432e19c0593ae918d220f2f9e35e52723b3f1ee1b02165731ef6a6481"
 }

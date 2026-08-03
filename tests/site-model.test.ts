@@ -121,6 +121,12 @@ describe("Task 6 site model", () => {
         expect.objectContaining({ note_id: model.graph.notes[0]!.id }),
       ],
     });
+    expect(model.graph.engine_provenance).toEqual({
+      repository: "https://github.com/sonsangjoon/coffee-chat",
+      version: "1.1.0",
+      source_commit: "a".repeat(40),
+      release_digest: `sha256:${"b".repeat(64)}`,
+    });
   });
 
   it("binds commit provenance despite hostile Git repository environment", async () => {

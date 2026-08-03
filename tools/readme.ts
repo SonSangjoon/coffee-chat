@@ -2,8 +2,6 @@ import { isEngineManifest, type Manifest } from "./knowledge.ts";
 
 export type ReadmePath = "README.md" | "README.ko.md";
 
-const ENGINE_REPOSITORY_URL = "https://github.com/SonSangjoon/coffee-chat";
-
 function textBytes(value: string): Buffer {
   return Buffer.from(value.endsWith("\n") ? value : `${value}\n`, "utf8");
 }
@@ -30,10 +28,15 @@ type ReadmeContext = {
   marketplace: string;
   isEngine: boolean;
   pagesUrl?: string;
+  engineRepositoryUrl?: string;
+  engineVersion?: string;
 };
 
 function context(manifest: Manifest): ReadmeContext {
   const isEngine = isEngineManifest(manifest);
+  const engineRepositoryUrl = isEngine
+    ? manifest.repository.url
+    : manifest.provenance?.engine.repository;
   return {
     name: isEngine
       ? "Coffee Chat"
@@ -43,11 +46,15 @@ function context(manifest: Manifest): ReadmeContext {
       ? "<COFFEE_CHAT_INSTANCE_URL>"
       : manifest.repository.url,
     taskUrl: isEngine ? "<YOUR_COFFEE_CHAT_URL>" : manifest.repository.url,
-    buildUrl: isEngine ? "#build-your-coffee-chat" : ENGINE_REPOSITORY_URL,
+    buildUrl: isEngine
+      ? "#build-your-coffee-chat"
+      : (engineRepositoryUrl ?? "#build-your-coffee-chat"),
     pluginSelector: `${manifest.plugin.name}@${manifest.marketplace_name}`,
     marketplace: manifest.marketplace_name,
     isEngine,
     pagesUrl: isEngine ? undefined : manifest.pages_url,
+    engineRepositoryUrl,
+    engineVersion: isEngine ? undefined : manifest.provenance?.engine.version,
   };
 }
 
@@ -93,7 +100,7 @@ function installCommands(
     `<details><summary>${install}</summary>`,
     "",
     "```sh",
-    `codex plugin marketplace add ${context.isEngine ? ENGINE_REPOSITORY_URL : context.instanceUrl}`,
+    `codex plugin marketplace add ${context.engineRepositoryUrl ?? context.instanceUrl}`,
     `codex plugin add ${context.pluginSelector}`,
     "",
     `codex plugin remove ${context.pluginSelector}`,
@@ -105,7 +112,7 @@ function installCommands(
     `<details><summary>${claude}</summary>`,
     "",
     "```sh",
-    `claude plugin marketplace add ${context.isEngine ? ENGINE_REPOSITORY_URL : context.instanceUrl} --scope local`,
+    `claude plugin marketplace add ${context.engineRepositoryUrl ?? context.instanceUrl} --scope local`,
     `claude plugin install ${context.pluginSelector} --scope local`,
     "",
     `claude plugin uninstall ${context.pluginSelector} --scope local`,
@@ -286,8 +293,10 @@ function renderEnglish(manifest: Manifest): string {
     "```",
     "",
     c.isEngine
-      ? "Create a separate instance from this neutral engine. Authors do not fill in a personality profile or a fixed Mental Model; the first useful result is one approved Note that can support a question or task immediately."
-      : `This record belongs to ${c.profileName}. Build your own separate Coffee Chat from the [neutral engine](${ENGINE_REPOSITORY_URL}); authors do not fill in a personality profile or a fixed Mental Model.`,
+      ? "Choose **Create yours** through the generic `coffee-chat` plugin. It uses the official GitHub Template flow, then hands the new public checkout to `skills/create-coffee-chat/SKILL.md` and Build KG. Authors do not fill in a personality profile or a fixed Mental Model; the first useful result is one approved Note that can support a question or task immediately."
+      : c.engineRepositoryUrl
+        ? `This record belongs to ${c.profileName}. Build your own separate Coffee Chat from the [neutral engine](${c.engineRepositoryUrl}); authors do not fill in a personality profile or a fixed Mental Model.`
+        : `This record belongs to ${c.profileName}. Its original engine is not recorded in this legacy manifest; authors do not fill in a personality profile or a fixed Mental Model.`,
     "",
     "The owner using the graph with their own agents is the primary loop. Public conversation and careful reuse by others grow from that same record.",
     "",
@@ -301,9 +310,11 @@ function renderEnglish(manifest: Manifest): string {
     "",
     ...lifecycleGuidance(c, "en"),
     "",
-    "Contribute reusable schemas, methods, Skills, and safety guardrails to the [engine](" +
-      ENGINE_REPOSITORY_URL +
-      "). Personal Notes belong only in an instance controlled by their author.",
+    c.engineRepositoryUrl
+      ? "Contribute reusable schemas, methods, Skills, and safety guardrails to the [engine](" +
+        c.engineRepositoryUrl +
+        "). Personal Notes belong only in an instance controlled by their author."
+      : "Personal Notes belong only in an instance controlled by their author; this legacy manifest does not record the originating engine.",
     "",
     ...(c.isEngine
       ? [
@@ -312,6 +323,12 @@ function renderEnglish(manifest: Manifest): string {
       : [
           "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).",
         ]),
+    ...(c.engineRepositoryUrl && c.engineVersion
+      ? [
+          "",
+          `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
+        ]
+      : []),
   ]);
 }
 
@@ -429,8 +446,10 @@ function renderKorean(manifest: Manifest): string {
     "```",
     "",
     c.isEngine
-      ? "이 중립 엔진에서 별도의 인스턴스를 만드세요. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않으며, 첫 승인 Note 하나만으로도 질문이나 관련 작업을 바로 지원할 수 있습니다."
-      : `${c.profileName}의 기록과는 별개로, [중립 엔진](${ENGINE_REPOSITORY_URL})에서 나만의 Coffee Chat을 만드세요. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않습니다.`,
+      ? "범용 `coffee-chat` 플러그인에서 **Create yours**를 선택하세요. 공식 GitHub Template 흐름으로 공개 체크아웃을 만들고 `skills/create-coffee-chat/SKILL.md`와 Build KG로 넘깁니다. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않으며, 첫 승인 Note 하나만으로도 질문이나 관련 작업을 바로 지원할 수 있습니다."
+      : c.engineRepositoryUrl
+        ? `${c.profileName}의 기록과는 별개로, [중립 엔진](${c.engineRepositoryUrl})에서 나만의 Coffee Chat을 만드세요. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않습니다.`
+        : `${c.profileName}의 기록과는 별개로, 원본 엔진이 기록되지 않은 레거시 매니페스트입니다. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않습니다.`,
     "",
     "주인이 자신의 Agent와 그래프를 쓰는 것이 핵심 반복입니다. 공개 대화와 다른 사람의 신중한 활용은 같은 기록에서 생기는 배포·협업의 반복입니다.",
     "",
@@ -444,9 +463,11 @@ function renderKorean(manifest: Manifest): string {
     "",
     ...lifecycleGuidance(c, "ko"),
     "",
-    "재사용 가능한 스키마·방법론·Skill·안전 가드레일은 [엔진](" +
-      ENGINE_REPOSITORY_URL +
-      ")에 기여하세요. 개인 Note는 작성자가 관리하는 인스턴스에만 둡니다.",
+    c.engineRepositoryUrl
+      ? "재사용 가능한 스키마·방법론·Skill·안전 가드레일은 [엔진](" +
+        c.engineRepositoryUrl +
+        ")에 기여하세요. 개인 Note는 작성자가 관리하는 인스턴스에만 둡니다."
+      : "개인 Note는 작성자가 관리하는 인스턴스에만 둡니다. 이 레거시 매니페스트에는 원본 엔진이 기록되어 있지 않습니다.",
     "",
     ...(c.isEngine
       ? [
@@ -455,6 +476,12 @@ function renderKorean(manifest: Manifest): string {
       : [
           "코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를, Note와 독창적 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
         ]),
+    ...(c.engineRepositoryUrl && c.engineVersion
+      ? [
+          "",
+          `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
+        ]
+      : []),
   ]);
 }
 

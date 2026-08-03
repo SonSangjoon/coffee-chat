@@ -113,7 +113,7 @@ one public reference + your dated thought
 → Coffee Chat and task use
 ```
 
-Create a separate instance from this neutral engine. Authors do not fill in a personality profile or a fixed Mental Model; the first useful result is one approved Note that can support a question or task immediately.
+Choose **Create yours** through the generic `coffee-chat` plugin. It uses the official GitHub Template flow, then hands the new public checkout to `skills/create-coffee-chat/SKILL.md` and Build KG. Authors do not fill in a personality profile or a fixed Mental Model; the first useful result is one approved Note that can support a question or task immediately.
 
 The owner using the graph with their own agents is the primary loop. Public conversation and careful reuse by others grow from that same record.
 

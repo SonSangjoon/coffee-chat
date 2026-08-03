@@ -108,6 +108,21 @@ const description =
             perspective for this conversation. / 공개 출처와 날짜가 있는 기록을
             살펴보고, 이 대화에 필요한 관점을 에이전트가 발현하도록 요청하세요.
           </p>
+          {
+            model.graph.engine_provenance && (
+              <p class="eyebrow">
+                Built with{" "}
+                <a
+                  href={model.graph.engine_provenance.repository}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Coffee Chat
+                </a>{" "}
+                · v{model.graph.engine_provenance.version}
+              </p>
+            )
+          }
           <div class="hero-actions">
             <a class="button" href={siteHref(data.base_path, "timeline/")}>
               Browse timeline / 타임라인 보기
