@@ -5,6 +5,9 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
+import { buildKnowledgeIndex } from "../tools/generate.ts";
+import { validateKnowledge } from "../tools/knowledge.ts";
+import { createSnapshot } from "../tools/snapshot.ts";
 
 const execFileAsync = promisify(execFile);
 const projectRoot = resolve(import.meta.dirname, "..");
@@ -99,6 +102,43 @@ afterEach(async () => {
 });
 
 describe("Coffee Chat Task 2 public CLI", () => {
+  it("keeps the knowledge digest stable across root provenance changes", async () => {
+    const root = await makeRepository();
+    const beforeValidation = await validateKnowledge(
+      await createSnapshot(root, "worktree"),
+    );
+    expect(beforeValidation.graph).toBeDefined();
+    const before = buildKnowledgeIndex(beforeValidation.graph! as never);
+
+    const manifest = JSON.parse(
+      await readFile(resolve(root, "coffee-chat.json"), "utf8"),
+    ) as Record<string, unknown>;
+    manifest.schema_version = "1.1.0";
+    manifest.provenance = {
+      engine: {
+        repository: "https://github.com/sonsangjoon/coffee-chat",
+        version: "1.1.0",
+        source_commit: "a".repeat(40),
+        release_digest: `sha256:${"b".repeat(64)}`,
+      },
+      created_from: {
+        method: "github-template",
+        template_repository: "https://github.com/sonsangjoon/coffee-chat",
+      },
+    };
+    await writeFile(
+      resolve(root, "coffee-chat.json"),
+      `${JSON.stringify(manifest, null, 2)}\n`,
+    );
+
+    const afterValidation = await validateKnowledge(
+      await createSnapshot(root, "worktree"),
+    );
+    expect(afterValidation.graph).toBeDefined();
+    const after = buildKnowledgeIndex(afterValidation.graph! as never);
+    expect(after.knowledge_digest).toBe(before.knowledge_digest);
+  });
+
   it("exposes validate, generate, check, stable formats, and documented exits", async () => {
     const root = await makeRepository();
 

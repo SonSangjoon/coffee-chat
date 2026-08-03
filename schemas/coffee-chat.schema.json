@@ -98,6 +98,7 @@
           "type": "string",
           "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
         },
+        "provenance": { "$ref": "#/$defs/instance_provenance" },
         "paths": {
           "type": "object",
           "additionalProperties": false,
@@ -108,7 +109,54 @@
             "method": { "$ref": "#/$defs/repository_path" }
           }
         }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "schema_version": { "const": "1.1.0" } } },
+          "then": {
+            "properties": { "provenance": true },
+            "required": ["provenance"]
+          }
+        }
+      ]
+    },
+    "instance_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine", "created_from"],
+      "properties": {
+        "engine": { "$ref": "#/$defs/engine_provenance" },
+        "created_from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["method", "template_repository"],
+          "properties": {
+            "method": { "const": "github-template" },
+            "template_repository": { "$ref": "#/$defs/github_repository" }
+          }
+        }
       }
+    },
+    "engine_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "source_commit", "release_digest"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/github_repository" },
+        "version": { "$ref": "#/$defs/semver" },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "release_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "github_repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[a-z0-9.-]+/[a-z0-9._-]+$"
     },
     "repository": {
       "type": "object",

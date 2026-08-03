@@ -12,7 +12,7 @@
     "edges"
   ],
   "properties": {
-    "schema_version": { "$ref": "#/$defs/semver" },
+    "schema_version": { "const": "1.0.0" },
     "profile_id": { "$ref": "#/$defs/uuid_v4" },
     "knowledge_digest": { "$ref": "#/$defs/digest" },
     "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },

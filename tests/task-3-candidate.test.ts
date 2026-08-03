@@ -720,6 +720,11 @@ describe("external-only complete Candidate materialization", () => {
       resolve(fixture.out, "preview.json"),
     );
     expect(prepared.candidateDigest).toBe(manifest.candidate_digest);
+    const materializedManifest = await readJson<Record<string, unknown>>(
+      resolve(fixture.out, "repository/coffee-chat.json"),
+    );
+    expect(materializedManifest).toMatchObject({ schema_version: "1.0.0" });
+    expect(materializedManifest).not.toHaveProperty("provenance");
     expect(manifest).toMatchObject({
       schema_version: "1.0.0",
       candidate_format_version: "1.0.0",

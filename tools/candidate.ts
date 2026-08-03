@@ -67,6 +67,7 @@ const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const CANDIDATE_FORMAT_VERSION = "1.0.0";
+export const LEGACY_MAKE_MINE_SCHEMA_VERSION = "1.0.0" as const;
 
 export function normalizeGitHubRepositoryUrl(raw: string): string {
   if (raw.length === 0 || raw !== raw.trim())
@@ -1351,7 +1352,7 @@ function buildDesiredState(
     ? structuredClone(baseManifest)
     : {
         schema_url: baseManifest.schema_url,
-        schema_version: baseManifest.schema_version,
+        schema_version: LEGACY_MAKE_MINE_SCHEMA_VERSION,
         repository_role: "instance",
         time_zone: (configuration as InstanceConfiguration).time_zone,
         profile: {

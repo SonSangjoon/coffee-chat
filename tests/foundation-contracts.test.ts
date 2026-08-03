@@ -14,6 +14,7 @@ const schemaNames = [
   "note-frontmatter.schema.json",
   "entity-registry.schema.json",
   "knowledge-index.schema.json",
+  "engine-lock.schema.json",
   "candidate-request.schema.json",
   "candidate-manifest.schema.json",
   "preview.schema.json",
@@ -57,7 +58,7 @@ describe("Coffee Chat foundation contracts", () => {
     expect(validate).toBeDefined();
     expect(validate?.(manifest)).toBe(true);
     expect(manifest).toMatchObject({
-      schema_version: "1.0.0",
+      schema_version: "1.1.0",
       repository_role: "engine",
       repository: { url: "https://github.com/SonSangjoon/coffee-chat" },
       pages_url: "https://sonsangjoon.github.io/coffee-chat/",
@@ -116,6 +117,17 @@ describe("Coffee Chat foundation contracts", () => {
           "sha256:78947f971ac9045761e2f19c751e305b8356a6cac191ef1aad73def41d9dc0f2",
         nodes: [],
         edges: [],
+      },
+      "https://coffee-chat.dev/schemas/engine-lock.schema.json": {
+        schema_version: "1.0.0",
+        engine: {
+          repository: "https://github.com/sonsangjoon/coffee-chat",
+          version: "1.1.0",
+          source_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          release_digest:
+            "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        },
+        managed_files: [],
       },
       "https://coffee-chat.dev/schemas/candidate-request.schema.json": {
         schema_version: "1.0.0",

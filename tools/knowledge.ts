@@ -17,6 +17,12 @@ import {
   repositoryPath,
   sortDiagnostics,
 } from "./contracts.ts";
+import {
+  assertLockMatchesManifest,
+  parseEngineLock,
+  validateInstanceProvenance,
+  type InstanceProvenance,
+} from "./engine-provenance.ts";
 import type { Snapshot } from "./snapshot.ts";
 import { createBaseSnapshot } from "./snapshot.ts";
 import {
@@ -85,6 +91,7 @@ export type InstanceManifest = {
   plugin: { name: string; version: string; description: string };
   marketplace_name: string;
   paths: { knowledge_index: string; skills: string; method: string };
+  provenance?: InstanceProvenance;
 };
 
 export type Manifest = EngineManifest | InstanceManifest;
@@ -542,7 +549,7 @@ function markdownLinks(
 function supportedSchemaVersion(value: unknown): boolean {
   if (typeof value !== "string") return false;
   const match = /^(\d+)\.(\d+)\.(\d+)/.exec(value);
-  return Boolean(match && Number(match[1]) === 1 && Number(match[2]) <= 0);
+  return Boolean(match && Number(match[1]) === 1 && Number(match[2]) <= 1);
 }
 
 function validTimeZone(value: unknown): boolean {
@@ -637,6 +644,29 @@ export async function validateKnowledge(
     const unicodeFailure = unicodeScalarDiagnostic(value, "coffee-chat.json");
     if (unicodeFailure) diagnostics.push(unicodeFailure);
     const rawProfile = recordValue(recordValue(value)?.profile);
+    const rawManifest = recordValue(value);
+    if (
+      rawManifest?.repository_role === "engine" &&
+      "provenance" in rawManifest
+    ) {
+      diagnostics.push({
+        code: "schema-additional-property",
+        path: "./coffee-chat.json",
+        pointer: "/provenance",
+        message: "Engine manifests do not allow provenance.",
+      });
+    }
+    if (
+      rawManifest?.repository_role === "instance" &&
+      rawManifest.schema_version === "1.1.0"
+    ) {
+      diagnostics.push(
+        ...validateInstanceProvenance(
+          rawManifest.provenance,
+          "coffee-chat.json",
+        ),
+      );
+    }
     if (rawProfile?.id !== undefined && !validUuid(rawProfile.id)) {
       diagnostics.push({
         code: "invalid-uuid-v4",
@@ -668,6 +698,17 @@ export async function validateKnowledge(
           pointer: "/time_zone",
           message: "Configured time zone must be a valid IANA zone.",
         });
+      }
+      if (isInstanceManifest(manifest) && manifest.schema_version === "1.1.0") {
+        try {
+          const lock = parseEngineLock(
+            await snapshot.read(".coffee-chat/engine-lock.json"),
+            ".coffee-chat/engine-lock.json",
+          );
+          diagnostics.push(...assertLockMatchesManifest(manifest, lock));
+        } catch (error) {
+          addFailure(diagnostics, error);
+        }
       }
       if (manifest.marketplace_name !== `${manifest.plugin.name}-marketplace`) {
         diagnostics.push({

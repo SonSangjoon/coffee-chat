@@ -1,6 +1,6 @@
 {
   "schema_url": "./schemas/coffee-chat.schema.json",
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "repository_role": "instance",
   "time_zone": "Etc/UTC",
   "profile": {
@@ -19,6 +19,18 @@
     "description": "A fictional projection fixture for package and Pages tests."
   },
   "marketplace_name": "coffee-chat-projection-marketplace",
+  "provenance": {
+    "engine": {
+      "repository": "https://github.com/sonsangjoon/coffee-chat",
+      "version": "1.1.0",
+      "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "release_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "created_from": {
+      "method": "github-template",
+      "template_repository": "https://github.com/sonsangjoon/coffee-chat"
+    }
+  },
   "paths": {
     "knowledge_index": "./knowledge/index.json",
     "skills": "./skills/",
