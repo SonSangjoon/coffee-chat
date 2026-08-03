@@ -84,7 +84,7 @@ afterEach(async () => {
 });
 
 describe("Task 4 deterministic delivery projections", () => {
-  it("exports exactly the three declared Agent Skills and no runtime surface", async () => {
+  it("exports the three instance Skills plus one engine provisioning Skill without a runtime surface", async () => {
     const skillNames = (
       await readdir(resolve(projectRoot, "skills"), {
         withFileTypes: true,
@@ -97,9 +97,15 @@ describe("Task 4 deterministic delivery projections", () => {
       "apply-perspective",
       "build-kg",
       "coffee-chat",
+      "create-coffee-chat",
     ]);
 
-    for (const name of skillNames) {
+    for (const name of [
+      "coffee-chat",
+      "apply-perspective",
+      "build-kg",
+      "create-coffee-chat",
+    ]) {
       const skill = await readFile(
         resolve(projectRoot, "skills", name, "SKILL.md"),
         "utf8",
@@ -128,12 +134,71 @@ describe("Task 4 deterministic delivery projections", () => {
       ).toBe(true);
     }
     expect(
+      generated.has(
+        "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
+      ),
+    ).toBe(true);
+    expect(
+      generated.has(
+        "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+      ),
+    ).toBe(true);
+    expect(
       [...generated.keys()].filter((path) =>
         /(?:^|\/)(?:hooks|agents|apps|settings|bin|lspServers|mcpServers)(?:\/|$)/.test(
           path,
         ),
       ),
     ).toEqual([]);
+  });
+
+  it("keeps the personal instance package closed to engine provisioning", async () => {
+    const root = await mkdtemp(
+      resolve(tmpdir(), "coffee-chat-task-5-instance-"),
+    );
+    temporaryRoots.push(root);
+    for (const path of [
+      "coffee-chat.json",
+      "schemas",
+      "method",
+      "skills",
+      "docs/assets/readme",
+      "docs/testing.md",
+      "LICENSE",
+      "CONTENT_LICENSE.md",
+    ])
+      await cp(resolve(projectRoot, path), resolve(root, path), {
+        recursive: true,
+      });
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/coffee-chat.json"),
+      resolve(root, "coffee-chat.json"),
+    );
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/knowledge"),
+      resolve(root, "knowledge"),
+      { recursive: true },
+    );
+    const { snapshot, graph } = await projectGraph(root);
+    const generated = await generatedProjectionBytes(snapshot, graph);
+    expect(
+      [...generated.keys()].filter((path) =>
+        path.includes("create-coffee-chat"),
+      ),
+    ).toEqual([]);
+    const packageRoot = `plugins/${graph.manifest.plugin.name}`;
+    expect(
+      [...generated.keys()]
+        .filter((path) => path.startsWith(`${packageRoot}/skills/`))
+        .sort(),
+    ).toEqual(
+      ["apply-perspective", "build-kg", "coffee-chat"]
+        .flatMap((name) => [
+          `${packageRoot}/skills/${name}/SKILL.md`,
+          `${packageRoot}/skills/${name}/references/method.md`,
+        ])
+        .sort(),
+    );
   });
 
   it("projects the shared method, thin routers, package, marketplace, and README for the generic engine", async () => {

@@ -48,6 +48,26 @@ The analysis itself runs only on GitHub-hosted runners as `CodeQL / Analyze (jav
 
 The Son fixture under `tests/fixtures/son-input/` is input-only and non-canonical. Release inventory tests prove that its bytes and the synthetic instance bytes do not enter the engine Profile, knowledge graph, plugin, README, or Pages.
 
+## Create yours Skill evaluation
+
+`tests/skill-evaluations.test.ts` keeps the creation pressure prompts as a
+static filesystem/instruction contract. It does not execute a model, call
+GitHub, or treat a transcript as a runtime. The prompts cover native Template
+creation, complete Preview-before-POST, Template-mode/provenance checks,
+credential redaction, safe empty checkout paths, timeout reconciliation,
+Build KG handoff, pre-conversion non-recursion, and the separate
+commit/push/PR/merge publication boundary.
+
+The pre-Skill diagnostic runs used isolated temporary homes and a hermetic
+temporary repository with a recording fake `gh`; no GitHub credential or
+personal content was retained. Codex baseline: `codex` host available,
+creation flow not loaded, diagnostic only (no deterministic pass/fail gate).
+Claude Code baseline: host executable unavailable in this environment, so no
+session was claimed. Post-Skill host runs remain diagnostic and must stop before
+the fake POST without the exact Preview digest, route one verified checkout to
+repo-local Build KG, and expose no credential. The deterministic gate is the
+static Vitest contract above.
+
 README asset tests parse PNG signatures and IHDR dimensions directly, enforce byte ceilings and approved SHA-256 digests for the three shared visuals, and walk inline, reference-style, and angle-bracket local Markdown targets through `mdast`. Candidate projection tests prove that both localized READMEs and those three support assets materialize transactionally without entering plugin payloads or the knowledge graph.
 
 ## Native host isolation

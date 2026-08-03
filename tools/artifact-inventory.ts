@@ -209,8 +209,17 @@ const EXCLUDED_PATHS = [
   "plugins/coffee-chat/skills/build-kg/references/method.md",
   "plugins/coffee-chat/skills/coffee-chat/SKILL.md",
   "plugins/coffee-chat/skills/coffee-chat/references/method.md",
+  "plugins/coffee-chat/skills/create-coffee-chat/SKILL.md",
+  "plugins/coffee-chat/skills/create-coffee-chat/references/engine-release.schema.json",
+  "plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
+  "plugins/coffee-chat/skills/create-coffee-chat/references/method.md",
+  "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
   "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
   "skills/create-coffee-chat/SKILL.md",
+  "skills/create-coffee-chat/references/engine-release.schema.json",
+  "skills/create-coffee-chat/references/engine-template-surface.schema.json",
+  "skills/create-coffee-chat/references/method.md",
+  "skills/create-coffee-chat/references/release.json",
   "skills/create-coffee-chat/references/template-surface.json",
   "skills/update-coffee-chat/SKILL.md",
   "skills/update-coffee-chat/references/method.md",
@@ -339,12 +348,27 @@ export function artifactPolicyForPath(
   return undefined;
 }
 
-const SKILL_NAMES = ["coffee-chat", "apply-perspective", "build-kg"] as const;
+export const INSTANCE_SKILLS = [
+  "coffee-chat",
+  "apply-perspective",
+  "build-kg",
+] as const;
+
+export const ENGINE_PROVISIONING_SKILLS = ["create-coffee-chat"] as const;
+
+export const ENGINE_PLUGIN_SKILLS = [
+  ...INSTANCE_SKILLS,
+  ...ENGINE_PROVISIONING_SKILLS,
+] as const;
 
 /** The complete generated inventory for a role. It is deliberately closed. */
 export function roleOwnedProjectionPaths(graph: KnowledgeGraph): string[] {
   const manifest = graph.manifest;
   const packageRoot = `plugins/${manifest.plugin.name}`;
+  const skillNames =
+    manifest.repository_role === "engine"
+      ? ENGINE_PLUGIN_SKILLS
+      : INSTANCE_SKILLS;
   const paths = [
     "README.md",
     "README.ko.md",
@@ -360,12 +384,25 @@ export function roleOwnedProjectionPaths(graph: KnowledgeGraph): string[] {
     `${packageRoot}/.codex-plugin/plugin.json`,
     `${packageRoot}/.claude-plugin/plugin.json`,
     `${packageRoot}/LICENSE`,
-    ...SKILL_NAMES.flatMap((name) => [
+    ...skillNames.flatMap((name) => [
       `skills/${name}/references/method.md`,
       `${packageRoot}/skills/${name}/SKILL.md`,
       `${packageRoot}/skills/${name}/references/method.md`,
     ]),
   ];
+  if (manifest.repository_role === "engine")
+    paths.push(
+      ...[
+        "skills/create-coffee-chat/references/engine-release.schema.json",
+        "skills/create-coffee-chat/references/engine-template-surface.schema.json",
+        "skills/create-coffee-chat/references/release.json",
+        "skills/create-coffee-chat/references/template-surface.json",
+        "plugins/coffee-chat/skills/create-coffee-chat/references/engine-release.schema.json",
+        "plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
+        "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
+        "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+      ],
+    );
   if (isInstanceGraph(graph))
     paths.push(
       `${packageRoot}/knowledge/coffee-chat.json`,

@@ -21,7 +21,7 @@
     },
     {
       "path": "./AGENTS.md",
-      "digest": "sha256:0913c98d563051bd753a8481787dde278d860a656c4e8ab735136a4463cdab49"
+      "digest": "sha256:aaaf3985f33ca7cc4d236a82bc3da5c85cb7a6c432a281663e25acc87efa8fe9"
     },
     {
       "path": "./CLAUDE.md",
@@ -45,7 +45,7 @@
     },
     {
       "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
-      "digest": "sha256:98b9ab023908a5e773f5b40e9055a3248a519d6beddf2bd2e8891b348fa0a7e3"
+      "digest": "sha256:8556710d7971be5f2474b44ef312956016d45ee43578b65e4a1076b69f217d30"
     },
     {
       "path": "./plugins/coffee-chat/LICENSE",
@@ -57,7 +57,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/apply-perspective/references/method.md",
-      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
     },
     {
       "path": "./plugins/coffee-chat/skills/build-kg/SKILL.md",
@@ -65,7 +65,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/build-kg/references/method.md",
-      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-chat/SKILL.md",
@@ -73,19 +73,55 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-chat/references/method.md",
-      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/create-coffee-chat/SKILL.md",
+      "digest": "sha256:3b6b3daffd54b132ca3f3152e69ca351e82618d62ac9d1e2e9d2ec529008604a"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/engine-release.schema.json",
+      "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
+      "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/method.md",
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
+      "digest": "sha256:6171dbb9adc06bc901a29132951f5ed899e66ff76c7b0ca4889a229570dbb8d0"
     },
     {
       "path": "./skills/apply-perspective/references/method.md",
-      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
     },
     {
       "path": "./skills/build-kg/references/method.md",
-      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
     },
     {
       "path": "./skills/coffee-chat/references/method.md",
-      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
+    },
+    {
+      "path": "./skills/create-coffee-chat/references/engine-release.schema.json",
+      "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4"
+    },
+    {
+      "path": "./skills/create-coffee-chat/references/engine-template-surface.schema.json",
+      "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014"
+    },
+    {
+      "path": "./skills/create-coffee-chat/references/method.md",
+      "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
+    },
+    {
+      "path": "./skills/create-coffee-chat/references/release.json",
+      "digest": "sha256:6171dbb9adc06bc901a29132951f5ed899e66ff76c7b0ca4889a229570dbb8d0"
     }
   ]
 }

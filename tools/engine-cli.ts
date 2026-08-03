@@ -13,11 +13,17 @@ import {
   templateSurfaceBytes,
 } from "./engine-release.ts";
 import {
+  GENERATED_OWNERSHIP_MARKER,
   artifactPolicyForPath,
   engineExcludedSourcePaths,
   engineManagedSourcePaths,
   engineDeliverySourcePaths,
 } from "./artifact-inventory.ts";
+import {
+  REPOSITORY_GENERATED_OWNERSHIP_MARKER,
+  buildGeneratedOwnershipMarker,
+  generatedOwnershipMarkerBytes,
+} from "./generated-ownership.ts";
 import { generatedProjectionBytes } from "./projections.ts";
 import { validateKnowledge } from "./knowledge.ts";
 import { createSnapshot } from "./snapshot.ts";
@@ -107,6 +113,111 @@ function mergeProjection(
   };
 }
 
+/** Rebind ownership markers after adding delivery-only release references. */
+function refreshOwnershipMarkers(
+  projection: RepositoryProjection,
+  packageRoot: string,
+): RepositoryProjection {
+  const values = new Map(
+    projection.outputs.map((output) => [output.path, output.bytes]),
+  );
+  const packageMarkerPath = `${packageRoot}/${GENERATED_OWNERSHIP_MARKER}`;
+  const packageFiles = new Map(
+    [...values.entries()]
+      .filter(
+        ([path]) =>
+          path.startsWith(`${packageRoot}/`) && path !== packageMarkerPath,
+      )
+      .map(
+        ([path, bytes]) =>
+          [path.slice(`${packageRoot}/`.length), bytes] as const,
+      ),
+  );
+  const packageMarker = buildGeneratedOwnershipMarker({
+    scope: "plugin-package",
+    files: packageFiles,
+  });
+  values.set(packageMarkerPath, generatedOwnershipMarkerBytes(packageMarker));
+  const repositoryFiles = new Map(
+    [...values.entries()].filter(
+      ([path]) =>
+        path !== REPOSITORY_GENERATED_OWNERSHIP_MARKER &&
+        path !== "engine/release.json" &&
+        path !== "engine/template-surface.json" &&
+        !path.startsWith(".github/workflows/"),
+    ),
+  );
+  const repositoryMarker = buildGeneratedOwnershipMarker({
+    scope: "repository",
+    files: repositoryFiles,
+  });
+  values.set(
+    REPOSITORY_GENERATED_OWNERSHIP_MARKER,
+    generatedOwnershipMarkerBytes(repositoryMarker),
+  );
+  return {
+    outputs: [...values.entries()]
+      .map(([path, bytes]) => ({ path, bytes, mode: "100644" as const }))
+      .sort((left, right) =>
+        left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+      ),
+    deletions: projection.deletions,
+  };
+}
+
+const CREATION_REFERENCE_SOURCES = [
+  ["skills/create-coffee-chat/references/release.json", "engine/release.json"],
+  [
+    "skills/create-coffee-chat/references/engine-release.schema.json",
+    "schemas/engine-release.schema.json",
+  ],
+  [
+    "skills/create-coffee-chat/references/template-surface.json",
+    "engine/template-surface.json",
+  ],
+  [
+    "skills/create-coffee-chat/references/engine-template-surface.schema.json",
+    "schemas/engine-template-surface.schema.json",
+  ],
+] as const;
+
+async function creationReferenceProjection(
+  snapshot: Awaited<ReturnType<typeof createSnapshot>>,
+  packageRoot: string,
+  releaseBytes: Buffer,
+  finalSurfaceBytes?: Buffer,
+): Promise<RepositoryProjection> {
+  // Older disposable engine fixtures predate the provisioning Skill and are
+  // still valid inputs for Candidate contract tests. A maintained engine
+  // checkout always contains the Skill, so only that checkout receives these
+  // engine-only references.
+  if (!(await snapshot.exists("skills/create-coffee-chat/SKILL.md")))
+    return { outputs: [], deletions: [] };
+  const outputs: RepositoryProjection["outputs"] = [];
+  for (const [path, source] of CREATION_REFERENCE_SOURCES) {
+    if (!(await snapshot.exists(source)))
+      throw new ValidationFailure({
+        code: "creation-reference-missing",
+        path: repositoryPath(source),
+        message:
+          "The engine creation Skill requires every generated release and template-surface reference.",
+      });
+    const bytes =
+      source === "engine/release.json"
+        ? releaseBytes
+        : source === "engine/template-surface.json" && finalSurfaceBytes
+          ? finalSurfaceBytes
+          : await snapshot.read(source);
+    outputs.push({ path, bytes, mode: "100644" });
+    outputs.push({
+      path: `${packageRoot}/${path}`,
+      bytes,
+      mode: "100644",
+    });
+  }
+  return { outputs, deletions: [] };
+}
+
 async function expectedProjection(
   root: string,
   snapshot: Awaited<ReturnType<typeof createSnapshot>>,
@@ -167,6 +278,15 @@ async function expectedProjection(
     releaseProjection,
     surfacePlaceholder,
   );
+  const creationReferences = await creationReferenceProjection(
+    snapshot,
+    "plugins/coffee-chat",
+    engineReleaseBytes(release),
+  );
+  const withReferences = refreshOwnershipMarkers(
+    mergeProjection(first, creationReferences),
+    "plugins/coffee-chat",
+  );
   const policies = [
     ...new Set([
       ...engineManagedSourcePaths(),
@@ -180,7 +300,7 @@ async function expectedProjection(
     snapshot,
     release,
     policies,
-    first,
+    withReferences,
   );
   const surfaceProjection: RepositoryProjection = {
     outputs: [
@@ -192,7 +312,16 @@ async function expectedProjection(
     ],
     deletions: [],
   };
-  return mergeProjection(first, surfaceProjection);
+  const finalCreationReferences = await creationReferenceProjection(
+    snapshot,
+    "plugins/coffee-chat",
+    engineReleaseBytes(release),
+    templateSurfaceBytes(surface),
+  );
+  return refreshOwnershipMarkers(
+    mergeProjection(withReferences, surfaceProjection, finalCreationReferences),
+    "plugins/coffee-chat",
+  );
 }
 
 async function writeProjection(

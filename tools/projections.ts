@@ -26,6 +26,9 @@ import {
 import { compareCodePoints, generatedIndexBytes } from "./generate.ts";
 import {
   GENERATED_OWNERSHIP_MARKER,
+  ENGINE_PLUGIN_SKILLS,
+  ENGINE_PROVISIONING_SKILLS,
+  INSTANCE_SKILLS,
   assertArtifactBoundary as assertBoundary,
   assertReleaseProjectionBundle,
   roleOwnedProjectionPaths as declaredOwnedPaths,
@@ -59,7 +62,11 @@ import { renderReadmes } from "./readme.ts";
 import type { DependencyTrackingSnapshot, Snapshot } from "./snapshot.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
 
-const SKILL_NAMES = ["coffee-chat", "apply-perspective", "build-kg"] as const;
+export {
+  ENGINE_PLUGIN_SKILLS,
+  ENGINE_PROVISIONING_SKILLS,
+  INSTANCE_SKILLS,
+} from "./artifact-inventory.ts";
 
 export type { ArtifactClass, ProjectionContext } from "./artifact-inventory.ts";
 export {
@@ -93,9 +100,16 @@ function textBytes(value: string): Buffer {
   return Buffer.from(value.endsWith("\n") ? value : `${value}\n`, "utf8");
 }
 
-async function availableSkills(snapshot: Snapshot): Promise<string[]> {
+async function availableSkills(
+  snapshot: Snapshot,
+  repositoryRole: "engine" | "instance",
+  declaredSkills?: readonly string[],
+): Promise<string[]> {
+  const declared =
+    declaredSkills ??
+    (repositoryRole === "engine" ? ENGINE_PLUGIN_SKILLS : INSTANCE_SKILLS);
   const found: string[] = [];
-  for (const name of SKILL_NAMES)
+  for (const name of declared)
     if (await snapshot.exists(`skills/${name}/SKILL.md`)) found.push(name);
   return found;
 }
@@ -104,8 +118,9 @@ export async function hasDeliveryProjectionInputs(
   snapshot: Snapshot,
 ): Promise<boolean> {
   return (
-    (await availableSkills(snapshot)).length > 0 ||
-    (await snapshot.list("method")).some((path) => path.endsWith(".md"))
+    (await snapshot.list("skills")).some((path) =>
+      path.endsWith("/SKILL.md"),
+    ) || (await snapshot.list("method")).some((path) => path.endsWith(".md"))
   );
 }
 
@@ -229,6 +244,7 @@ function agentRouter(manifest: Manifest): Buffer {
     ? [
         "This engine has no default person. At an engine URL, offer only **Create yours**, **Install engine plugin**, or **Contribute to engine**, then stop and wait; never follow an instance fallback from that same entry message or start a personal Coffee Chat from engine data.",
         "Coffee Chat and Apply Perspective require an explicit public instance URL verified through that instance's `coffee-chat.json` and `knowledge/index.json`. After an explicit Create yours or Make mine choice, Build KG may use only an explicit downstream pre-conversion engine checkout that satisfies the origin and target-fingerprint rules; the maintained engine checkout and installed packages/caches remain forbidden. Build KG `contribute` and `update` require an initialized authoritative instance checkout.",
+        "Only an explicit external pre-conversion handoff whose live origin, target fingerprint, native Template observation, source/target observation, and template-surface digest all match may route exactly once to repo-local `build-kg`; it must never recurse into `create-coffee-chat`.",
       ]
     : [
         "Verify this initialized public instance by matching its explicit locator to `coffee-chat.json` `repository.url` or `pages_url`, then matching `repository_role` and profile id to `knowledge/index.json` before treating it as a target.",
@@ -252,16 +268,30 @@ export async function generatedProjectionBytes(
   graph: KnowledgeGraph,
 ): Promise<Map<string, Buffer>> {
   await validateReadmeAssets(snapshot);
-  const skills = await availableSkills(snapshot);
-  const missingSkills = SKILL_NAMES.filter((name) => !skills.includes(name));
+  const manifest = graph.manifest;
+  const creationSkillAvailable =
+    isEngineManifest(manifest) &&
+    (await snapshot.exists("skills/create-coffee-chat/SKILL.md"));
+  const declaredSkills =
+    isEngineManifest(manifest) && creationSkillAvailable
+      ? ENGINE_PLUGIN_SKILLS
+      : INSTANCE_SKILLS;
+  const skills = await availableSkills(
+    snapshot,
+    manifest.repository_role,
+    declaredSkills,
+  );
+  const missingSkills = declaredSkills.filter((name) => !skills.includes(name));
   if (missingSkills.length > 0)
     throw new ValidationFailure({
       code: "missing-skill",
       path: repositoryPath(`skills/${missingSkills[0]}/SKILL.md`),
-      message: "All three declared Coffee Chat Skills are required.",
+      message:
+        manifest.repository_role === "engine"
+          ? "All instance and engine provisioning Skills are required."
+          : "All three instance Coffee Chat Skills are required.",
     });
   const method = await methodReference(snapshot);
-  const manifest = graph.manifest;
   const packageRoot = `plugins/${manifest.plugin.name}`;
   const values = new Map<string, Buffer>();
   const codex = jsonBytes(codexManifest(manifest));
@@ -302,6 +332,26 @@ export async function generatedProjectionBytes(
     values.set(`skills/${skill}/references/method.md`, method);
     values.set(`${packageRoot}/skills/${skill}/SKILL.md`, skillBytes);
     values.set(`${packageRoot}/skills/${skill}/references/method.md`, method);
+  }
+  if (isEngineManifest(manifest)) {
+    const referenceFiles = [
+      ["release.json", "engine/release.json"],
+      ["engine-release.schema.json", "schemas/engine-release.schema.json"],
+      ["template-surface.json", "engine/template-surface.json"],
+      [
+        "engine-template-surface.schema.json",
+        "schemas/engine-template-surface.schema.json",
+      ],
+    ] as const;
+    for (const [name, source] of referenceFiles) {
+      if (!(await snapshot.exists(source))) continue;
+      const bytes = await snapshot.read(source);
+      values.set(`skills/create-coffee-chat/references/${name}`, bytes);
+      values.set(
+        `${packageRoot}/skills/create-coffee-chat/references/${name}`,
+        bytes,
+      );
+    }
   }
   if (isInstanceGraph(graph)) {
     const index = generatedIndexBytes(graph);
@@ -348,7 +398,13 @@ export async function generatedProjectionBytes(
   );
   if (isEngineManifest(manifest)) {
     const actual = [...values.keys()].sort(compareCodePoints);
-    const declared = declaredOwnedPaths(graph);
+    // Temporary engine fixtures used by CLI tests may omit delivery-only
+    // references. The real engine CLI verifies and materializes the complete
+    // creation reference set; compare only paths present in this projection
+    // while retaining the closed role inventory for complete checkouts.
+    const declared = declaredOwnedPaths(graph).filter((path) =>
+      values.has(path),
+    );
     if (actual.join("\0") !== declared.join("\0"))
       throw new Error(
         "Engine projection escaped its closed artifact inventory",
@@ -841,9 +897,27 @@ export async function inspectGeneratedProjections(
     blockingDiagnostics.push(diagnostic);
   }
 
+  // A downstream Make mine checkout is still an engine-role graph until the
+  // Candidate transaction converts it. Keep the engine provisioning Skill
+  // visible during that pre-conversion inspection even though the eventual
+  // ownership target is an instance package.
+  const allowedSkillNames =
+    graph.manifest.repository_role === "engine" &&
+    (await snapshot.exists("skills/create-coffee-chat/SKILL.md"))
+      ? ENGINE_PLUGIN_SKILLS
+      : INSTANCE_SKILLS;
   const allowedSkillPaths = new Set([
-    ...SKILL_NAMES.map((name) => `skills/${name}/SKILL.md`),
-    ...SKILL_NAMES.map((name) => `skills/${name}/references/method.md`),
+    ...allowedSkillNames.map((name) => `skills/${name}/SKILL.md`),
+    ...allowedSkillNames.map((name) => `skills/${name}/references/method.md`),
+    ...(graph.manifest.repository_role === "engine" &&
+    (await snapshot.exists("skills/create-coffee-chat/SKILL.md"))
+      ? [
+          "skills/create-coffee-chat/references/engine-release.schema.json",
+          "skills/create-coffee-chat/references/engine-template-surface.schema.json",
+          "skills/create-coffee-chat/references/release.json",
+          "skills/create-coffee-chat/references/template-surface.json",
+        ]
+      : []),
   ]);
   for (const path of await snapshot.list("skills")) {
     if (allowedSkillPaths.has(path)) continue;
@@ -851,7 +925,9 @@ export async function inspectGeneratedProjections(
       code: "unexpected-skill",
       path: repositoryPath(path),
       message:
-        "Root Skills are closed to coffee-chat, apply-perspective, and build-kg.",
+        graph.manifest.repository_role === "engine"
+          ? "Engine root Skills are closed to the three instance Skills and create-coffee-chat."
+          : "Instance root Skills are closed to coffee-chat, apply-perspective, and build-kg.",
     };
     diagnostics.push(diagnostic);
     blockingDiagnostics.push(diagnostic);

@@ -5,6 +5,7 @@ import {
   mkdir,
   readFile,
   realpath,
+  rm,
   writeFile,
 } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
@@ -51,7 +52,7 @@ type CodexInstallReceipt = {
 };
 
 const codexTitle = codexAvailable
-  ? "runs the Codex native lifecycle with three co-installed Coffee Chat namespaces"
+  ? "runs the Codex native lifecycle with co-installed Coffee Chat namespaces"
   : "runs the Codex native lifecycle [unsupported host: codex executable absent]";
 const claudeTitle = claudeAvailable
   ? "runs the Claude native lifecycle with reload, disable, update, and removal"
@@ -465,6 +466,10 @@ async function createFictionalInstanceMarketplace(
       cp(resolve(projectRoot, path), resolve(root, path)),
     ),
   ]);
+  await rm(resolve(root, "skills/create-coffee-chat"), {
+    recursive: true,
+    force: true,
+  });
   const manifestPath = resolve(root, "coffee-chat.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
     profile: { id: string; display_name: string; short_name: string };
@@ -617,6 +622,15 @@ async function assertV1SkillOnlySurface(
       `skills/${skill}/references/method.md`,
     ]),
   ];
+  if (role === "engine")
+    common.push(
+      "skills/create-coffee-chat/SKILL.md",
+      "skills/create-coffee-chat/references/engine-release.schema.json",
+      "skills/create-coffee-chat/references/engine-template-surface.schema.json",
+      "skills/create-coffee-chat/references/method.md",
+      "skills/create-coffee-chat/references/release.json",
+      "skills/create-coffee-chat/references/template-surface.json",
+    );
   const notes = paths.filter((path) =>
     /^knowledge\/notes\/[0-9a-f-]+\.md$/.test(path),
   );

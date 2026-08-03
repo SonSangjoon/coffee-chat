@@ -16,6 +16,7 @@ import {
   evaluateSideEffects,
   removeSkillSandbox,
   requiredSkillScenarios,
+  creationSkillScenarios,
   snapshotFilesystem,
   type CandidateApplyEvidence,
 } from "./helpers/skill-harness.ts";
@@ -309,5 +310,65 @@ describe("Task 4 Skill evaluation harness", () => {
         validCandidateApplyEvidence(),
       ),
     ).toEqual([]);
+  });
+});
+
+describe("Task 5 creation Skill evaluation harness", () => {
+  it("defines static pressure fixtures for the native Template flow", () => {
+    expect(
+      creationSkillScenarios.map(({ id, mode }) => ({ id, mode })),
+    ).toEqual([
+      { id: "create-template-native-api", mode: "create-coffee-chat" },
+      {
+        id: "create-template-publication-boundary",
+        mode: "create-coffee-chat",
+      },
+    ]);
+    const assertions = new Set(
+      creationSkillScenarios.flatMap((scenario) => scenario.assertions),
+    );
+    expect([...assertions].sort()).toEqual(
+      [
+        "ambiguous-timeout-reconcile",
+        "approved-empty-nonsymlink-path",
+        "build-kg-handoff-before-knowledge",
+        "candidate-does-not-publish",
+        "complete-preview-before-post",
+        "credential-free",
+        "default-branch-reconciliation",
+        "native-template-api-only",
+        "partial-external-result",
+        "preconversion-route-no-recursion",
+        "protected-branch-merge-boundary",
+        "publication-preview-separate",
+        "public-content-excluded",
+        "release-observations-required",
+        "template-mode-required",
+        "template-provenance-verified",
+      ].sort(),
+    );
+    for (const scenario of creationSkillScenarios) {
+      expect(Object.keys(scenario).sort()).toEqual([
+        "assertions",
+        "id",
+        "input",
+        "mode",
+      ]);
+      expect(scenario.input.trim()).not.toBe("");
+      expect(scenario).not.toHaveProperty("expectedResponse");
+    }
+  });
+
+  it("treats creation filesystem writes as violations", async () => {
+    const sandbox = await newSandbox();
+    const before = await snapshotFilesystem(sandbox.root);
+    await writeFile(sandbox.derivedPerspective, "creation wrote\n", "utf8");
+    const changes = diffFilesystem(
+      before,
+      await snapshotFilesystem(sandbox.root),
+    );
+    expect(evaluateSideEffects("create-coffee-chat", changes, sandbox)).toEqual(
+      ["cache/derived-perspective.md"],
+    );
   });
 });
