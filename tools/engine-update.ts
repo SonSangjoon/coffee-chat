@@ -78,7 +78,24 @@ function equalIdentity(
   );
 }
 function inside(root: string, path: string): string {
-  return resolve(root, path.replace(/^\.\//, ""));
+  const relativePath = path.replace(/^\.\//, "");
+  if (
+    path.startsWith("/") ||
+    relativePath.length === 0 ||
+    relativePath
+      .split("/")
+      .some(
+        (segment) =>
+          segment.length === 0 || segment === "." || segment === "..",
+      ) ||
+    relativePath.includes("\\")
+  )
+    throw new Error("unsafe path");
+  const absolute = resolve(root, relativePath);
+  const rootAbsolute = resolve(root);
+  if (absolute !== rootAbsolute && !absolute.startsWith(`${rootAbsolute}/`))
+    throw new Error("path escape");
+  return absolute;
 }
 async function readFile(
   dependencies: EngineUpdateDependencies,
@@ -95,20 +112,69 @@ function strictJson(bytes: Buffer, path: string): unknown {
 }
 function validRelease(value: unknown): value is EngineReleaseManifest {
   const item = record(value);
+  const semver =
+    /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+  const repository = /^https:\/\/github\.com\/[A-Za-z0-9.-]+\/[A-Za-z0-9._-]+$/;
+  const filePath =
+    /^\.\/(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*\\)(?:[A-Za-z0-9._\-[\]]+\/)*[A-Za-z0-9._\-[\]]+$/;
+  const files = (candidate: unknown, expectedClass: string) => {
+    if (!Array.isArray(candidate)) return false;
+    const paths: string[] = [];
+    for (const raw of candidate) {
+      const file = record(raw);
+      if (
+        !file ||
+        Object.keys(file).sort().join("\0") !== "class\0digest\0mode\0path" ||
+        typeof file.path !== "string" ||
+        !filePath.test(file.path) ||
+        typeof file.digest !== "string" ||
+        !DIGEST.test(file.digest) ||
+        file.class !== expectedClass ||
+        (file.mode !== "100644" && file.mode !== "100755")
+      )
+        return false;
+      paths.push(file.path);
+    }
+    return (
+      paths.every((path, index) => index === 0 || paths[index - 1]! < path) &&
+      new Set(paths).size === paths.length
+    );
+  };
+  const managedPaths = new Set(
+    Array.isArray(item?.managed_files)
+      ? (item.managed_files as Array<{ path: string }>).map((file) => file.path)
+      : [],
+  );
+  const deliveryPaths = new Set(
+    Array.isArray(item?.delivery_files)
+      ? (item.delivery_files as Array<{ path: string }>).map(
+          (file) => file.path,
+        )
+      : [],
+  );
+  const inventoryOverlap = [...managedPaths].some((path) =>
+    deliveryPaths.has(path),
+  );
   return Boolean(
     item &&
+      Object.keys(item).sort().join("\0") ===
+        "delivery_files\0managed_files\0migration_registry\0release_digest\0repository\0schema_version\0source_ref\0target_manifest_schema_version\0version" &&
       item.schema_version === "1.0.0" &&
       typeof item.repository === "string" &&
+      repository.test(item.repository) &&
       typeof item.version === "string" &&
+      semver.test(item.version) &&
       typeof item.source_ref === "string" &&
       item.source_ref === `refs/tags/v${item.version}` &&
       typeof item.target_manifest_schema_version === "string" &&
+      semver.test(item.target_manifest_schema_version) &&
       record(item.migration_registry)?.path ===
         "./engine/migrations/registry.json" &&
       typeof record(item.migration_registry)?.digest === "string" &&
       DIGEST.test(record(item.migration_registry)?.digest as string) &&
-      Array.isArray(item.managed_files) &&
-      Array.isArray(item.delivery_files) &&
+      files(item.managed_files, "engine-source") &&
+      files(item.delivery_files, "engine-delivery") &&
+      !inventoryOverlap &&
       typeof item.release_digest === "string" &&
       DIGEST.test(item.release_digest),
   );
@@ -249,6 +315,11 @@ export async function inspectEngineUpdate(
   if (!path)
     return { status: "unknown", reason_code: "migration-path-unknown" };
   const documents: MigrationDocument[] = [];
+  let migrationManifest = await readFile(
+    dependencies,
+    input.target_root,
+    "coffee-chat.json",
+  );
   for (const edge of path) {
     try {
       const bytes = await readFile(
@@ -267,10 +338,10 @@ export async function inspectEngineUpdate(
           status: "incompatible",
           reason_code: "migration-document-invalid",
         };
-      evaluateMigrationDocument(
-        await readFile(dependencies, input.target_root, "coffee-chat.json"),
-        edge,
-        document,
+      evaluateMigrationDocument(migrationManifest, edge, document).forEach(
+        (operation) => {
+          migrationManifest = operation.after;
+        },
       );
       documents.push(document);
     } catch {
