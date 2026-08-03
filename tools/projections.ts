@@ -36,6 +36,18 @@ import {
   type ProjectionContext,
 } from "./artifact-inventory.ts";
 import {
+  REPOSITORY_GENERATED_OWNERSHIP_MARKER,
+  assertOwnedFilePreimage,
+  buildGeneratedOwnershipMarker,
+  generatedOwnershipMarkerBytes,
+  markerOwnedFilesAsRepositoryPaths,
+  markerPathForScope,
+  ownershipDigest,
+  parseGeneratedOwnershipMarker,
+  type GeneratedOwnershipMarker,
+  type LegacyGeneratedOwnershipMarker,
+} from "./generated-ownership.ts";
+import {
   isEngineManifest,
   isInstanceGraph,
   isInstanceManifest,
@@ -301,17 +313,32 @@ export async function generatedProjectionBytes(
     for (const note of graph.notes)
       values.set(`${packageRoot}/${note.path}`, note.bytes);
   }
+  const packageFiles = new Map(
+    [...values.entries()]
+      .filter(([path]) => path.startsWith(`${packageRoot}/`))
+      .map(
+        ([path, bytes]) =>
+          [path.slice(`${packageRoot}/`.length), bytes] as const,
+      ),
+  );
+  const packageMarker = buildGeneratedOwnershipMarker({
+    scope: "plugin-package",
+    files: packageFiles,
+    ...(isInstanceManifest(manifest) && manifest.provenance
+      ? { adopted_engine: manifest.provenance.engine }
+      : {}),
+  });
   values.set(
     `${packageRoot}/${GENERATED_OWNERSHIP_MARKER}`,
-    jsonBytes({
-      generated_by: "coffee-chat",
-      schema_version: "1.0.0",
-      repository_role: manifest.repository_role,
-      package_name: manifest.plugin.name,
-      owned_paths: [...values.keys()]
-        .filter((path) => path.startsWith(`${packageRoot}/`))
-        .sort(compareCodePoints),
-    }),
+    generatedOwnershipMarkerBytes(packageMarker),
+  );
+  const repositoryMarker = buildGeneratedOwnershipMarker({
+    scope: "repository",
+    files: values,
+  });
+  values.set(
+    REPOSITORY_GENERATED_OWNERSHIP_MARKER,
+    generatedOwnershipMarkerBytes(repositoryMarker),
   );
   if (isEngineManifest(manifest)) {
     const actual = [...values.keys()].sort(compareCodePoints);
@@ -431,6 +458,122 @@ export type GeneratedProjectionInspection = {
   blockingDiagnostics: Diagnostic[];
 };
 
+type GeneratedOwnershipState = {
+  digests: Map<string, string>;
+  legacyPaths: Set<string>;
+};
+
+function ownershipDiagnostic(
+  code: string,
+  path: string,
+  message: string,
+): Diagnostic {
+  return { code, path: repositoryPath(path), message };
+}
+
+async function collectGeneratedOwnership(
+  snapshot: Snapshot,
+): Promise<{ state: GeneratedOwnershipState; diagnostics: Diagnostic[] }> {
+  const state: GeneratedOwnershipState = {
+    digests: new Map(),
+    legacyPaths: new Set(),
+  };
+  const diagnostics: Diagnostic[] = [];
+  const rootMarkerPath = REPOSITORY_GENERATED_OWNERSHIP_MARKER;
+  if (await snapshot.exists(rootMarkerPath)) {
+    try {
+      const marker = parseGeneratedOwnershipMarker(
+        await snapshot.read(rootMarkerPath),
+        rootMarkerPath,
+      );
+      for (const entry of marker.owned_files)
+        state.digests.set(entry.path.slice(2), entry.digest);
+    } catch (error) {
+      diagnostics.push(
+        ownershipDiagnostic(
+          "generated-ownership-invalid",
+          rootMarkerPath,
+          error instanceof Error
+            ? error.message
+            : "Repository ownership marker is invalid.",
+        ),
+      );
+    }
+  }
+  const packages = new Set(
+    (await snapshot.list("plugins"))
+      .map((path) => path.split("/")[1])
+      .filter((value): value is string => Boolean(value)),
+  );
+  for (const packageName of packages) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(packageName)) continue;
+    const markerPath = `plugins/${packageName}/${GENERATED_OWNERSHIP_MARKER}`;
+    if (!(await snapshot.exists(markerPath))) continue;
+    try {
+      const marker = parseGeneratedOwnershipMarker(
+        await snapshot.read(markerPath),
+        markerPath,
+      );
+      const prefix = `plugins/${packageName}`;
+      for (const entry of marker.owned_files)
+        state.digests.set(`${prefix}/${entry.path.slice(2)}`, entry.digest);
+    } catch {
+      try {
+        const legacy = record(
+          parseStrictJson(
+            decodeCanonicalText(await snapshot.read(markerPath), markerPath),
+            markerPath,
+          ),
+        ) as LegacyGeneratedOwnershipMarker | undefined;
+        if (
+          legacy?.generated_by === "coffee-chat" &&
+          legacy.schema_version === "1.0.0" &&
+          Array.isArray(legacy.owned_paths)
+        )
+          for (const path of legacy.owned_paths) state.legacyPaths.add(path);
+        else
+          diagnostics.push(
+            ownershipDiagnostic(
+              "generated-ownership-invalid",
+              markerPath,
+              "Package ownership marker is invalid.",
+            ),
+          );
+      } catch {
+        diagnostics.push(
+          ownershipDiagnostic(
+            "generated-ownership-invalid",
+            markerPath,
+            "Package ownership marker is invalid.",
+          ),
+        );
+      }
+    }
+  }
+  return { state, diagnostics };
+}
+
+async function snapshotMatchesPreimage(
+  snapshot: Snapshot,
+  path: string,
+  expectedDigest: string,
+): Promise<{ exists: boolean; matches: boolean; safe: boolean }> {
+  if (!(await snapshot.exists(path)))
+    return { exists: false, matches: true, safe: true };
+  try {
+    await snapshot.assertSafe(path);
+    if (snapshot.mode === "worktree") {
+      const status = await lstat(resolve(snapshot.root, ...path.split("/")));
+      if (status.isSymbolicLink() || !status.isFile())
+        return { exists: true, matches: false, safe: false };
+    }
+    const actual = ownershipDigest(await snapshot.read(path));
+    return { exists: true, matches: actual === expectedDigest, safe: true };
+  } catch {
+    return { exists: true, matches: false, safe: false };
+  }
+}
+
 const ROOT_ADAPTER_PREFIXES = [
   ".codex-plugin",
   ".claude-plugin",
@@ -457,12 +600,7 @@ async function ownedCoffeeChatPackagePaths(
   const markerPath = `plugins/${packageName}/${GENERATED_OWNERSHIP_MARKER}`;
   if (!(await snapshot.exists(markerPath))) return undefined;
   try {
-    const marker = record(
-      parseStrictJson(
-        decodeCanonicalText(await snapshot.read(markerPath), markerPath),
-        markerPath,
-      ),
-    );
+    const markerBytes = await snapshot.read(markerPath);
     const pluginPath = `plugins/${packageName}/.codex-plugin/plugin.json`;
     if (!(await snapshot.exists(pluginPath))) return undefined;
     const plugin = record(
@@ -472,32 +610,54 @@ async function ownedCoffeeChatPackagePaths(
       ),
     );
     const prefix = `plugins/${packageName}/`;
-    const ownedPaths = marker?.owned_paths;
-    const validPath = (path: unknown): path is string =>
-      typeof path === "string" &&
-      path.startsWith(prefix) &&
-      path.length > prefix.length &&
-      !path.includes("\\") &&
-      !path.split("/").includes("..") &&
-      posix.normalize(path) === path;
     if (
-      marker?.generated_by === "coffee-chat" &&
-      marker?.schema_version === "1.0.0" &&
-      (marker?.repository_role === "engine" ||
-        marker?.repository_role === "instance") &&
-      (marker?.package_name === undefined ||
-        marker?.package_name === packageName) &&
-      plugin?.name === packageName &&
-      Array.isArray(plugin?.keywords) &&
-      plugin.keywords.includes("coffee-chat") &&
-      Array.isArray(ownedPaths) &&
-      ownedPaths.every(validPath) &&
-      new Set(ownedPaths).size === ownedPaths.length
+      plugin?.name !== packageName ||
+      !Array.isArray(plugin?.keywords) ||
+      !plugin.keywords.includes("coffee-chat")
     )
+      return undefined;
+    try {
+      const parsed = parseGeneratedOwnershipMarker(markerBytes, markerPath);
       return {
-        repositoryRole: marker.repository_role as "engine" | "instance",
-        paths: new Set([...ownedPaths, markerPath]),
+        repositoryRole: parsed.adopted_engine ? "instance" : "engine",
+        paths: new Set([
+          ...markerOwnedFilesAsRepositoryPaths(parsed, prefix.slice(0, -1)),
+          markerPath,
+        ]),
       };
+    } catch {
+      // The v1.0 package marker is retained as a narrowly-scoped bootstrap
+      // input. It is never trusted for deletion after a byte has changed.
+      const legacy = record(
+        parseStrictJson(
+          decodeCanonicalText(markerBytes, markerPath),
+          markerPath,
+        ),
+      ) as LegacyGeneratedOwnershipMarker | undefined;
+      const ownedPaths = legacy?.owned_paths;
+      const validPath = (path: unknown): path is string =>
+        typeof path === "string" &&
+        path.startsWith(prefix) &&
+        path.length > prefix.length &&
+        !path.includes("\\") &&
+        !path.split("/").includes("..") &&
+        posix.normalize(path) === path;
+      if (
+        legacy?.generated_by === "coffee-chat" &&
+        legacy?.schema_version === "1.0.0" &&
+        (legacy?.repository_role === "engine" ||
+          legacy?.repository_role === "instance") &&
+        (legacy?.package_name === undefined ||
+          legacy?.package_name === packageName) &&
+        Array.isArray(ownedPaths) &&
+        ownedPaths.every(validPath) &&
+        new Set(ownedPaths).size === ownedPaths.length
+      )
+        return {
+          repositoryRole: legacy.repository_role as "engine" | "instance",
+          paths: new Set([...ownedPaths, markerPath]),
+        };
+    }
     return undefined;
   } catch {
     return undefined;
@@ -561,12 +721,32 @@ export async function inspectGeneratedProjections(
   const diagnostics: Diagnostic[] = [];
   const blockingDiagnostics: Diagnostic[] = [];
   const ownedStalePaths = new Set<string>();
+  const ownership = await collectGeneratedOwnership(snapshot);
+  diagnostics.push(...ownership.diagnostics);
+  blockingDiagnostics.push(...ownership.diagnostics);
   const ownedPackages = await ownedPackagePaths(snapshot);
 
   for (const [path, bytes] of expected) {
     let matches = false;
     if (await snapshot.exists(path))
       matches = (await snapshot.read(path)).equals(bytes);
+    const previousDigest = ownership.state.digests.get(path);
+    if (previousDigest && (await snapshot.exists(path))) {
+      const preimage = await snapshotMatchesPreimage(
+        snapshot,
+        path,
+        previousDigest,
+      );
+      if (!preimage.matches || !preimage.safe) {
+        const diagnostic = ownershipDiagnostic(
+          "generated-owned-file-conflict",
+          path,
+          "A generated file changed after its ownership preimage was recorded.",
+        );
+        diagnostics.push(diagnostic);
+        blockingDiagnostics.push(diagnostic);
+      }
+    }
     if (!matches) {
       const diagnostic = {
         code: "stale-generated-projection",
@@ -575,6 +755,59 @@ export async function inspectGeneratedProjections(
       };
       diagnostics.push(diagnostic);
     }
+  }
+
+  for (const [path, previousDigest] of ownership.state.digests) {
+    if (expected.has(path) || !(await snapshot.exists(path))) continue;
+    const preimage = await snapshotMatchesPreimage(
+      snapshot,
+      path,
+      previousDigest,
+    );
+    if (!preimage.matches || !preimage.safe) {
+      const diagnostic = ownershipDiagnostic(
+        "generated-owned-file-conflict",
+        path,
+        "A stale generated file changed after its ownership preimage was recorded.",
+      );
+      diagnostics.push(diagnostic);
+      blockingDiagnostics.push(diagnostic);
+      continue;
+    }
+    ownedStalePaths.add(path);
+    diagnostics.push(
+      ownershipDiagnostic(
+        "unexpected-generated-projection",
+        path,
+        "Owned generated content is not part of the current deterministic projection.",
+      ),
+    );
+  }
+  for (const path of ownership.state.legacyPaths) {
+    if (expected.has(path)) {
+      const expectedBytes = expected.get(path)!;
+      const matches =
+        (await snapshot.exists(path)) &&
+        (await snapshot.read(path)).equals(expectedBytes);
+      if (!matches) {
+        const diagnostic = ownershipDiagnostic(
+          "generated-ownership-upgrade-required",
+          path,
+          "Legacy generated bytes do not match the immutable pre-change projection bundle.",
+        );
+        diagnostics.push(diagnostic);
+        blockingDiagnostics.push(diagnostic);
+      }
+      continue;
+    }
+    if (!(await snapshot.exists(path))) continue;
+    const diagnostic = ownershipDiagnostic(
+      "generated-ownership-upgrade-required",
+      path,
+      "Legacy ownership cannot authorize deletion without a digest-bound marker.",
+    );
+    diagnostics.push(diagnostic);
+    blockingDiagnostics.push(diagnostic);
   }
 
   const allowedSkillPaths = new Set([
@@ -618,6 +851,11 @@ export async function inspectGeneratedProjections(
     const packageRoot = `plugins/${packageName}`;
     for (const path of await snapshot.list(packageRoot)) {
       if (expected.has(path)) continue;
+      if (
+        ownership.state.legacyPaths.has(path) ||
+        ownership.state.digests.has(path)
+      )
+        continue;
       if (!ownedPaths.has(path)) continue;
       if (!(await stalePathIsSafe(snapshot, path))) {
         const diagnostic = {

@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.1.0",
+  "owner": "coffee-chat",
+  "scope": "repository",
+  "owned_files": [
+    {
+      "path": "./.agents/plugins/marketplace.json",
+      "digest": "sha256:e416a10d9708a4ed5915704ede2f7d32f6554ddeb996fffcb70d005de94404be"
+    },
+    {
+      "path": "./.claude-plugin/marketplace.json",
+      "digest": "sha256:cd1bc7e1b477195829965e7e8f6f8c3ad18e3432444f08bcd2fa05b00ce01766"
+    },
+    {
+      "path": "./.claude-plugin/plugin.json",
+      "digest": "sha256:46ae25dc13593d307767810f3991a951d1c1e3979634b9386f97059cc79355ea"
+    },
+    {
+      "path": "./.codex-plugin/plugin.json",
+      "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
+    },
+    {
+      "path": "./AGENTS.md",
+      "digest": "sha256:0913c98d563051bd753a8481787dde278d860a656c4e8ab735136a4463cdab49"
+    },
+    {
+      "path": "./CLAUDE.md",
+      "digest": "sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+    },
+    {
+      "path": "./README.ko.md",
+      "digest": "sha256:eae5fd51eea04a0878dbbae4cc117652f05915f44271ce6200c556468073c72b"
+    },
+    {
+      "path": "./README.md",
+      "digest": "sha256:1610959378b4bb31a7eb46381efc8242b956aaf7bcf688a8ccab07ebbd70cb36"
+    },
+    {
+      "path": "./plugins/coffee-chat/.claude-plugin/plugin.json",
+      "digest": "sha256:46ae25dc13593d307767810f3991a951d1c1e3979634b9386f97059cc79355ea"
+    },
+    {
+      "path": "./plugins/coffee-chat/.codex-plugin/plugin.json",
+      "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
+    },
+    {
+      "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
+      "digest": "sha256:98b9ab023908a5e773f5b40e9055a3248a519d6beddf2bd2e8891b348fa0a7e3"
+    },
+    {
+      "path": "./plugins/coffee-chat/LICENSE",
+      "digest": "sha256:4e877a766f8f5ea05b55cd7447e272c9307e892014c573704a4b9f2c7146a0c0"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/apply-perspective/SKILL.md",
+      "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/apply-perspective/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/build-kg/SKILL.md",
+      "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/build-kg/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/coffee-chat/SKILL.md",
+      "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d"
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/coffee-chat/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./skills/apply-perspective/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./skills/build-kg/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./skills/coffee-chat/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    }
+  ]
+}

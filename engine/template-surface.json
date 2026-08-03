@@ -4,7 +4,7 @@
   "release": {
     "version": "1.1.0",
     "source_ref": "refs/tags/v1.1.0",
-    "release_digest": "sha256:32aa819017ad450694b1b9337f118c59362eaff64ed6dda85c6fcc1c2deb657f"
+    "release_digest": "sha256:055595de01248d0c2d0c610fe81f96589c6753e9cb90ea51a16e05fb05c68775"
   },
   "files": [
     {
@@ -49,6 +49,17 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
+      }
+    },
+    {
+      "path": "./.coffee-chat/generated-files.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f1118fa507d6977351cb2fa49de37c4f6373ec87b415bc6be86401ae89d8066d"
       }
     },
     {
@@ -411,7 +422,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:a7f81760495d1bf8dcf3c7b7fe949664f86f789e66e774ebf7080126af3fda62"
+        "digest": "sha256:188f09b1fa0b3af0993ae32bbb14e4adf939a30392ad8344873b7db0cce56ed7"
       }
     },
     {
@@ -498,7 +509,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:16db6198102a1ba15a14556ef2c3c123d095b0a6d8f25c77d050a01154876ce6"
+        "digest": "sha256:98b9ab023908a5e773f5b40e9055a3248a519d6beddf2bd2e8891b348fa0a7e3"
       }
     },
     {
@@ -675,6 +686,17 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:de3e04fc7c8678e099a43b44b2fd91244655c94daeb94c509df737d4fd1e1430"
+      }
+    },
+    {
+      "path": "./schemas/generated-ownership.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:fb3cb54dafdb65a33f70acf11a66fd51c7033a6c6036ae6c4019efecd86b19a3"
       }
     },
     {
@@ -1184,6 +1206,17 @@
       }
     },
     {
+      "path": "./tests/generated-ownership.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:fadc8b2ab205b011b23f2cce587f363b125cdf538a5e2e060fc4deef127fb40a"
+      }
+    },
+    {
       "path": "./tests/gitleaks-contracts.test.ts",
       "mode": "100644",
       "engine_audience": "instance",
@@ -1444,7 +1477,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:8f3795fa40a43411a03ec09b14469c32a6dcabbcdec5f16440018a9187ddc3f2"
+        "digest": "sha256:2654f1e90033754a5149663962ce7f6b6fea0b8b3a55c563bfbf3a4a0c4efa96"
       }
     },
     {
@@ -1466,7 +1499,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:947d9f1e05fc6ea6dca94ca2a442e89457be8770d377b93abc8211a616877840"
+        "digest": "sha256:e6ad19b4e57c1955e5cf31ea49b28755daff7443bd7281839c40dcf85b81512c"
       }
     },
     {
@@ -1536,6 +1569,17 @@
       }
     },
     {
+      "path": "./tools/generated-ownership.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:3a6dd110e85daab612a58b39b9709fadefba4e0e355db03f098b8e9a09280b63"
+      }
+    },
+    {
       "path": "./tools/gitleaks.ts",
       "mode": "100644",
       "engine_audience": "instance",
@@ -1576,7 +1620,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:44fb3592f4155a6e289d8a940d8806aa538bd44d6eddfdfa4eeda9f070ac592d"
+        "digest": "sha256:7bd5a867d1bbb6026ac6d9a7f7f1bc4ebc203aafa53bc050a9e52fe12618506a"
       }
     },
     {
@@ -1679,5 +1723,5 @@
       }
     }
   ],
-  "surface_digest": "sha256:66a427b5e2e93104927fb6caf0bfcb94362b51fa4ffdab71de8563a83ed71e45"
+  "surface_digest": "sha256:bdcc42820ad46b02f6239cfb7b98bbdf5da207eab48169a702fa223e9ec0347c"
 }

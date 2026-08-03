@@ -1,17 +1,43 @@
 {
-  "generated_by": "coffee-chat",
-  "schema_version": "1.0.0",
-  "repository_role": "engine",
-  "package_name": "coffee-chat",
-  "owned_paths": [
-    "plugins/coffee-chat/.claude-plugin/plugin.json",
-    "plugins/coffee-chat/.codex-plugin/plugin.json",
-    "plugins/coffee-chat/LICENSE",
-    "plugins/coffee-chat/skills/apply-perspective/SKILL.md",
-    "plugins/coffee-chat/skills/apply-perspective/references/method.md",
-    "plugins/coffee-chat/skills/build-kg/SKILL.md",
-    "plugins/coffee-chat/skills/build-kg/references/method.md",
-    "plugins/coffee-chat/skills/coffee-chat/SKILL.md",
-    "plugins/coffee-chat/skills/coffee-chat/references/method.md"
+  "schema_version": "1.1.0",
+  "owner": "coffee-chat",
+  "scope": "plugin-package",
+  "owned_files": [
+    {
+      "path": "./.claude-plugin/plugin.json",
+      "digest": "sha256:46ae25dc13593d307767810f3991a951d1c1e3979634b9386f97059cc79355ea"
+    },
+    {
+      "path": "./.codex-plugin/plugin.json",
+      "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
+    },
+    {
+      "path": "./LICENSE",
+      "digest": "sha256:4e877a766f8f5ea05b55cd7447e272c9307e892014c573704a4b9f2c7146a0c0"
+    },
+    {
+      "path": "./skills/apply-perspective/SKILL.md",
+      "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5"
+    },
+    {
+      "path": "./skills/apply-perspective/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./skills/build-kg/SKILL.md",
+      "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71"
+    },
+    {
+      "path": "./skills/build-kg/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    },
+    {
+      "path": "./skills/coffee-chat/SKILL.md",
+      "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d"
+    },
+    {
+      "path": "./skills/coffee-chat/references/method.md",
+      "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+    }
   ]
 }

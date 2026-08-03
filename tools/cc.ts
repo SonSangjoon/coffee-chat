@@ -285,7 +285,8 @@ async function main(): Promise<void> {
 
     if (
       validation.graph.manifest.repository_role === "engine" &&
-      (options.command === "generate" || options.command === "check")
+      (options.command === "generate" || options.command === "check") &&
+      (await snapshot.exists("tools/engine-cli.ts"))
     ) {
       const deliveryArgs: string[] = [options.command];
       if (options.generationCheck) deliveryArgs.push("--check");

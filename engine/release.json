@@ -142,6 +142,12 @@
       "class": "engine-source"
     },
     {
+      "path": "./schemas/generated-ownership.schema.json",
+      "digest": "sha256:fb3cb54dafdb65a33f70acf11a66fd51c7033a6c6036ae6c4019efecd86b19a3",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
       "path": "./schemas/knowledge-index.schema.json",
       "digest": "sha256:a2e3407389b69809014adfb476422e0ffa126668d4e73af1ece9cd426526e77b",
       "mode": "100644",
@@ -340,6 +346,12 @@
       "class": "engine-source"
     },
     {
+      "path": "./tests/generated-ownership.test.ts",
+      "digest": "sha256:fadc8b2ab205b011b23f2cce587f363b125cdf538a5e2e060fc4deef127fb40a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
       "path": "./tests/gitleaks-contracts.test.ts",
       "digest": "sha256:83b18a94371e4cf60530140ad416f9f8d66191da76517b46637f62cb7886abca",
       "mode": "100644",
@@ -479,7 +491,7 @@
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:8f3795fa40a43411a03ec09b14469c32a6dcabbcdec5f16440018a9187ddc3f2",
+      "digest": "sha256:2654f1e90033754a5149663962ce7f6b6fea0b8b3a55c563bfbf3a4a0c4efa96",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -491,7 +503,7 @@
     },
     {
       "path": "./tools/cc.ts",
-      "digest": "sha256:947d9f1e05fc6ea6dca94ca2a442e89457be8770d377b93abc8211a616877840",
+      "digest": "sha256:e6ad19b4e57c1955e5cf31ea49b28755daff7443bd7281839c40dcf85b81512c",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -520,6 +532,12 @@
       "class": "engine-source"
     },
     {
+      "path": "./tools/generated-ownership.ts",
+      "digest": "sha256:3a6dd110e85daab612a58b39b9709fadefba4e0e355db03f098b8e9a09280b63",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
       "path": "./tools/gitleaks.ts",
       "digest": "sha256:ccc9cef0fa5f75cbec5867802c39ded7c60170136a4d52f76da107f3c971e606",
       "mode": "100644",
@@ -539,7 +557,7 @@
     },
     {
       "path": "./tools/projections.ts",
-      "digest": "sha256:44fb3592f4155a6e289d8a940d8806aa538bd44d6eddfdfa4eeda9f070ac592d",
+      "digest": "sha256:7bd5a867d1bbb6026ac6d9a7f7f1bc4ebc203aafa53bc050a9e52fe12618506a",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -714,5 +732,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:32aa819017ad450694b1b9337f118c59362eaff64ed6dda85c6fcc1c2deb657f"
+  "release_digest": "sha256:055595de01248d0c2d0c610fe81f96589c6753e9cb90ea51a16e05fb05c68775"
 }
