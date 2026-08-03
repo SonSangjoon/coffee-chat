@@ -444,6 +444,10 @@ export async function verifyTemplateSurface(
   surface: EngineTemplateSurfaceManifest,
 ): Promise<Diagnostic[]> {
   const diagnostics: Diagnostic[] = [];
+  const repositoryEntries = await snapshot.listRepositoryEntries();
+  const entryByPath = new Map(
+    repositoryEntries.map((entry) => [`./${entry.path}`, entry]),
+  );
   const paths = surface.files.map((file) => file.path);
   if (new Set(paths).size !== paths.length)
     diagnostics.push(
@@ -471,9 +475,63 @@ export async function verifyTemplateSurface(
         "Template surface digest does not match its canonical payload.",
       ),
     );
+  for (const entry of repositoryEntries) {
+    const path = `./${entry.path}` as `./${string}`;
+    if (!paths.includes(path))
+      diagnostics.push(
+        diagnostic(
+          "template-surface-unlisted-path",
+          entry.path,
+          "Template surface must classify every repository entry exactly once.",
+        ),
+      );
+    if (entry.mode === "120000")
+      diagnostics.push(
+        diagnostic(
+          "template-surface-symlink",
+          entry.path,
+          "Template surface cannot bind symbolic links.",
+        ),
+      );
+  }
   const expectedSurfaceBytes = canonicalBytes(surface);
   for (const file of surface.files) {
     const path = file.path.slice(2);
+    if (!isSafeRepositoryPath(path))
+      diagnostics.push(
+        diagnostic(
+          "template-surface-path-invalid",
+          path,
+          "Template surface paths must be safe repository-relative paths.",
+        ),
+      );
+    const entry = entryByPath.get(file.path);
+    if (!entry) {
+      diagnostics.push(
+        diagnostic(
+          "template-surface-missing",
+          path,
+          "Template surface path is missing from the snapshot.",
+        ),
+      );
+      continue;
+    }
+    if (entry.mode !== file.mode)
+      diagnostics.push(
+        diagnostic(
+          "template-surface-mode-mismatch",
+          path,
+          "Template surface mode does not match the snapshot.",
+        ),
+      );
+    if (!artifactPolicyForPath(path))
+      diagnostics.push(
+        diagnostic(
+          "unclassified-engine-path",
+          path,
+          "Template surface contains an unclassified path.",
+        ),
+      );
     try {
       const bytes = await snapshot.read(path);
       if (
@@ -509,6 +567,17 @@ export async function verifyTemplateSurface(
             ),
           );
       }
+      if (
+        file.binding.kind !== "content" &&
+        file.binding.kind !== "surface-self-copy"
+      )
+        diagnostics.push(
+          diagnostic(
+            "template-surface-binding-invalid",
+            path,
+            "Template surface binding kind is unsupported.",
+          ),
+        );
     } catch {
       diagnostics.push(
         diagnostic(
