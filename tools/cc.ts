@@ -16,6 +16,7 @@ import {
   writeGeneratedProjections,
 } from "./projections.ts";
 import { createSnapshot } from "./snapshot.ts";
+import { observeTemplateFromGitHub } from "./template-adoption.ts";
 
 type KnowledgeOptions = {
   kind: "knowledge";
@@ -186,11 +187,17 @@ async function main(): Promise<void> {
 
   if (options.kind === "candidate-prepare") {
     try {
-      const result = await prepareCandidate({
-        root: cwd(),
-        requestPath: options.request,
-        out: options.out,
-      });
+      const result = await prepareCandidate(
+        {
+          root: cwd(),
+          requestPath: options.request,
+          out: options.out,
+        },
+        {
+          observeTemplate: (expected) =>
+            observeTemplateFromGitHub(cwd(), expected),
+        },
+      );
       process.stdout.write(
         `${JSON.stringify({
           candidate_digest: result.candidateDigest,
@@ -217,11 +224,17 @@ async function main(): Promise<void> {
   }
   if (options.kind === "candidate-apply") {
     try {
-      const receipt = await applyCandidate({
-        root: cwd(),
-        candidateDir: options.directory,
-        approvedDigest: options.approve,
-      });
+      const receipt = await applyCandidate(
+        {
+          root: cwd(),
+          candidateDir: options.directory,
+          approvedDigest: options.approve,
+        },
+        {
+          observeTemplate: (expected) =>
+            observeTemplateFromGitHub(cwd(), expected),
+        },
+      );
       process.stdout.write(`${JSON.stringify(receipt)}\n`);
       process.exitCode = receipt.status === "applied" ? 0 : 1;
     } catch (error) {

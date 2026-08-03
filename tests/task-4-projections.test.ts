@@ -13,6 +13,8 @@ import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
+import { createHash } from "node:crypto";
+import { compareCodePoints } from "../tools/generate.ts";
 import {
   checkGeneratedProjections,
   generatedProjectionBytes,
@@ -25,6 +27,10 @@ const projectRoot = resolve(import.meta.dirname, "..");
 const cliPath = resolve(projectRoot, "tools/cc.ts");
 const execFileAsync = promisify(execFile);
 const temporaryRoots: string[] = [];
+
+function digest(value: string): `sha256:${string}` {
+  return `sha256:${createHash("sha256").update(value, "utf8").digest("hex")}`;
+}
 
 async function projectGraph(root = projectRoot) {
   const snapshot = await createSnapshot(root, "worktree");
@@ -460,15 +466,38 @@ describe("Task 4 deterministic delivery projections", () => {
     const currentMarkerValue = JSON.parse(
       await readFile(currentMarker, "utf8"),
     ) as {
-      owned_paths: string[];
+      owned_files: Array<{ path: string; digest: string }>;
     };
-    currentMarkerValue.owned_paths.push(
-      "plugins/coffee-chat/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
-      "plugins/coffee-chat/hooks/hooks.json",
+    currentMarkerValue.owned_files.push(
+      {
+        path: "./knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
+        digest: digest("stale\n"),
+      },
+      { path: "./hooks/hooks.json", digest: digest("{}\n") },
     );
-    await writeFile(
-      currentMarker,
+    currentMarkerValue.owned_files.sort((left, right) =>
+      compareCodePoints(left.path, right.path),
+    );
+    const currentMarkerBytes = Buffer.from(
       `${JSON.stringify(currentMarkerValue, null, 2)}\n`,
+    );
+    await writeFile(currentMarker, currentMarkerBytes);
+    const repositoryMarkerPath = resolve(
+      root,
+      ".coffee-chat/generated-files.json",
+    );
+    const repositoryMarker = JSON.parse(
+      await readFile(repositoryMarkerPath, "utf8"),
+    ) as { owned_files: Array<{ path: string; digest: string }> };
+    const packageEntry = repositoryMarker.owned_files.find(
+      (entry) =>
+        entry.path === "./plugins/coffee-chat/.coffee-chat-generated.json",
+    );
+    expect(packageEntry).toBeDefined();
+    packageEntry!.digest = digest(currentMarkerBytes.toString("utf8"));
+    await writeFile(
+      repositoryMarkerPath,
+      `${JSON.stringify(repositoryMarker, null, 2)}\n`,
     );
 
     const obsoletePackage = resolve(root, "plugins/coffee-chat-obsolete");
@@ -478,14 +507,8 @@ describe("Task 4 deterministic delivery projections", () => {
       ".coffee-chat-generated.json",
     );
     const marker = JSON.parse(await readFile(obsoleteMarker, "utf8")) as {
-      package_name?: string;
-      owned_paths: string[];
+      owned_files: Array<{ path: string; digest: string }>;
     };
-    delete marker.package_name;
-    marker.owned_paths = marker.owned_paths.map((path) =>
-      path.replace("plugins/coffee-chat/", "plugins/coffee-chat-obsolete/"),
-    );
-    await writeFile(obsoleteMarker, `${JSON.stringify(marker, null, 2)}\n`);
     for (const relativePath of [".codex-plugin/plugin.json"]) {
       const path = resolve(obsoletePackage, relativePath);
       const value = JSON.parse(await readFile(path, "utf8")) as {
@@ -496,7 +519,13 @@ describe("Task 4 deterministic delivery projections", () => {
         value.name = "coffee-chat-obsolete";
       else value.plugin!.name = "coffee-chat-obsolete";
       await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
+      const entry = marker.owned_files.find(
+        (candidate) => candidate.path === `./${relativePath}`,
+      );
+      expect(entry).toBeDefined();
+      entry!.digest = digest(await readFile(path, "utf8"));
     }
+    await writeFile(obsoleteMarker, `${JSON.stringify(marker, null, 2)}\n`);
     const unlisted = resolve(obsoletePackage, "user-content/keep.txt");
     await mkdir(resolve(obsoletePackage, "user-content"), { recursive: true });
     await writeFile(unlisted, "do not delete\n");
@@ -595,10 +624,10 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(await readFile(reference, "utf8")).toBe("drift\n");
 
     expect(await runCli(root, "generate", "--format", "json")).toEqual({
-      exitCode: 0,
-      stdout: "[]\n",
+      exitCode: 1,
+      stdout: expect.stringContaining('"code":"generated-owned-file-conflict"'),
     });
-    expect(await readFile(reference, "utf8")).not.toBe("drift\n");
+    expect(await readFile(reference, "utf8")).toBe("drift\n");
   });
 
   it("checks the staged virtual tree without reading worktree projection drift", async () => {
@@ -639,9 +668,9 @@ describe("Task 4 deterministic delivery projections", () => {
       "plugins/coffee-chat/.coffee-chat-generated.json",
     );
     const marker = JSON.parse(await readFile(markerPath, "utf8")) as {
-      owned_paths: string[];
+      owned_files: Array<{ path: string; digest: string }>;
     };
-    marker.owned_paths.reverse();
+    marker.owned_files.reverse();
     await writeFile(markerPath, `${JSON.stringify(marker, null, 2)}\n`);
 
     const checked = await runCli(root, "check", "--format", "json");

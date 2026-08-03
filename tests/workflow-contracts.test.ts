@@ -63,12 +63,11 @@ describe("Task 7 Coffee Chat Pages workflow", () => {
   it("builds and uploads only dist/site before a separately privileged deploy", async () => {
     const { value } = await loadWorkflow("pages.yml");
     const events = object(value.on, "Pages on");
-    const push = object(events.push, "Pages push event");
     const jobs = object(value.jobs, "Pages jobs");
 
     expect(value.name).toBe("Coffee Chat Pages");
-    expect(Object.keys(events).sort()).toEqual(["push", "workflow_dispatch"]);
-    expect(push.branches).toEqual(["main"]);
+    expect(Object.keys(events)).toEqual(["workflow_dispatch"]);
+    expect(events).not.toHaveProperty("push");
     expect(value.permissions).toEqual({ contents: "read" });
     expect(jobs).toHaveProperty("build");
     expect(jobs).toHaveProperty("deploy");
@@ -164,16 +163,15 @@ describe("Task 7 shared workflow hardening", () => {
 });
 
 describe("Task 1 CodeQL workflow", () => {
-  it("analyzes JavaScript and TypeScript on pull requests and main", async () => {
+  it("analyzes JavaScript and TypeScript on pull requests without a creation-time push", async () => {
     const { raw, value } = await loadWorkflow("codeql.yml");
     const events = object(value.on, "CodeQL on");
-    const push = object(events.push, "CodeQL push event");
     const permissions = object(value.permissions, "CodeQL permissions");
     const jobs = object(value.jobs, "CodeQL jobs");
 
     expect(value.name).toBe("CodeQL");
-    expect(Object.keys(events).sort()).toEqual(["pull_request", "push"]);
-    expect(push.branches).toEqual(["main"]);
+    expect(Object.keys(events)).toEqual(["pull_request"]);
+    expect(events).not.toHaveProperty("push");
     expect(events).not.toHaveProperty("pull_request_target");
     expect(raw).not.toMatch(/\bpull_request_target\b/);
     expect(raw).not.toMatch(/\$\{\{\s*secrets\./i);

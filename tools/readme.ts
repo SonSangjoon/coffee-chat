@@ -305,7 +305,13 @@ function renderEnglish(manifest: Manifest): string {
       ENGINE_REPOSITORY_URL +
       "). Personal Notes belong only in an instance controlled by their author.",
     "",
-    "See [testing and acceptance](./docs/testing.md). Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).",
+    ...(c.isEngine
+      ? [
+          "See [testing and acceptance](./docs/testing.md). Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).",
+        ]
+      : [
+          "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).",
+        ]),
   ]);
 }
 
@@ -442,7 +448,13 @@ function renderKorean(manifest: Manifest): string {
       ENGINE_REPOSITORY_URL +
       ")에 기여하세요. 개인 Note는 작성자가 관리하는 인스턴스에만 둡니다.",
     "",
-    "[testing and acceptance](./docs/testing.md)를 확인하세요. 코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를, Note와 독창적 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
+    ...(c.isEngine
+      ? [
+          "[testing and acceptance](./docs/testing.md)를 확인하세요. 코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를, Note와 독창적 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
+        ]
+      : [
+          "코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를, Note와 독창적 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
+        ]),
   ]);
 }
 

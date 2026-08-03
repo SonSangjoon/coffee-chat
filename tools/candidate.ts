@@ -24,6 +24,19 @@ import {
   ValidationFailure,
   type Diagnostic,
 } from "./contracts.ts";
+import type {
+  EngineReleaseManifest,
+  EngineTemplateSurfaceManifest,
+} from "./engine-contracts.ts";
+import {
+  adoptEngineSourceFiles,
+  engineLockFiles,
+  observeTemplateFromGitHub,
+  readEngineAdoptionInputs,
+  sameTemplateObservation,
+  validateTemplateObservation,
+  type TemplateObservation,
+} from "./template-adoption.ts";
 import {
   canonicalizeJson,
   checkGeneratedIndex,
@@ -57,8 +70,12 @@ import {
   sha256,
   validateKnowledge,
 } from "./knowledge.ts";
+import type { InstanceProvenance } from "./engine-provenance.ts";
 import { createSnapshot } from "./snapshot.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
+import { renderRoleWorkflows } from "./workflow-projections.ts";
+
+export type { TemplateObservation } from "./template-adoption.ts";
 
 const require = createRequire(import.meta.url);
 const addFormats = require("ajv-formats").default as FormatsPlugin;
@@ -67,7 +84,6 @@ const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const CANDIDATE_FORMAT_VERSION = "1.0.0";
-export const LEGACY_MAKE_MINE_SCHEMA_VERSION = "1.0.0" as const;
 
 export function normalizeGitHubRepositoryUrl(raw: string): string {
   if (raw.length === 0 || raw !== raw.trim())
@@ -115,9 +131,35 @@ export function normalizeGitHubRepositoryUrl(raw: string): string {
   return `https://github.com/${owner.toLowerCase()}/${repository.toLowerCase()}`;
 }
 
-type ProfileValue = {
+export type ProfileValue = {
   display_name: string;
   short_name: string;
+};
+
+export type RepositoryValue = {
+  url: string;
+  default_branch: string;
+};
+
+export type PluginValue = {
+  name: string;
+  version: string;
+  description: string;
+};
+
+export type MakeMineConfiguration = {
+  profile: {
+    temporary_key: string;
+    display_name: string;
+    short_name: string;
+  };
+  time_zone: string;
+  repository: RepositoryValue;
+  pages_url: string;
+  plugin: PluginValue;
+  content_notice: string;
+  provenance: InstanceProvenance;
+  template_observation: TemplateObservation;
 };
 
 export type InstanceConfiguration = {
@@ -127,10 +169,12 @@ export type InstanceConfiguration = {
     short_name: string;
   };
   time_zone: string;
-  repository: { url: string; default_branch: string };
+  repository: RepositoryValue;
   pages_url: string;
-  plugin: { name: string; version: string; description: string };
+  plugin: PluginValue;
   content_notice: string;
+  provenance: InstanceProvenance;
+  template_observation: TemplateObservation;
 };
 
 type EntityValue = Omit<Entity, "id">;
@@ -231,6 +275,8 @@ type PreviewData = {
   proposed_time_zone: string;
   marketplace_name: string;
   content_notice?: string;
+  provenance?: InstanceProvenance;
+  template_observation?: TemplateObservation;
   time_zone: string;
   frozen_date: string;
   affected_paths: string[];
@@ -272,6 +318,8 @@ export type CandidateManifest = {
       plugin: InstanceConfiguration["plugin"];
       marketplace_name: string;
       content_notice: string;
+      provenance: InstanceProvenance;
+      template_observation: TemplateObservation;
     };
     entity_changes: MaterializedEntityChange[];
     note_changes: MaterializedNoteChange[];
@@ -283,6 +331,8 @@ export type CandidateManifest = {
   knowledge_digest: string;
   validation: { status: "passed" };
   preview: PreviewData;
+  provenance?: InstanceProvenance;
+  template_observation?: TemplateObservation;
 };
 
 export type CandidateReceipt = {
@@ -293,6 +343,8 @@ export type CandidateReceipt = {
   validation: { status: "passed" | "not_run" };
   invalidation_code?: string;
   target_fingerprint: TargetFingerprint;
+  provenance?: InstanceProvenance;
+  template_observation?: TemplateObservation;
   setup_effects?: Array<{
     effect: "install-pre-commit";
     target_path: string;
@@ -379,8 +431,13 @@ export type CandidateDependencies = {
   git?: GitExecutor;
   process?: ProcessExecutor;
   preflight?: {
-    checkpoint(point: "before-shared-validation"): Promise<void>;
+    checkpoint(
+      point: "before-shared-validation" | "before-candidate-transaction",
+    ): Promise<void>;
   };
+  observeTemplate?: (
+    expected: TemplateObservation,
+  ) => Promise<TemplateObservation>;
 };
 
 type RequiredDependencies = {
@@ -390,8 +447,13 @@ type RequiredDependencies = {
   git: GitExecutor;
   process?: ProcessExecutor;
   preflight: {
-    checkpoint(point: "before-shared-validation"): Promise<void>;
+    checkpoint(
+      point: "before-shared-validation" | "before-candidate-transaction",
+    ): Promise<void>;
   };
+  observeTemplate?: (
+    expected: TemplateObservation,
+  ) => Promise<TemplateObservation>;
 };
 
 export class CandidateTransactionFailure extends UnableToComplete {
@@ -435,6 +497,9 @@ function dependencies(overrides: CandidateDependencies): RequiredDependencies {
     git: overrides.git ?? defaultGit,
     ...(overrides.process ? { process: overrides.process } : {}),
     preflight: overrides.preflight ?? { checkpoint: async () => undefined },
+    ...(overrides.observeTemplate
+      ? { observeTemplate: overrides.observeTemplate }
+      : {}),
   };
 }
 
@@ -760,40 +825,21 @@ async function requiredGit(
   return result.stdout.trim();
 }
 
-async function repositoryBinding(
+/** Resolve the lossless local target binding used by Prepare, Apply, and the
+ * final transaction checkpoint. Device/inode values intentionally remain
+ * bigint-derived decimal strings so large filesystems cannot be truncated. */
+export async function resolveTargetFingerprint(
   root: string,
-  git: GitExecutor,
-  fileSystem: CandidateFileSystem,
-): Promise<{
-  root: string;
-  head: string;
-  identity: RepositoryIdentity;
-  targetFingerprint: TargetFingerprint;
-}> {
-  const [
-    realRoot,
-    topRaw,
-    commonRaw,
-    head,
-    branch,
-    manifestBytes,
-    originResult,
-  ] = await Promise.all([
-    fileSystem.realpath(root),
-    requiredGit(git, root, ["rev-parse", "--show-toplevel"]),
+  dependencies: Pick<CandidateDependencies, "git" | "fileSystem"> = {},
+): Promise<TargetFingerprint> {
+  const fileSystem = dependencies.fileSystem ?? nodeFileSystem;
+  const git = dependencies.git ?? defaultGit;
+  const [commonRaw, head, originResult, manifestBytes] = await Promise.all([
     requiredGit(git, root, ["rev-parse", "--git-common-dir"]),
     requiredGit(git, root, ["rev-parse", "--verify", "HEAD^{commit}"]),
-    requiredGit(git, root, ["rev-parse", "--abbrev-ref", "HEAD"]),
-    fileSystem.readFile(resolve(root, "coffee-chat.json")),
     git.execute(root, ["config", "--get-all", "remote.origin.url"]),
+    fileSystem.readFile(resolve(root, "coffee-chat.json")),
   ]);
-  const topLevel = await fileSystem.realpath(resolve(root, topRaw));
-  if (topLevel !== realRoot)
-    throw unable(
-      "candidate-repository-mismatch",
-      ".",
-      "Candidate commands must run at the authoritative repository root.",
-    );
   const commonDir = await fileSystem.realpath(resolve(root, commonRaw));
   const commonBefore = await fileSystem.lstatBigInt(commonDir);
   const commonAfterPath = await fileSystem.realpath(resolve(root, commonRaw));
@@ -835,21 +881,53 @@ async function repositoryBinding(
       ".",
       "The Git origin must name exactly one GitHub repository identity.",
     );
-  const originUrl = normalizedOrigins[0] as string;
+  return {
+    git_common_dir: {
+      real_path: commonDir,
+      device: commonAfter.dev.toString(10),
+      inode: commonAfter.ino.toString(10),
+    },
+    origin_url: normalizedOrigins[0] as string,
+    base_commit: head,
+    pre_conversion_manifest_digest: sha256(manifestBytes),
+  };
+}
+
+async function repositoryBinding(
+  root: string,
+  git: GitExecutor,
+  fileSystem: CandidateFileSystem,
+): Promise<{
+  root: string;
+  head: string;
+  identity: RepositoryIdentity;
+  targetFingerprint: TargetFingerprint;
+}> {
+  const [realRoot, topRaw, head, branch, targetFingerprint] = await Promise.all(
+    [
+      fileSystem.realpath(root),
+      requiredGit(git, root, ["rev-parse", "--show-toplevel"]),
+      requiredGit(git, root, ["rev-parse", "--verify", "HEAD^{commit}"]),
+      requiredGit(git, root, ["rev-parse", "--abbrev-ref", "HEAD"]),
+      resolveTargetFingerprint(root, { git, fileSystem }),
+    ],
+  );
+  const topLevel = await fileSystem.realpath(resolve(root, topRaw));
+  if (topLevel !== realRoot)
+    throw unable(
+      "candidate-repository-mismatch",
+      ".",
+      "Candidate commands must run at the authoritative repository root.",
+    );
   return {
     root: realRoot,
     head,
-    identity: { top_level: topLevel, git_common_dir: commonDir, branch },
-    targetFingerprint: {
-      git_common_dir: {
-        real_path: commonDir,
-        device: commonAfter.dev.toString(10),
-        inode: commonAfter.ino.toString(10),
-      },
-      origin_url: originUrl,
-      base_commit: head,
-      pre_conversion_manifest_digest: sha256(manifestBytes),
+    identity: {
+      top_level: topLevel,
+      git_common_dir: targetFingerprint.git_common_dir.real_path,
+      branch,
     },
+    targetFingerprint,
   };
 }
 
@@ -934,6 +1012,137 @@ function validateRepositoryTarget(
       ".",
       "The actual Git origin must equal the instance manifest repository.",
     );
+}
+
+function validateMakeMineConfiguration(
+  request: CandidateRequest,
+  baseManifest: Manifest,
+  observation: TemplateObservation,
+  release: EngineReleaseManifest,
+  surface: EngineTemplateSurfaceManifest,
+): void {
+  if (request.mode !== "make-mine") return;
+  const configuration = request.instance_configuration as InstanceConfiguration;
+  try {
+    validateTemplateObservation(observation);
+  } catch {
+    throw validationFailure(
+      "make-mine-template-observation-invalid",
+      ".",
+      "Make mine requires a valid native GitHub Template observation.",
+    );
+  }
+  let sourceRepository: string;
+  let targetRepository: string;
+  try {
+    sourceRepository = normalizeGitHubRepositoryUrl(
+      baseManifest.repository.url,
+    );
+    targetRepository = normalizeGitHubRepositoryUrl(
+      configuration.repository.url,
+    );
+  } catch {
+    throw validationFailure(
+      "make-mine-template-observation-mismatch",
+      ".",
+      "Template observation repositories must use the canonical engine and target identities.",
+    );
+  }
+  if (
+    observation.source_repository !== sourceRepository ||
+    observation.template_repository !== sourceRepository ||
+    observation.target_repository !== targetRepository ||
+    observation.source_default_branch !==
+      baseManifest.repository.default_branch ||
+    observation.target_default_branch !==
+      configuration.repository.default_branch ||
+    observation.source_release_ref !== release.source_ref ||
+    observation.release_digest !== release.release_digest ||
+    observation.template_surface_digest !== surface.surface_digest ||
+    observation.source_default_tree !== observation.target_initial_tree
+  )
+    throw validationFailure(
+      "make-mine-template-observation-mismatch",
+      ".",
+      "Native Template observation does not match the engine release, surface, and target configuration.",
+    );
+  const expectedProvenance: InstanceProvenance = {
+    engine: {
+      repository: observation.source_repository,
+      version: release.version,
+      source_commit: observation.source_default_commit,
+      release_digest: observation.release_digest,
+    },
+    created_from: {
+      method: "github-template",
+      template_repository: observation.template_repository,
+    },
+  };
+  if (!sameJson(configuration.provenance, expectedProvenance))
+    throw validationFailure(
+      "make-mine-template-observation-mismatch",
+      ".",
+      "Instance provenance must name the observed Template source, release, and default commit.",
+    );
+  if (
+    !observation.source_is_template ||
+    observation.source_visibility !== "public" ||
+    observation.target_visibility !== "public"
+  )
+    throw validationFailure(
+      "make-mine-template-observation-mismatch",
+      ".",
+      "The source must remain a public Template and the target must remain public.",
+    );
+}
+
+async function observeMakeMine(
+  request: CandidateRequest,
+  baseManifest: Manifest,
+  root: string,
+  deps: RequiredDependencies,
+): Promise<{
+  observation: TemplateObservation;
+  release: EngineReleaseManifest;
+  surface: EngineTemplateSurfaceManifest;
+}> {
+  if (request.mode !== "make-mine")
+    throw new Error("observeMakeMine called for non-make-mine request");
+  const configuration = request.instance_configuration as InstanceConfiguration;
+  const { release, surface } = await readEngineAdoptionInputs(root);
+  if (!deps.observeTemplate)
+    throw validationFailure(
+      "make-mine-template-observation-required",
+      ".",
+      "Make mine requires an injected read-only native GitHub Template observer.",
+    );
+  let observed: TemplateObservation;
+  try {
+    observed = validateTemplateObservation(
+      await deps.observeTemplate(configuration.template_observation),
+    );
+  } catch (error) {
+    if (error instanceof ValidationFailure) throw error;
+    throw unable(
+      "template-observation-unavailable",
+      ".",
+      "Native GitHub Template observation failed without mutation.",
+    );
+  }
+  if (!sameTemplateObservation(observed, configuration.template_observation))
+    throw validationFailure(
+      "make-mine-template-observation-drift",
+      ".",
+      "Native GitHub Template observation differs from the request binding.",
+    );
+  validateMakeMineConfiguration(
+    request,
+    baseManifest,
+    observed,
+    release,
+    surface,
+  );
+  return { observation: observed, release, surface };
 }
 
 type DirectoryIdentity = {
@@ -1084,9 +1293,16 @@ async function canonicalPaths(
   ))
     ? ["CONTENT_LICENSE.md"]
     : [];
+  const engineLock = (await pathExists(
+    fileSystem,
+    resolve(root, ".coffee-chat/engine-lock.json"),
+  ))
+    ? [".coffee-chat/engine-lock.json"]
+    : [];
   return sortedStrings([
     "coffee-chat.json",
     ...contentNotice,
+    ...engineLock,
     ...knowledge.filter(
       (path) =>
         path === "knowledge/entities.yml" ||
@@ -1331,7 +1547,15 @@ type DesiredState = {
   changedNoteIds: Map<string, "create" | "correct">;
   changedEntityIds: Map<string, "create" | "update">;
   privacyWarnings: string[];
+  makeMine?: {
+    observation: TemplateObservation;
+    release: EngineReleaseManifest;
+    surface: EngineTemplateSurfaceManifest;
+    adoptionFiles: Map<string, Buffer>;
+  };
 };
+
+type MakeMineBinding = NonNullable<DesiredState["makeMine"]>;
 
 function buildDesiredState(
   request: CandidateRequest,
@@ -1340,6 +1564,7 @@ function buildDesiredState(
   baseNotes: LoadedNote[],
   minted: Map<string, string>,
   frozenDate: string,
+  makeMine?: MakeMineBinding,
 ): DesiredState {
   if (request.mode !== "make-mine" && !isInstanceManifest(baseManifest))
     throw validationFailure(
@@ -1352,7 +1577,7 @@ function buildDesiredState(
     ? structuredClone(baseManifest)
     : {
         schema_url: baseManifest.schema_url,
-        schema_version: LEGACY_MAKE_MINE_SCHEMA_VERSION,
+        schema_version: "1.1.0",
         repository_role: "instance",
         time_zone: (configuration as InstanceConfiguration).time_zone,
         profile: {
@@ -1373,6 +1598,22 @@ function buildDesiredState(
           skills: baseManifest.paths.skills,
           method: baseManifest.paths.method,
         },
+        ...(makeMine
+          ? {
+              provenance: {
+                engine: {
+                  repository: makeMine.observation.source_repository,
+                  version: makeMine.release.version,
+                  source_commit: makeMine.observation.source_default_commit,
+                  release_digest: makeMine.observation.release_digest,
+                },
+                created_from: {
+                  method: "github-template" as const,
+                  template_repository: makeMine.observation.template_repository,
+                },
+              },
+            }
+          : {}),
       };
   const materializedChanges: CandidateManifest["materialized_changes"] = {
     entity_changes: [],
@@ -1391,6 +1632,25 @@ function buildDesiredState(
     manifest.pages_url = instance.pages_url;
     manifest.plugin = structuredClone(instance.plugin);
     manifest.marketplace_name = `${instance.plugin.name}-marketplace`;
+    if (!makeMine)
+      throw validationFailure(
+        "make-mine-template-observation-required",
+        ".",
+        "Make mine requires native Template provenance.",
+      );
+    manifest.schema_version = "1.1.0";
+    manifest.provenance = {
+      engine: {
+        repository: makeMine.observation.source_repository,
+        version: makeMine.release.version,
+        source_commit: makeMine.observation.source_default_commit,
+        release_digest: makeMine.observation.release_digest,
+      },
+      created_from: {
+        method: "github-template",
+        template_repository: makeMine.observation.template_repository,
+      },
+    };
     materializedChanges.instance_configuration = {
       profile: {
         id,
@@ -1405,6 +1665,8 @@ function buildDesiredState(
       plugin: structuredClone(instance.plugin),
       marketplace_name: `${instance.plugin.name}-marketplace`,
       content_notice: instance.content_notice,
+      provenance: manifest.provenance,
+      template_observation: makeMine.observation,
     };
   }
 
@@ -1634,6 +1896,7 @@ function buildDesiredState(
     changedNoteIds,
     changedEntityIds,
     privacyWarnings: [...new Set(requestedPrivacyWarnings)],
+    ...(makeMine ? { makeMine } : {}),
   };
 }
 
@@ -1643,26 +1906,48 @@ async function writeMaterializedRepository(
   state: DesiredState,
   currentCanonical: string[],
   support: string[],
+  makeMine: MakeMineBinding | undefined,
   fileSystem: CandidateFileSystem,
 ): Promise<void> {
   await fileSystem.mkdir(candidateRepository, { recursive: true });
-  for (const path of support) {
-    const target = resolve(candidateRepository, path);
-    await fileSystem.mkdir(dirname(target), { recursive: true });
-    await fileSystem.writeFile(
-      target,
-      await fileSystem.readFile(resolve(root, path)),
-    );
-  }
-  for (const path of currentCanonical.filter(
-    (path) => path.startsWith("method/") || path === "CONTENT_LICENSE.md",
-  )) {
-    const target = resolve(candidateRepository, path);
-    await fileSystem.mkdir(dirname(target), { recursive: true });
-    await fileSystem.writeFile(
-      target,
-      await fileSystem.readFile(resolve(root, path)),
-    );
+  if (makeMine) {
+    for (const [path, bytes] of makeMine.adoptionFiles.entries()) {
+      const target = resolve(candidateRepository, path);
+      await fileSystem.mkdir(dirname(target), { recursive: true });
+      const sourceStatus = await fileSystem.lstat(resolve(root, path));
+      await fileSystem.writeFile(target, bytes, {
+        mode: sourceStatus.mode & 0o111 ? 0o755 : 0o644,
+      });
+    }
+    for (const output of renderRoleWorkflows("instance").outputs) {
+      const target = resolve(candidateRepository, output.path);
+      await fileSystem.mkdir(dirname(target), { recursive: true });
+      await fileSystem.writeFile(target, output.bytes, {
+        mode: output.mode === "100755" ? 0o755 : 0o644,
+      });
+    }
+  } else {
+    for (const path of support) {
+      const target = resolve(candidateRepository, path);
+      await fileSystem.mkdir(dirname(target), { recursive: true });
+      await fileSystem.writeFile(
+        target,
+        await fileSystem.readFile(resolve(root, path)),
+      );
+    }
+    for (const path of currentCanonical.filter(
+      (path) =>
+        path.startsWith("method/") ||
+        path === "CONTENT_LICENSE.md" ||
+        path === ".coffee-chat/engine-lock.json",
+    )) {
+      const target = resolve(candidateRepository, path);
+      await fileSystem.mkdir(dirname(target), { recursive: true });
+      await fileSystem.writeFile(
+        target,
+        await fileSystem.readFile(resolve(root, path)),
+      );
+    }
   }
   await fileSystem.writeFile(
     resolve(candidateRepository, "coffee-chat.json"),
@@ -1676,6 +1961,27 @@ async function writeMaterializedRepository(
         "utf8",
       ),
     );
+  if (makeMine) {
+    const lockPath = resolve(
+      candidateRepository,
+      ".coffee-chat/engine-lock.json",
+    );
+    await fileSystem.mkdir(dirname(lockPath), { recursive: true });
+    await fileSystem.writeFile(
+      lockPath,
+      Buffer.from(
+        `${JSON.stringify(
+          {
+            schema_version: "1.0.0",
+            engine: state.manifest.provenance?.engine,
+            managed_files: engineLockFiles(makeMine.release),
+          },
+          null,
+          2,
+        )}\n`,
+      ),
+    );
+  }
   await fileSystem.mkdir(resolve(candidateRepository, "knowledge/notes"), {
     recursive: true,
   });
@@ -1866,6 +2172,31 @@ export async function prepareCandidate(
     baseValidation.graph.manifest,
     repository.targetFingerprint,
   );
+  let makeMine: MakeMineBinding | undefined;
+  if (parsed.request.mode === "make-mine") {
+    try {
+      const observed = await observeMakeMine(
+        parsed.request,
+        baseValidation.graph.manifest,
+        repository.root,
+        deps,
+      );
+      makeMine = {
+        ...observed,
+        adoptionFiles: await adoptEngineSourceFiles(
+          repository.root,
+          observed.surface,
+        ),
+      };
+    } catch (error) {
+      if (error instanceof ValidationFailure) throw error;
+      throw unable(
+        "template-observation-unavailable",
+        ".",
+        "Native GitHub Template observation failed without mutation.",
+      );
+    }
+  }
   const projectionOwnershipTarget = {
     repositoryRole: "instance" as const,
     packageName:
@@ -1889,12 +2220,13 @@ export async function prepareCandidate(
       inspection.diagnostics.some(
         (diagnostic) => !ownedStale.has(diagnostic.path),
       )
-    )
+    ) {
       throw validationFailure(
         "candidate-base-invalid",
         ".",
         "Existing generated delivery projections must match canonical inputs; only marker-owned stale package files may be bound for deletion.",
       );
+    }
   }
   const graphIds = new Set([
     ...(isInstanceGraph(baseValidation.graph)
@@ -1918,15 +2250,26 @@ export async function prepareCandidate(
     baseValidation.graph.notes,
     minted,
     frozenDate,
+    makeMine,
   );
   const currentCanonical = await canonicalPaths(
     repository.root,
     deps.fileSystem,
   );
   const currentState = sortedStrings([
-    ...new Set([...currentCanonical, ...baseProjectionPaths]),
+    ...new Set([
+      ...currentCanonical,
+      ...baseProjectionPaths,
+      ...(makeMine
+        ? makeMine.surface.files.map((file) => logicalPath(file.path))
+        : []),
+    ]),
   ]);
   const support = await supportPaths(repository.root, deps.fileSystem);
+  // Make mine's adopted engine surface is already part of `outputs`; engine-
+  // only verification material is intentionally absent from the downstream
+  // package. There are therefore no additional support files to materialize.
+  const materializedSupport = makeMine ? [] : support;
   const implementation = await implementationPaths(
     repository.root,
     deps.fileSystem,
@@ -1960,7 +2303,8 @@ export async function prepareCandidate(
       repository.root,
       desired,
       currentCanonical,
-      support,
+      materializedSupport,
+      makeMine,
       deps.fileSystem,
     );
     let materializedSnapshot = await createSnapshot(
@@ -1974,12 +2318,13 @@ export async function prepareCandidate(
       !materializedValidation.graph ||
       materializedValidation.diagnostics.length > 0 ||
       !isInstanceGraph(materializedValidation.graph)
-    )
+    ) {
       throw validationFailure(
         "candidate-validation-failed",
         ".",
         "Materialized Candidate failed the shared validator.",
       );
+    }
     const indexBytes = generatedIndexBytes(materializedValidation.graph);
     await deps.fileSystem.writeFile(
       resolve(candidateRepository, "knowledge/index.json"),
@@ -2054,6 +2399,17 @@ export async function prepareCandidate(
       materializedValidation.graph,
       deps.fileSystem,
     );
+    if (makeMine) {
+      materializedCanonical.push(
+        ...makeMine.adoptionFiles.keys(),
+        ...renderRoleWorkflows("instance").outputs.map((output) => output.path),
+      );
+      materializedCanonical.splice(
+        0,
+        materializedCanonical.length,
+        ...sortedStrings([...new Set(materializedCanonical)]),
+      );
+    }
     const outputs = await pathDigests(
       deps.fileSystem,
       candidateRepository,
@@ -2148,6 +2504,12 @@ export async function prepareCandidate(
         ? {
             content_notice:
               parsed.request.instance_configuration.content_notice,
+            ...(makeMine
+              ? {
+                  provenance: desired.manifest.provenance,
+                  template_observation: makeMine.observation,
+                }
+              : {}),
           }
         : {}),
       time_zone: desired.manifest.time_zone,
@@ -2189,7 +2551,7 @@ export async function prepareCandidate(
       support_files: await pathDigests(
         deps.fileSystem,
         candidateRepository,
-        support,
+        materializedSupport,
       ),
       worktree: relevantWorktree,
       source_observations: desired.sourceObservations,
@@ -2201,6 +2563,12 @@ export async function prepareCandidate(
       knowledge_digest: index.knowledge_digest,
       validation: { status: "passed" as const },
       preview,
+      ...(makeMine
+        ? {
+            provenance: desired.manifest.provenance,
+            template_observation: makeMine.observation,
+          }
+        : {}),
     };
     const candidateDigest = sha256(
       canonicalizeJson(manifestWithoutDigest as never),
@@ -2262,6 +2630,8 @@ function invalidated(
   candidateDigest: string,
   code: string,
   targetFingerprint: TargetFingerprint,
+  provenance?: InstanceProvenance,
+  templateObservation?: TemplateObservation,
 ): CandidateReceipt {
   return {
     schema_version: "1.0.0",
@@ -2271,6 +2641,10 @@ function invalidated(
     validation: { status: "not_run" },
     invalidation_code: code,
     target_fingerprint: targetFingerprint,
+    ...(provenance ? { provenance } : {}),
+    ...(templateObservation
+      ? { template_observation: templateObservation }
+      : {}),
   };
 }
 
@@ -2440,6 +2814,23 @@ function validateManifestSemantics(manifest: CandidateManifest): void {
       manifest.time_zone !== configuration.time_zone
     )
       throw new Error("instance configuration mismatch");
+    if (!manifest.provenance || !manifest.template_observation)
+      throw new Error("make-mine provenance mismatch");
+    if (
+      !sameJson(manifest.provenance, configuration.provenance) ||
+      !sameJson(
+        manifest.template_observation,
+        configuration.template_observation,
+      ) ||
+      !sameJson(preview.provenance, manifest.provenance) ||
+      !sameJson(preview.template_observation, manifest.template_observation)
+    )
+      throw new Error("make-mine provenance mismatch");
+    try {
+      validateTemplateObservation(manifest.template_observation);
+    } catch {
+      throw new Error("make-mine template observation invalid");
+    }
     let proposedRepository: string;
     try {
       proposedRepository = normalizeGitHubRepositoryUrl(
@@ -2454,7 +2845,9 @@ function validateManifestSemantics(manifest: CandidateManifest): void {
     configuration ||
     preview.current_repository_role !== "instance" ||
     preview.proposed_repository_role !== "instance" ||
-    preview.content_notice !== undefined
+    preview.content_notice !== undefined ||
+    manifest.provenance !== undefined ||
+    manifest.template_observation !== undefined
   )
     throw new Error("unexpected instance configuration");
 }
@@ -2488,7 +2881,12 @@ function validateMaterializedRequestBinding(
       !sameJson(configuration.plugin, requested.plugin) ||
       configuration.marketplace_name !==
         `${requested.plugin.name}-marketplace` ||
-      configuration.content_notice !== requested.content_notice
+      configuration.content_notice !== requested.content_notice ||
+      !sameJson(configuration.provenance, requested.provenance) ||
+      !sameJson(
+        configuration.template_observation,
+        requested.template_observation,
+      )
     )
       return false;
     temporaryIds.set(requested.profile.temporary_key, configuration.profile.id);
@@ -2744,6 +3142,14 @@ async function currentDigestsEqual(
   manifest: CandidateManifest,
 ): Promise<boolean> {
   try {
+    if (manifest.mode === "make-mine") {
+      const actual = await pathDigests(
+        fileSystem,
+        root,
+        expected.map((entry) => logicalPath(entry.path)),
+      );
+      return sameJson(actual, expected);
+    }
     const snapshot = await createSnapshot(root, "worktree");
     const validation = await validateKnowledge(snapshot, {
       validateIndex: false,
@@ -2874,6 +3280,40 @@ async function finalApprovalBinding(
     const current = await inspectHook(root, { git: deps.git });
     if (!sameJson(current, effect.target_fingerprint))
       return { invalidationCode: "hook-target-drift" };
+  }
+  if (manifest.mode === "make-mine") {
+    try {
+      const observed = await observeMakeMine(
+        parsedRequest.request,
+        baseGraph.manifest,
+        root,
+        deps,
+      );
+      if (
+        !manifest.template_observation ||
+        !manifest.provenance ||
+        !sameTemplateObservation(
+          observed.observation,
+          manifest.template_observation,
+        ) ||
+        !sameJson(manifest.provenance, {
+          engine: {
+            repository: observed.observation.source_repository,
+            version: observed.release.version,
+            source_commit: observed.observation.source_default_commit,
+            release_digest: observed.observation.release_digest,
+          },
+          created_from: {
+            method: "github-template",
+            template_repository: observed.observation.template_repository,
+          },
+        })
+      )
+        return { invalidationCode: "template-observation-drift" };
+      await adoptEngineSourceFiles(root, observed.surface);
+    } catch {
+      return { invalidationCode: "template-observation-drift" };
+    }
   }
   return bindTransaction(root, candidateRoot, manifest, deps.fileSystem);
 }
@@ -3395,7 +3835,13 @@ export async function applyCandidate(
   if (manifest.candidate_digest !== options.approvedDigest)
     return invalidateCurrentRepository("approved-digest-mismatch");
   const invalidate = (code: string) =>
-    invalidated(options.approvedDigest, code, manifest.target_fingerprint);
+    invalidated(
+      options.approvedDigest,
+      code,
+      manifest.target_fingerprint,
+      manifest.provenance,
+      manifest.template_observation,
+    );
   try {
     try {
       repository = await repositoryBinding(root, deps.git, deps.fileSystem);
@@ -3483,6 +3929,39 @@ export async function applyCandidate(
       )
     )
       return invalidate("candidate-manifest-invalid");
+    if (manifest.mode === "make-mine") {
+      try {
+        const observed = await observeMakeMine(
+          parsedRequest.request,
+          baseValidation.graph.manifest,
+          repository.root,
+          deps,
+        );
+        if (
+          !manifest.template_observation ||
+          !manifest.provenance ||
+          !sameTemplateObservation(
+            observed.observation,
+            manifest.template_observation,
+          ) ||
+          !sameJson(manifest.provenance, {
+            engine: {
+              repository: observed.observation.source_repository,
+              version: observed.release.version,
+              source_commit: observed.observation.source_default_commit,
+              release_digest: observed.observation.release_digest,
+            },
+            created_from: {
+              method: "github-template",
+              template_repository: observed.observation.template_repository,
+            },
+          })
+        )
+          return invalidate("template-observation-drift");
+      } catch {
+        return invalidate("template-observation-drift");
+      }
+    }
     const rootManifest = parseStrictJson(
       decodeCanonicalText(
         await deps.fileSystem.readFile(
@@ -3598,6 +4077,10 @@ export async function applyCandidate(
         changed_paths: manifest.changed_paths,
         validation: { status: "passed" },
         target_fingerprint: manifest.target_fingerprint,
+        ...(manifest.provenance ? { provenance: manifest.provenance } : {}),
+        ...(manifest.template_observation
+          ? { template_observation: manifest.template_observation }
+          : {}),
       };
     }
     const effect = manifest.setup_effects[0] as SetupBinding;
@@ -3613,6 +4096,10 @@ export async function applyCandidate(
         changed_paths: manifest.changed_paths,
         validation: { status: "passed" },
         target_fingerprint: manifest.target_fingerprint,
+        ...(manifest.provenance ? { provenance: manifest.provenance } : {}),
+        ...(manifest.template_observation
+          ? { template_observation: manifest.template_observation }
+          : {}),
         setup_effects: [
           {
             effect: effect.effect,
@@ -3629,6 +4116,10 @@ export async function applyCandidate(
         changed_paths: manifest.changed_paths,
         validation: { status: "passed" },
         target_fingerprint: manifest.target_fingerprint,
+        ...(manifest.provenance ? { provenance: manifest.provenance } : {}),
+        ...(manifest.template_observation
+          ? { template_observation: manifest.template_observation }
+          : {}),
         setup_effects: [
           {
             effect: effect.effect,

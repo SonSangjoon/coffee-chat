@@ -152,7 +152,9 @@ const MANAGED_PATHS = [
   "tools/site-build.ts",
   "tools/snapshot.ts",
   "tools/strict-input.ts",
+  "tools/template-adoption.ts",
   "tools/temporal.ts",
+  "tools/workflow-projections.ts",
   "tsconfig.json",
   "vitest.config.ts",
 ] as const;
@@ -167,7 +169,6 @@ const DELIVERY_PATHS = [
   "tests/release-dependency-closure.test.ts",
   "tools/engine-cli.ts",
   "tools/engine-release.ts",
-  "tools/workflow-projections.ts",
 ] as const;
 
 const EXCLUDED_PATHS = [
@@ -333,7 +334,7 @@ export function artifactPolicyForPath(
         "template-copy": { audience: "engine-only", ownership: "authored" },
       },
       template_disposition: "remove-engine-only",
-      release_class: "delivery",
+      release_class: "excluded",
     };
   return undefined;
 }

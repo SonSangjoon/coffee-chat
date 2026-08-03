@@ -53,7 +53,42 @@ function fixedDependencies(includeIds: boolean): CandidateDependencies {
   return {
     clock: { now: () => new Date("2026-08-01T03:00:00.000Z") },
     ...(includeIds ? { uuid: { next: () => ids.shift()! } } : {}),
+    observeTemplate: async (expected) => expected,
   };
+}
+
+async function bindTemplateObservation(
+  root: string,
+  value: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const release = JSON.parse(
+    await readFile(resolve(root, "engine/release.json"), "utf8"),
+  ) as { version: string; source_ref: string; release_digest: string };
+  const surface = JSON.parse(
+    await readFile(resolve(root, "engine/template-surface.json"), "utf8"),
+  ) as { surface_digest: string };
+  const commit = await git(root, "rev-list", "--max-parents=0", "HEAD");
+  const tree = await git(root, "rev-parse", `${commit}^{tree}`);
+  const configuration = value.instance_configuration as Record<string, unknown>;
+  const provenance = configuration.provenance as Record<string, unknown>;
+  const engine = provenance.engine as Record<string, unknown>;
+  const observation = configuration.template_observation as Record<
+    string,
+    unknown
+  >;
+  engine.version = release.version;
+  engine.source_commit = commit;
+  engine.release_digest = release.release_digest;
+  observation.source_default_commit = commit;
+  observation.source_default_tree = tree;
+  observation.source_release_ref = release.source_ref;
+  observation.source_release_commit = commit;
+  observation.source_release_tree = tree;
+  observation.release_digest = release.release_digest;
+  observation.template_surface_digest = surface.surface_digest;
+  observation.target_initial_commit = commit;
+  observation.target_initial_tree = tree;
+  return value;
 }
 
 async function repositoryFixture(
@@ -65,8 +100,17 @@ async function repositoryFixture(
   temporaryRoots.push(base);
   const root = resolve(base, "repository");
   await mkdir(root);
+  await symlink(
+    resolve(projectRoot, "node_modules"),
+    resolve(root, "node_modules"),
+    "dir",
+  );
   for (const path of [
     "coffee-chat.json",
+    ".gitignore",
+    "engine",
+    "package.json",
+    "package-lock.json",
     "schemas",
     "tools",
     "method",
@@ -105,11 +149,6 @@ async function repositoryFixture(
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
     await writeFile(resolve(root, "unrelated-sentinel.txt"), "keep me\n");
   }
-  await execFileAsync(
-    process.execPath,
-    ["--experimental-strip-types", cliPath, "generate", "--format", "json"],
-    { cwd: root, encoding: "utf8" },
-  );
   if (options.ownedStale) {
     const packageName = options.upstreamIdentity
       ? "coffee-chat-upstream"
@@ -150,6 +189,7 @@ async function repositoryFixture(
     );
   }
   await git(root, "init", "-q");
+  await writeFile(resolve(root, ".git/info/exclude"), "node_modules\n");
   await git(root, "config", "user.email", "task4@example.com");
   await git(root, "config", "user.name", "Task 4");
   await git(
@@ -163,6 +203,13 @@ async function repositoryFixture(
   );
   await git(root, "add", ".");
   await git(root, "commit", "-qm", "fixture");
+  await execFileAsync(
+    process.execPath,
+    ["--experimental-strip-types", cliPath, "generate", "--format", "json"],
+    { cwd: root, encoding: "utf8" },
+  );
+  await git(root, "add", "engine");
+  await git(root, "commit", "--amend", "--no-edit", "-q");
   return {
     root,
     request: resolve(base, "request.json"),
@@ -194,6 +241,40 @@ function request() {
       },
       content_notice:
         "# Projection Content Notice\n\nProjection Author retains ownership of the authored public Notes.\n",
+      provenance: {
+        engine: {
+          repository: "https://github.com/sonsangjoon/coffee-chat",
+          version: "1.1.0",
+          source_commit: "a".repeat(40),
+          release_digest: `sha256:${"b".repeat(64)}`,
+        },
+        created_from: {
+          method: "github-template",
+          template_repository: "https://github.com/sonsangjoon/coffee-chat",
+        },
+      },
+      template_observation: {
+        source_repository_id: "1",
+        source_repository: "https://github.com/sonsangjoon/coffee-chat",
+        source_is_template: true,
+        source_visibility: "public",
+        source_default_branch: "main",
+        source_default_commit: "a".repeat(40),
+        source_default_tree: "c".repeat(40),
+        source_release_ref: "refs/tags/v1.1.0",
+        source_release_commit: "a".repeat(40),
+        source_release_tree: "c".repeat(40),
+        release_digest: `sha256:${"b".repeat(64)}`,
+        template_surface_digest: `sha256:${"d".repeat(64)}`,
+        target_repository_id: "2",
+        target_repository: "https://github.com/example/coffee-chat-downstream",
+        target_description: "A downstream Coffee Chat instance.",
+        template_repository: "https://github.com/sonsangjoon/coffee-chat",
+        target_visibility: "public",
+        target_default_branch: "main",
+        target_initial_commit: "a".repeat(40),
+        target_initial_tree: "c".repeat(40),
+      },
     },
     entity_changes: [
       {
@@ -234,6 +315,16 @@ function request() {
     ],
     setup_effects: [],
   };
+}
+
+async function writeCandidateRequest(fixture: {
+  root: string;
+  request: string;
+}): Promise<void> {
+  await writeFile(
+    fixture.request,
+    `${JSON.stringify(await bindTemplateObservation(fixture.root, request()), null, 2)}\n`,
+  );
 }
 
 async function addForeignInstancePackage(root: string): Promise<void> {
@@ -289,6 +380,13 @@ afterEach(async () => {
 describe("Task 4 Candidate projection transaction", () => {
   it("ignores unrelated repository symlinks outside every bound inventory", async () => {
     const fixture = await repositoryFixture();
+    // The fixture normally links node_modules to the project dependencies so
+    // the CLI can run. Make this test's unrelated symlink in a real temporary
+    // directory instead of mutating the shared dependency tree.
+    await rm(resolve(fixture.root, "node_modules"), {
+      recursive: true,
+      force: true,
+    });
     await mkdir(resolve(fixture.root, "node_modules/.bin"), {
       recursive: true,
     });
@@ -297,7 +395,7 @@ describe("Task 4 Candidate projection transaction", () => {
       "../tool.js",
       resolve(fixture.root, "node_modules/.bin/tool"),
     );
-    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+    await writeCandidateRequest(fixture);
 
     const prepared = await prepareCandidate(
       {
@@ -329,7 +427,7 @@ describe("Task 4 Candidate projection transaction", () => {
     await writeFile(target, await readFile(method));
     await rm(method);
     await symlink("../method-source.md", method);
-    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+    await writeCandidateRequest(fixture);
 
     await expect(
       prepareCandidate(
@@ -355,7 +453,7 @@ describe("Task 4 Candidate projection transaction", () => {
       resolve(fixture.root, "method-source"),
     );
     await symlink("method-source", resolve(fixture.root, "method"));
-    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+    await writeCandidateRequest(fixture);
 
     await expect(
       prepareCandidate(
@@ -376,7 +474,7 @@ describe("Task 4 Candidate projection transaction", () => {
 
   it("binds, previews, applies, and verifies canonical knowledge plus the complete delivery projection set", async () => {
     const fixture = await repositoryFixture();
-    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+    await writeCandidateRequest(fixture);
 
     const prepared = await prepareCandidate(
       {
@@ -424,11 +522,7 @@ describe("Task 4 Candidate projection transaction", () => {
 
     expect(
       supportPaths.filter((path) => path.startsWith("./docs/assets/readme/")),
-    ).toEqual([
-      "./docs/assets/readme/coffee-chat-cover.png",
-      "./docs/assets/readme/coffee-chat-flow.en.png",
-      "./docs/assets/readme/coffee-chat-trust.en.png",
-    ]);
+    ).toEqual([]);
 
     expect(outputPaths).toEqual(
       expect.arrayContaining([
@@ -494,7 +588,7 @@ describe("Task 4 Candidate projection transaction", () => {
       resolve(fixture.root, "unrelated-sentinel.txt"),
       "keep me\n",
     );
-    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+    await writeCandidateRequest(fixture);
 
     const prepared = await prepareCandidate(
       {
@@ -562,7 +656,7 @@ describe("Task 4 Candidate projection transaction", () => {
     await addForeignInstancePackage(fixture.root);
     await git(fixture.root, "add", ".");
     await git(fixture.root, "commit", "-qm", "add another instance package");
-    await writeFile(fixture.request, `${JSON.stringify(request(), null, 2)}\n`);
+    await writeCandidateRequest(fixture);
 
     const prepared = await prepareCandidate(
       {

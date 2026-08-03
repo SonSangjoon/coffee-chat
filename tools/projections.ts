@@ -220,7 +220,7 @@ function claudeMarketplace(manifest: Manifest): Record<string, unknown> {
 
 function contentLicense(): Buffer {
   return textBytes(
-    "# Content License\n\nThe [MIT License](./LICENSE) covers reusable Coffee Chat software, schemas, templates, and Skills. Downstream authors retain ownership of the Notes and original prose they add to their own instances.\n\nOnly `tests/fixtures/son-input/**` is © 2026 Son, All rights reserved. That path-scoped fixture notice does not apply to the generic plugin or downstream instances.\n\nThird-party Sources retain their own terms. Linking to, citing, indexing, or describing a third-party Source does not grant rights in that Source beyond its applicable terms.\n",
+    "# Content License\n\nThe [MIT License](./LICENSE) covers reusable Coffee Chat software, schemas, templates, and Skills. Downstream authors retain ownership of the Notes and original prose they add to their own instances.\n\nThird-party Sources retain their own terms. Linking to, citing, indexing, or describing a third-party Source does not grant rights in that Source beyond its applicable terms.\n",
   );
 }
 
@@ -325,7 +325,13 @@ export async function generatedProjectionBytes(
     scope: "plugin-package",
     files: packageFiles,
     ...(isInstanceManifest(manifest) && manifest.provenance
-      ? { adopted_engine: manifest.provenance.engine }
+      ? {
+          adopted_engine: {
+            repository: manifest.provenance.engine.repository,
+            version: manifest.provenance.engine.version,
+            release_digest: manifest.provenance.engine.release_digest,
+          },
+        }
       : {}),
   });
   values.set(
@@ -473,6 +479,10 @@ function ownershipDiagnostic(
 
 async function collectGeneratedOwnership(
   snapshot: Snapshot,
+  ownershipTarget: {
+    repositoryRole: "engine" | "instance";
+    packageName: string;
+  },
 ): Promise<{ state: GeneratedOwnershipState; diagnostics: Diagnostic[] }> {
   const state: GeneratedOwnershipState = {
     digests: new Map(),
@@ -514,6 +524,16 @@ async function collectGeneratedOwnership(
         await snapshot.read(markerPath),
         markerPath,
       );
+      // A downstream instance may carry other people's valid instance
+      // packages. Their ownership preimages are intentionally outside this
+      // Candidate's mutation boundary; only the current package and engine
+      // package markers participate in stale/conflict checks.
+      if (
+        ownershipTarget.repositoryRole === "instance" &&
+        marker.adopted_engine !== undefined &&
+        packageName !== ownershipTarget.packageName
+      )
+        continue;
       const prefix = `plugins/${packageName}`;
       for (const entry of marker.owned_files)
         state.digests.set(`${prefix}/${entry.path.slice(2)}`, entry.digest);
@@ -525,13 +545,23 @@ async function collectGeneratedOwnership(
             markerPath,
           ),
         ) as LegacyGeneratedOwnershipMarker | undefined;
-        if (
+        // A package owned by another tool is outside Coffee Chat's mutation
+        // boundary. Its marker must not turn an otherwise valid projection
+        // into a blocking Coffee Chat diagnostic.
+        if (legacy?.generated_by && legacy.generated_by !== "coffee-chat")
+          continue;
+        const validLegacy =
           legacy?.generated_by === "coffee-chat" &&
           legacy.schema_version === "1.0.0" &&
-          Array.isArray(legacy.owned_paths)
-        )
-          for (const path of legacy.owned_paths) state.legacyPaths.add(path);
-        else
+          Array.isArray(legacy.owned_paths);
+        if (validLegacy) {
+          const foreignInstance =
+            ownershipTarget.repositoryRole === "instance" &&
+            legacy.repository_role === "instance" &&
+            packageName !== ownershipTarget.packageName;
+          if (!foreignInstance)
+            for (const path of legacy.owned_paths) state.legacyPaths.add(path);
+        } else {
           diagnostics.push(
             ownershipDiagnostic(
               "generated-ownership-invalid",
@@ -539,6 +569,7 @@ async function collectGeneratedOwnership(
               "Package ownership marker is invalid.",
             ),
           );
+        }
       } catch {
         diagnostics.push(
           ownershipDiagnostic(
@@ -721,7 +752,7 @@ export async function inspectGeneratedProjections(
   const diagnostics: Diagnostic[] = [];
   const blockingDiagnostics: Diagnostic[] = [];
   const ownedStalePaths = new Set<string>();
-  const ownership = await collectGeneratedOwnership(snapshot);
+  const ownership = await collectGeneratedOwnership(snapshot, ownershipTarget);
   diagnostics.push(...ownership.diagnostics);
   blockingDiagnostics.push(...ownership.diagnostics);
   const ownedPackages = await ownedPackagePaths(snapshot);

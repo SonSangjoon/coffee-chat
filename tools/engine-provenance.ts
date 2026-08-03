@@ -14,7 +14,7 @@ const SEMVER =
 const COMMIT = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const MANAGED_PATH =
-  /^\.\/(?!.*(?:^|\/)\.\.(?:\/|$))(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+$/;
+  /^\.\/(?!.*(?:^|\/)\.\.(?:\/|$))(?:[A-Za-z0-9._\-\[\]]+\/)*[A-Za-z0-9._\-\[\]]+$/;
 const INSTANCE_OWNED_PATHS = [
   "./coffee-chat.json",
   "./.coffee-chat/",
@@ -26,8 +26,6 @@ const INSTANCE_OWNED_PATHS = [
   "./.codex-plugin/",
   "./.claude-plugin/",
   "./.agents/",
-  "./skills/",
-  "./method/",
   "./dist/",
   "./public/",
   "./site/dist/",

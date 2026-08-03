@@ -19,13 +19,13 @@ import { createSnapshot } from "../tools/snapshot.ts";
 import { parseMarkdownDocument } from "../tools/strict-input.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
-const sonFixtureRoot = resolve(projectRoot, "tests/fixtures/son-input");
+const exampleFixtureRoot = resolve(projectRoot, "tests/fixtures/example-input");
 const syntheticFixtureRoot = resolve(
   projectRoot,
   "tests/fixtures/synthetic-instance",
 );
 
-type SonRequest = {
+type ExampleRequest = {
   mode: string;
   instance_configuration: {
     profile: {
@@ -64,10 +64,13 @@ async function engineGraph() {
   return { snapshot, graph: validation.graph! };
 }
 
-async function readSonRequest(): Promise<SonRequest> {
+async function readExampleRequest(): Promise<ExampleRequest> {
   return JSON.parse(
-    await readFile(resolve(sonFixtureRoot, "first-note-request.json"), "utf8"),
-  ) as SonRequest;
+    await readFile(
+      resolve(exampleFixtureRoot, "first-note-request.json"),
+      "utf8",
+    ),
+  ) as ExampleRequest;
 }
 
 async function walkFiles(root: string, prefix = ""): Promise<string[]> {
@@ -189,11 +192,11 @@ describe("Task 5 fixture and output isolation", () => {
     }
   });
 
-  it("keeps the Son fixture at an input-only boundary", async () => {
+  it("keeps the fictional Example Author fixture at an input-only boundary", async () => {
     const [paths, readme, request] = await Promise.all([
-      walkFiles(sonFixtureRoot),
-      readFile(resolve(sonFixtureRoot, "README.md"), "utf8"),
-      readSonRequest(),
+      walkFiles(exampleFixtureRoot),
+      readFile(resolve(exampleFixtureRoot, "README.md"), "utf8"),
+      readExampleRequest(),
     ]);
 
     expect(paths).toEqual(["README.md", "first-note-request.json"]);
@@ -201,9 +204,9 @@ describe("Task 5 fixture and output isolation", () => {
     expect(readme).toContain("non-canonical");
     expect(request.mode).toBe("make-mine");
     expect(request.instance_configuration.profile).toEqual({
-      temporary_key: "owner_profile",
-      display_name: "Son",
-      short_name: "Son",
+      temporary_key: "example_profile",
+      display_name: "Example Author",
+      short_name: "Example",
     });
     expect(
       request.entity_changes.map((change) => ({
@@ -211,19 +214,15 @@ describe("Task 5 fixture and output isolation", () => {
         label: change.value.label,
         kind: change.value.kind,
       })),
-    ).toEqual([
-      { action: "create", label: "Taste", kind: "concept" },
-      { action: "create", label: "Iteration", kind: "process" },
-      { action: "create", label: "AI agent", kind: "technology" },
-    ]);
+    ).toEqual([{ action: "create", label: "Iteration", kind: "process" }]);
     expect(request.note_changes).toHaveLength(1);
     const note = request.note_changes[0]!.value;
     const paragraphs = note.body.split("\n\n");
-    expect(paragraphs).toHaveLength(6);
+    expect(paragraphs).toHaveLength(1);
     expect(paragraphs.every((paragraph) => paragraph.trim().length > 0)).toBe(
       true,
     );
-    expect(note.sources).toHaveLength(5);
+    expect(note.sources).toHaveLength(1);
     expect(
       note.sources.every(
         (source) =>
@@ -249,7 +248,7 @@ describe("Task 5 fixture and output isolation", () => {
   });
 
   it("keeps fixture bytes outside every engine release projection", async () => {
-    const request = await readSonRequest();
+    const request = await readExampleRequest();
     const note = request.note_changes[0]!.value;
     const syntheticPaths = await walkFiles(syntheticFixtureRoot);
     const syntheticNotePath = syntheticPaths.find((path) =>
@@ -337,7 +336,12 @@ describe("Task 5 fixture and output isolation", () => {
         /^knowledge\/notes\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.md$/,
       );
       expect(fixturePaths).toEqual(
-        ["coffee-chat.json", "knowledge/entities.yml", notePaths[0]!].sort(),
+        [
+          ".coffee-chat/engine-lock.json",
+          "coffee-chat.json",
+          "knowledge/entities.yml",
+          notePaths[0]!,
+        ].sort(),
       );
 
       await Promise.all(
@@ -348,7 +352,7 @@ describe("Task 5 fixture and output isolation", () => {
         ),
       );
       await Promise.all(
-        ["coffee-chat.json", "knowledge"].map((path) =>
+        [".coffee-chat", "coffee-chat.json", "knowledge"].map((path) =>
           cp(
             resolve(syntheticFixtureRoot, path),
             resolve(temporaryRoot, path),
@@ -385,16 +389,26 @@ describe("Task 5 fixture and output isolation", () => {
         ).toBe(true);
       }
 
-      const sonRequest = await readSonRequest();
+      const exampleRequest = await readExampleRequest();
+      const contentPaths = fixturePaths.filter(
+        (path) => path !== ".coffee-chat/engine-lock.json",
+      );
       const syntheticBytes = await Promise.all(
-        fixturePaths.map((path) =>
+        contentPaths.map((path) =>
           readFile(resolve(syntheticFixtureRoot, ...path.split("/")), "utf8"),
         ),
       );
       expect(syntheticBytes.join("\n")).not.toContain(
-        sonRequest.note_changes[0]!.value.body,
+        exampleRequest.note_changes[0]!.value.body,
       );
-      expect(syntheticBytes.join("\n")).not.toMatch(/sha256:[0-9a-f]{64}/);
+      const syntheticText = syntheticBytes.join("\n");
+      const exampleDigests = new Set(
+        [
+          ...JSON.stringify(exampleRequest).matchAll(/sha256:[0-9a-f]{64}/g),
+        ].map(([digest]) => digest),
+      );
+      for (const digest of exampleDigests)
+        expect(syntheticText).not.toContain(digest);
     } finally {
       await removeAndProveAbsent(temporaryRoot);
     }

@@ -9,6 +9,7 @@ import {
   realpath,
   rename,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -73,6 +74,40 @@ function request(): Record<string, unknown> {
         description: "A downstream Coffee Chat instance.",
       },
       content_notice: CONTENT_NOTICE,
+      provenance: {
+        engine: {
+          repository: "https://github.com/sonsangjoon/coffee-chat",
+          version: "1.1.0",
+          source_commit: "a".repeat(40),
+          release_digest: `sha256:${"b".repeat(64)}`,
+        },
+        created_from: {
+          method: "github-template",
+          template_repository: "https://github.com/sonsangjoon/coffee-chat",
+        },
+      },
+      template_observation: {
+        source_repository_id: "1",
+        source_repository: "https://github.com/sonsangjoon/coffee-chat",
+        source_is_template: true,
+        source_visibility: "public",
+        source_default_branch: "main",
+        source_default_commit: "a".repeat(40),
+        source_default_tree: "c".repeat(40),
+        source_release_ref: "refs/tags/v1.1.0",
+        source_release_commit: "a".repeat(40),
+        source_release_tree: "c".repeat(40),
+        release_digest: `sha256:${"b".repeat(64)}`,
+        template_surface_digest: `sha256:${"d".repeat(64)}`,
+        target_repository_id: "2",
+        target_repository: "https://github.com/example/downstream",
+        target_description: "A downstream Coffee Chat instance.",
+        template_repository: "https://github.com/sonsangjoon/coffee-chat",
+        target_visibility: "public",
+        target_default_branch: "main",
+        target_initial_commit: "a".repeat(40),
+        target_initial_tree: "c".repeat(40),
+      },
     },
     entity_changes: [
       {
@@ -111,7 +146,42 @@ function dependencies(
   return {
     clock: { now: () => new Date(date) },
     uuid: { next: () => ids.shift()! },
+    observeTemplate: async (expected) => expected,
   };
+}
+
+async function bindTemplateObservation(
+  root: string,
+  value: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const release = JSON.parse(
+    await readFile(resolve(root, "engine/release.json"), "utf8"),
+  ) as { version: string; source_ref: string; release_digest: string };
+  const surface = JSON.parse(
+    await readFile(resolve(root, "engine/template-surface.json"), "utf8"),
+  ) as { surface_digest: string };
+  const commit = await git(root, "rev-list", "--max-parents=0", "HEAD");
+  const tree = await git(root, "rev-parse", `${commit}^{tree}`);
+  const configuration = value.instance_configuration as Record<string, unknown>;
+  const provenance = configuration.provenance as Record<string, unknown>;
+  const engine = provenance.engine as Record<string, unknown>;
+  const observation = configuration.template_observation as Record<
+    string,
+    unknown
+  >;
+  engine.version = release.version;
+  engine.source_commit = commit;
+  engine.release_digest = release.release_digest;
+  observation.source_default_commit = commit;
+  observation.source_default_tree = tree;
+  observation.source_release_ref = release.source_ref;
+  observation.source_release_commit = commit;
+  observation.source_release_tree = tree;
+  observation.release_digest = release.release_digest;
+  observation.template_surface_digest = surface.surface_digest;
+  observation.target_initial_commit = commit;
+  observation.target_initial_tree = tree;
+  return value;
 }
 
 async function makeDownstreamRepository() {
@@ -119,8 +189,17 @@ async function makeDownstreamRepository() {
   temporaryRoots.push(base);
   const root = resolve(base, "repository");
   await mkdir(root);
+  await symlink(
+    resolve(projectRoot, "node_modules"),
+    resolve(root, "node_modules"),
+    "dir",
+  );
   for (const path of [
     "coffee-chat.json",
+    ".gitignore",
+    "engine",
+    "package.json",
+    "package-lock.json",
     "schemas",
     "tools",
     "method",
@@ -133,12 +212,8 @@ async function makeDownstreamRepository() {
     await cp(resolve(projectRoot, path), resolve(root, path), {
       recursive: true,
     });
-  await execFileAsync(
-    process.execPath,
-    ["--experimental-strip-types", cliPath, "generate", "--format", "json"],
-    { cwd: root, encoding: "utf8" },
-  );
   await git(root, "init", "-q");
+  await writeFile(resolve(root, ".git/info/exclude"), "node_modules\n");
   await git(root, "config", "user.email", "downstream@example.com");
   await git(root, "config", "user.name", "Downstream Test");
   await git(
@@ -152,7 +227,17 @@ async function makeDownstreamRepository() {
   await git(root, "commit", "-qm", "engine fork");
   const requestPath = resolve(base, "request.json");
   const out = resolve(base, "candidate");
-  await writeFile(requestPath, `${JSON.stringify(request(), null, 2)}\n`);
+  await execFileAsync(
+    process.execPath,
+    ["--experimental-strip-types", cliPath, "generate", "--format", "json"],
+    { cwd: root, encoding: "utf8" },
+  );
+  await git(root, "add", "engine");
+  await git(root, "commit", "--amend", "--no-edit", "-q");
+  await writeFile(
+    requestPath,
+    `${JSON.stringify(await bindTemplateObservation(root, request()), null, 2)}\n`,
+  );
   return { base, root, requestPath, out };
 }
 

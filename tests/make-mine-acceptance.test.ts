@@ -9,12 +9,18 @@ import {
   readlink,
   rm,
   symlink,
+  writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import type { CandidateReceipt, CandidateRequest } from "../tools/candidate.ts";
+import {
+  applyCandidate,
+  prepareCandidate,
+  type CandidateReceipt,
+  type CandidateRequest,
+} from "../tools/candidate.ts";
 import { isInstanceGraph, validateKnowledge } from "../tools/knowledge.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
@@ -22,7 +28,7 @@ const execFileAsync = promisify(execFile);
 const projectRoot = resolve(import.meta.dirname, "..");
 const sourceRequestPath = resolve(
   projectRoot,
-  "tests/fixtures/son-input/first-note-request.json",
+  "tests/fixtures/example-input/first-note-request.json",
 );
 const uuidV4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -83,7 +89,7 @@ async function command(
 }
 
 async function git(root: string, ...args: string[]): Promise<string> {
-  return command("git", args, root);
+  return (await command("git", args, root)).trim();
 }
 
 async function runCc(root: string, ...args: string[]): Promise<string> {
@@ -181,17 +187,13 @@ describe("Task 5 disposable Make mine acceptance", () => {
         resolve(downstream, "node_modules"),
         "dir",
       );
-      expect(await runCc(downstream, "generate", "--format", "json")).toBe(
-        "[]\n",
-      );
-
       const request = JSON.parse(
         await readFile(sourceRequestPath, "utf8"),
       ) as CandidateRequest;
       expect(request.mode).toBe("make-mine");
       expect(request.instance_configuration).toBeDefined();
       if (!request.instance_configuration) return;
-      expect(request.entity_changes).toHaveLength(3);
+      expect(request.entity_changes).toHaveLength(1);
       expect(request.note_changes).toHaveLength(1);
       const requestedNote = request.note_changes[0]!;
       expect(requestedNote.action).toBe("create");
@@ -200,6 +202,10 @@ describe("Task 5 disposable Make mine acceptance", () => {
       );
 
       await git(downstream, "init", "--initial-branch=main");
+      await writeFile(
+        resolve(downstream, ".git/info/exclude"),
+        "node_modules\n",
+      );
       await git(downstream, "config", "user.name", "Coffee Chat Test");
       await git(downstream, "config", "user.email", "test@example.com");
       await git(
@@ -211,23 +217,71 @@ describe("Task 5 disposable Make mine acceptance", () => {
       );
       await git(downstream, "add", "--all");
       await git(downstream, "commit", "-m", "Initialize downstream engine");
-      await mkdir(dirname(requestCopy), { recursive: true });
-      await copyFile(sourceRequestPath, requestCopy);
-
-      const prepared = await runCcJson<PrepareOutput>(
-        downstream,
-        "candidate",
-        "prepare",
-        "--request",
-        requestCopy,
-        "--out",
-        candidate,
+      expect(await runCc(downstream, "generate", "--format", "json")).toBe(
+        "[]\n",
       );
-      expect(prepared.candidate_digest).toMatch(/^sha256:[0-9a-f]{64}$/);
+      await git(downstream, "add", "engine");
+      await git(downstream, "commit", "--amend", "--no-edit");
+      await mkdir(dirname(requestCopy), { recursive: true });
+      const requestForCandidate = structuredClone(request);
+      const release = JSON.parse(
+        await readFile(resolve(downstream, "engine/release.json"), "utf8"),
+      ) as { version: string; source_ref: string; release_digest: string };
+      const surface = JSON.parse(
+        await readFile(
+          resolve(downstream, "engine/template-surface.json"),
+          "utf8",
+        ),
+      ) as { surface_digest: string };
+      const initialCommit = await git(
+        downstream,
+        "rev-list",
+        "--max-parents=0",
+        "HEAD",
+      );
+      const initialTree = await git(
+        downstream,
+        "rev-parse",
+        `${initialCommit}^{tree}`,
+      );
+      const configuration = requestForCandidate.instance_configuration!;
+      configuration.provenance.engine.version = release.version;
+      configuration.provenance.engine.source_commit = initialCommit;
+      configuration.provenance.engine.release_digest =
+        release.release_digest as `sha256:${string}`;
+      configuration.template_observation.source_default_commit = initialCommit;
+      configuration.template_observation.source_default_tree = initialTree;
+      configuration.template_observation.source_release_ref =
+        release.source_ref;
+      configuration.template_observation.source_release_commit = initialCommit;
+      configuration.template_observation.source_release_tree = initialTree;
+      configuration.template_observation.release_digest =
+        release.release_digest as `sha256:${string}`;
+      configuration.template_observation.template_surface_digest =
+        surface.surface_digest as `sha256:${string}`;
+      configuration.template_observation.target_initial_commit = initialCommit;
+      configuration.template_observation.target_initial_tree = initialTree;
+      await writeFile(
+        requestCopy,
+        `${JSON.stringify(requestForCandidate, null, 2)}\n`,
+      );
+
+      const candidateDependencies = {
+        observeTemplate: async (
+          expected: NonNullable<
+            CandidateRequest["instance_configuration"]
+          >["template_observation"],
+        ) => expected,
+      };
+      const prepared = await prepareCandidate(
+        { root: downstream, requestPath: requestCopy, out: candidate },
+        candidateDependencies,
+      );
+      expect(prepared.candidateDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
       const preview = JSON.parse(
-        await readFile(prepared.preview_json, "utf8"),
+        await readFile(prepared.previewJson, "utf8"),
       ) as PreviewFile;
-      expect(preview.candidate_digest).toBe(prepared.candidate_digest);
+      expect(preview.candidate_digest).toBe(prepared.candidateDigest);
       expect(preview.validation).toEqual({ status: "passed" });
       expect(preview.notes).toHaveLength(1);
       expect(preview.notes[0]).toMatchObject({
@@ -257,17 +311,16 @@ describe("Task 5 disposable Make mine acceptance", () => {
         sortByUrl(expectedObservations),
       );
 
-      const receipt = await runCcJson<CandidateReceipt>(
-        downstream,
-        "candidate",
-        "apply",
-        "--dir",
-        candidate,
-        "--approve",
-        prepared.candidate_digest,
-      );
+      const receipt = (await applyCandidate(
+        {
+          root: downstream,
+          candidateDir: candidate,
+          approvedDigest: prepared.candidateDigest,
+        },
+        candidateDependencies,
+      )) as CandidateReceipt;
       expect(receipt).toMatchObject({
-        candidate_digest: prepared.candidate_digest,
+        candidate_digest: prepared.candidateDigest,
         status: "applied",
         validation: { status: "passed" },
       });
