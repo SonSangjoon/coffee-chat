@@ -7,6 +7,7 @@ import {
   classifyInstanceProvenance,
   parseEngineLock,
 } from "../tools/engine-provenance.ts";
+import { ValidationFailure } from "../tools/contracts.ts";
 import {
   type InstanceManifest,
   validateKnowledge,
@@ -38,6 +39,23 @@ async function repositoryFrom(fixture: string): Promise<string> {
 async function validateInstance(root: string) {
   return (await validateKnowledge(await createSnapshot(root, "worktree")))
     .diagnostics;
+}
+
+function lockBytes(value: Record<string, unknown>): Buffer {
+  return Buffer.from(`${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function expectLockDiagnostic(
+  value: Record<string, unknown>,
+  expected: { code: string; pointer: string },
+): void {
+  try {
+    parseEngineLock(lockBytes(value), ".coffee-chat/engine-lock.json");
+    throw new Error("Expected engine lock parsing to fail.");
+  } catch (error) {
+    expect(error).toBeInstanceOf(ValidationFailure);
+    expect((error as ValidationFailure).diagnostic).toMatchObject(expected);
+  }
 }
 
 afterEach(async () => {
@@ -153,5 +171,95 @@ describe("instance engine provenance", () => {
     );
 
     expect(assertLockMatchesManifest(manifest, lock)).toEqual([]);
+  });
+
+  it("classifies an incomplete schema-1.1 provenance binding as invalid", async () => {
+    const root = await repositoryFrom(boundFixture);
+    const manifest = JSON.parse(
+      await readFile(resolve(root, "coffee-chat.json"), "utf8"),
+    ) as InstanceManifest;
+    delete manifest.provenance;
+
+    expect(classifyInstanceProvenance(manifest)).toEqual({
+      status: "invalid",
+    });
+  });
+
+  it("parses lock engine diagnostics from the lock engine pointer", async () => {
+    const root = await repositoryFrom(boundFixture);
+    const lock = JSON.parse(
+      await readFile(resolve(root, ".coffee-chat/engine-lock.json"), "utf8"),
+    ) as Record<string, unknown>;
+    ((lock.engine as Record<string, unknown>).source_commit as string) =
+      "A".repeat(40);
+
+    expectLockDiagnostic(lock, {
+      code: "schema-pattern",
+      pointer: "/engine/source_commit",
+    });
+  });
+
+  it("requires exact managed-file keys in an engine lock", async () => {
+    const root = await repositoryFrom(boundFixture);
+    const lock = JSON.parse(
+      await readFile(resolve(root, ".coffee-chat/engine-lock.json"), "utf8"),
+    ) as Record<string, unknown>;
+    lock.managed_files = [
+      {
+        path: "./tools/runtime.ts",
+        class: "engine-source",
+        digest: `sha256:${"a".repeat(64)}`,
+      },
+    ];
+    expectLockDiagnostic(lock, {
+      code: "schema-required",
+      pointer: "/managed_files/0/mode",
+    });
+
+    lock.managed_files = [
+      {
+        path: "./tools/runtime.ts",
+        class: "engine-source",
+        digest: `sha256:${"a".repeat(64)}`,
+        mode: "100644",
+        unexpected: true,
+      },
+    ];
+    expectLockDiagnostic(lock, {
+      code: "schema-additional-property",
+      pointer: "/managed_files/0/unexpected",
+    });
+  });
+
+  it.each([
+    "./coffee-chat.json",
+    "./.coffee-chat/generated-files.json",
+    "./knowledge/index.json",
+    "./CONTENT_LICENSE.md",
+    "./README.md",
+    "./README.ko.md",
+    "./AGENTS.md",
+    "./CLAUDE.md",
+    "./plugins/coffee-chat/skills/coffee-chat/SKILL.md",
+    "./.claude-plugin/plugin.json",
+    "./.agents/plugins/marketplace.json",
+  ])("rejects instance-owned or generated managed path %s", async (path) => {
+    const root = await repositoryFrom(boundFixture);
+    const lock = JSON.parse(
+      await readFile(resolve(root, ".coffee-chat/engine-lock.json"), "utf8"),
+    ) as Record<string, unknown>;
+    lock.managed_files = [
+      {
+        path,
+        class: "engine-source",
+        digest: `sha256:${"a".repeat(64)}`,
+        mode: "100644",
+      },
+    ];
+
+    expectLockDiagnostic(lock, {
+      code: "engine-lock-path-invalid",
+      pointer: "/managed_files/0/path",
+    });
   });
 });

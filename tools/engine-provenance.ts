@@ -20,6 +20,20 @@ const INSTANCE_OWNED_PATHS = [
   "./.coffee-chat/",
   "./knowledge/",
   "./CONTENT_LICENSE.md",
+  "./AGENTS.md",
+  "./CLAUDE.md",
+  "./plugins/",
+  "./.codex-plugin/",
+  "./.claude-plugin/",
+  "./.agents/",
+  "./skills/",
+  "./method/",
+  "./dist/",
+  "./public/",
+  "./site/dist/",
+  "./engine/release.json",
+  "./engine/template-surface.json",
+  "./engine/migrations/",
 ] as const;
 
 export type EngineProvenance = {
@@ -137,6 +151,7 @@ function canonicalRepositoryDiagnostic(
 export function validateEngineProvenance(
   value: unknown,
   path: string,
+  pointer = "/provenance/engine",
 ): Diagnostic[] {
   const item = record(value);
   if (!item)
@@ -144,7 +159,7 @@ export function validateEngineProvenance(
       diagnostic(
         "schema-type",
         path,
-        "/provenance/engine",
+        pointer,
         "Engine provenance must be an object.",
       ),
     ];
@@ -161,7 +176,7 @@ export function validateEngineProvenance(
         diagnostic(
           "schema-required",
           path,
-          `/provenance/engine/${field}`,
+          `${pointer}/${field}`,
           "Engine provenance field is required.",
         ),
       );
@@ -172,7 +187,7 @@ export function validateEngineProvenance(
         diagnostic(
           "schema-additional-property",
           path,
-          `/provenance/engine/${key}`,
+          `${pointer}/${key}`,
           "Engine provenance does not allow additional properties.",
         ),
       );
@@ -180,7 +195,7 @@ export function validateEngineProvenance(
   const repositoryFailure = canonicalRepositoryDiagnostic(
     item.repository,
     path,
-    "/provenance/engine/repository",
+    `${pointer}/repository`,
   );
   if (repositoryFailure) diagnostics.push(repositoryFailure);
   if (typeof item.version !== "string" || !SEMVER.test(item.version))
@@ -188,7 +203,7 @@ export function validateEngineProvenance(
       diagnostic(
         "schema-pattern",
         path,
-        "/provenance/engine/version",
+        `${pointer}/version`,
         "Engine version must be strict SemVer.",
       ),
     );
@@ -200,7 +215,7 @@ export function validateEngineProvenance(
       diagnostic(
         "schema-pattern",
         path,
-        "/provenance/engine/source_commit",
+        `${pointer}/source_commit`,
         "Engine source commit must be 40 or 64 lowercase hexadecimal characters.",
       ),
     );
@@ -212,7 +227,7 @@ export function validateEngineProvenance(
       diagnostic(
         "schema-pattern",
         path,
-        "/provenance/engine/release_digest",
+        `${pointer}/release_digest`,
         "Engine release digest must be a lowercase SHA-256 digest.",
       ),
     );
@@ -233,7 +248,11 @@ export function validateInstanceProvenance(
         "Schema-1.1 instances require provenance.",
       ),
     ];
-  const diagnostics = validateEngineProvenance(provenance.engine, path);
+  const diagnostics = validateEngineProvenance(
+    provenance.engine,
+    path,
+    "/provenance/engine",
+  );
   const fields = ["engine", "created_from"] as const;
   for (const field of fields) {
     if (!(field in provenance))
@@ -311,10 +330,35 @@ export function validateInstanceProvenance(
 
 export function classifyInstanceProvenance(
   manifest: InstanceManifest,
-): { status: "legacy" } | { status: "bound"; provenance: InstanceProvenance } {
-  return manifest.schema_version === "1.0.0" || !manifest.provenance
-    ? { status: "legacy" }
-    : { status: "bound", provenance: manifest.provenance };
+):
+  | { status: "legacy" }
+  | { status: "bound"; provenance: InstanceProvenance }
+  | { status: "invalid" } {
+  if (manifest.schema_version === "1.0.0") return { status: "legacy" };
+  if (
+    manifest.schema_version !== "1.1.0" ||
+    validateInstanceProvenance(manifest.provenance, "coffee-chat.json").length >
+      0
+  ) {
+    return { status: "invalid" };
+  }
+  return {
+    status: "bound",
+    provenance: manifest.provenance as InstanceProvenance,
+  };
+}
+
+function forbiddenManagedPath(path: string): boolean {
+  return (
+    path === "./README.md" ||
+    /^\.\/README\.[^/]+\.md$/.test(path) ||
+    path === "./marketplace.json" ||
+    INSTANCE_OWNED_PATHS.some((forbidden) =>
+      forbidden.endsWith("/")
+        ? path === forbidden.slice(0, -1) || path.startsWith(forbidden)
+        : path === forbidden,
+    )
+  );
 }
 
 function validateManagedFiles(value: unknown, path: string): Diagnostic[] {
@@ -343,15 +387,34 @@ function validateManagedFiles(value: unknown, path: string): Diagnostic[] {
       );
       continue;
     }
+    const fields = ["path", "class", "digest", "mode"] as const;
+    for (const field of fields) {
+      if (!(field in file))
+        diagnostics.push(
+          diagnostic(
+            "schema-required",
+            path,
+            `${pointer}/${field}`,
+            "Managed file field is required.",
+          ),
+        );
+    }
+    for (const key of Object.keys(file)) {
+      if (!fields.includes(key as (typeof fields)[number]))
+        diagnostics.push(
+          diagnostic(
+            "schema-additional-property",
+            path,
+            `${pointer}/${key}`,
+            "Managed file does not allow additional properties.",
+          ),
+        );
+    }
     const managedPath = file.path;
     if (
       typeof managedPath !== "string" ||
       !MANAGED_PATH.test(managedPath) ||
-      INSTANCE_OWNED_PATHS.some((forbidden) =>
-        forbidden.endsWith("/")
-          ? managedPath.startsWith(forbidden)
-          : managedPath === forbidden,
-      )
+      forbiddenManagedPath(managedPath)
     )
       diagnostics.push(
         diagnostic(
@@ -361,7 +424,7 @@ function validateManagedFiles(value: unknown, path: string): Diagnostic[] {
           "Managed file path must be safe and engine-owned.",
         ),
       );
-    if (file.class !== "engine-source")
+    if ("class" in file && file.class !== "engine-source")
       diagnostics.push(
         diagnostic(
           "schema-const",
@@ -370,7 +433,10 @@ function validateManagedFiles(value: unknown, path: string): Diagnostic[] {
           "Managed lock files must be engine-source files.",
         ),
       );
-    if (typeof file.digest !== "string" || !DIGEST.test(file.digest))
+    if (
+      "digest" in file &&
+      (typeof file.digest !== "string" || !DIGEST.test(file.digest))
+    )
       diagnostics.push(
         diagnostic(
           "schema-pattern",
@@ -379,7 +445,7 @@ function validateManagedFiles(value: unknown, path: string): Diagnostic[] {
           "Managed file digest must be a lowercase SHA-256 digest.",
         ),
       );
-    if (file.mode !== "100644" && file.mode !== "100755")
+    if ("mode" in file && file.mode !== "100644" && file.mode !== "100755")
       diagnostics.push(
         diagnostic(
           "schema-enum",
@@ -449,7 +515,7 @@ export function parseEngineLock(bytes: Buffer, path: string): EngineLock {
           "Engine lock schema version must be 1.0.0.",
         ),
       );
-    diagnostics.push(...validateEngineProvenance(lock.engine, path));
+    diagnostics.push(...validateEngineProvenance(lock.engine, path, "/engine"));
     diagnostics.push(...validateManagedFiles(lock.managed_files, path));
   }
   if (containsUnpairedUnicodeSurrogate(value))
@@ -479,6 +545,15 @@ export function assertLockMatchesManifest(
         "coffee-chat.json",
         "/provenance",
         "Legacy instances do not have bound engine provenance.",
+      ),
+    ];
+  if (provenance.status === "invalid")
+    return [
+      diagnostic(
+        "engine-lock-manifest-invalid",
+        "coffee-chat.json",
+        "/provenance",
+        "Engine lock cannot bind an invalid instance provenance record.",
       ),
     ];
   return isDeepStrictEqual(provenance.provenance.engine, lock.engine)
