@@ -4,7 +4,7 @@
   "release": {
     "version": "1.1.0",
     "source_ref": "refs/tags/v1.1.0",
-    "release_digest": "sha256:56ea78a1b45e62ec2833f41a88cd0f42d335f8431490973ec0c5e95961ec2203"
+    "release_digest": "sha256:32aa819017ad450694b1b9337f118c59362eaff64ed6dda85c6fcc1c2deb657f"
   },
   "files": [
     {
@@ -411,7 +411,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:1b7c315875c452d93d028d5bd18a92c7414a75a28d0d6854d968733df03c8d17"
+        "digest": "sha256:a7f81760495d1bf8dcf3c7b7fe949664f86f789e66e774ebf7080126af3fda62"
       }
     },
     {
@@ -1521,7 +1521,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:ceecbb16155ae133e1b5177c385711c695866eded5790f70cfd2109b358b6544"
+        "digest": "sha256:066264f20af0a03a12781bbbe6383648505fae9354d4dac9dc69abb4d8ab5051"
       }
     },
     {
@@ -1679,5 +1679,5 @@
       }
     }
   ],
-  "surface_digest": "sha256:86c7dcc3c3d7bedbd9b78cb7271155f7aa3080665f8ee012f67f45d382d5126b"
+  "surface_digest": "sha256:66a427b5e2e93104927fb6caf0bfcb94362b51fa4ffdab71de8563a83ed71e45"
 }
