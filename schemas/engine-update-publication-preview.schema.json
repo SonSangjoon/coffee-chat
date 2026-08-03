@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-publication-preview.schema.json",
+  "title": "Coffee Chat engine update publication preview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "publication_digest",
+    "repository",
+    "base",
+    "head",
+    "worktree",
+    "git_isolation",
+    "update_receipt",
+    "receipt_plan",
+    "commit",
+    "pull_request",
+    "workflow_effects"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "publication_digest": { "$ref": "#/$defs/digest" },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "origin_url", "remote"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "origin_url": { "$ref": "#/$defs/repository" },
+        "remote": { "const": "origin" }
+      }
+    },
+    "base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "remote_sha"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 },
+        "remote_sha": { "$ref": "#/$defs/commit" }
+      }
+    },
+    "head": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "pre_commit_head_sha", "push_refspec"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 },
+        "pre_commit_head_sha": { "$ref": "#/$defs/commit" },
+        "push_refspec": {
+          "type": "string",
+          "pattern": "^refs/heads/[^:]+:refs/heads/[^:]+$"
+        }
+      }
+    },
+    "worktree": { "$ref": "#/$defs/worktree" },
+    "git_isolation": { "$ref": "#/$defs/isolation" },
+    "update_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "const": "./update-receipt.json" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "receipt_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "journal_path"],
+      "properties": {
+        "path": { "$ref": "#/$defs/absolute_path" },
+        "journal_path": { "$ref": "#/$defs/absolute_path" }
+      }
+    },
+    "commit": { "$ref": "#/$defs/commit_plan" },
+    "pull_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "body", "merge"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string" },
+        "merge": { "const": false }
+      }
+    },
+    "workflow_effects": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/workflow" }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "worktree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "status",
+        "git_tree_sha",
+        "inventory_digest",
+        "base_index_tree_sha",
+        "unstaged_diff_digest",
+        "changed_paths"
+      ],
+      "properties": {
+        "path": { "$ref": "#/$defs/absolute_path" },
+        "status": { "const": "matches-update-receipt" },
+        "git_tree_sha": { "$ref": "#/$defs/commit" },
+        "inventory_digest": { "$ref": "#/$defs/digest" },
+        "base_index_tree_sha": { "$ref": "#/$defs/commit" },
+        "unstaged_diff_digest": { "$ref": "#/$defs/digest" },
+        "changed_paths": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\./" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "existing_worktree",
+        "empty_hooks_path",
+        "empty_hooks_path_digest",
+        "effective_config_digest",
+        "temporary_index",
+        "filters"
+      ],
+      "properties": {
+        "existing_worktree": { "const": "created-and-materialized-by-task-8" },
+        "empty_hooks_path": { "$ref": "#/$defs/absolute_path" },
+        "empty_hooks_path_digest": { "$ref": "#/$defs/digest" },
+        "effective_config_digest": { "$ref": "#/$defs/digest" },
+        "temporary_index": { "$ref": "#/$defs/absolute_path" },
+        "filters": { "const": "custom-filters-rejected" }
+      }
+    },
+    "commit_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parent_sha",
+        "message",
+        "author_name",
+        "author_email",
+        "committer_name",
+        "committer_email",
+        "authored_at",
+        "committed_at",
+        "signing"
+      ],
+      "properties": {
+        "parent_sha": { "$ref": "#/$defs/commit" },
+        "message": { "type": "string", "minLength": 1 },
+        "author_name": { "type": "string", "minLength": 1 },
+        "author_email": { "type": "string", "format": "email" },
+        "committer_name": { "type": "string", "minLength": 1 },
+        "committer_email": { "type": "string", "format": "email" },
+        "authored_at": { "type": "string", "format": "date-time" },
+        "committed_at": { "type": "string", "format": "date-time" },
+        "signing": { "const": "none" }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "event",
+        "source",
+        "source_commit",
+        "workflow_digest",
+        "filters_digest",
+        "triggered_by",
+        "jobs",
+        "permissions_digest",
+        "referenced_secret_names",
+        "environment_names"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^\\./\\.github/workflows/[^/]+\\.(?:yml|yaml)$"
+        },
+        "event": {
+          "enum": [
+            "push",
+            "pull_request",
+            "pull_request_target",
+            "workflow_run",
+            "workflow_call"
+          ]
+        },
+        "source": { "enum": ["result-tree", "remote-base"] },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "workflow_digest": { "$ref": "#/$defs/digest" },
+        "filters_digest": { "$ref": "#/$defs/digest" },
+        "triggered_by": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "jobs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "permissions_digest": { "$ref": "#/$defs/digest" },
+        "referenced_secret_names": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "environment_names": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

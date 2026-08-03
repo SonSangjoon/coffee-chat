@@ -36,7 +36,7 @@ type HookOptions = {
 };
 type EngineUpdateOptions = {
   kind: "engine-update";
-  action: "inspect" | "prepare" | "apply";
+  action: "inspect" | "prepare" | "apply" | "publish-prepare" | "publish-apply";
   args: string[];
 };
 type Options =
@@ -50,7 +50,7 @@ function usageFailure(): UnableToComplete {
     code: "cli-usage",
     path: ".",
     message:
-      "Usage: cc <validate|generate|check> [...], cc candidate prepare --request FILE --out DIR, cc candidate apply --dir DIR --approve DIGEST, cc hooks inspect|install|uninstall [--format human|json], or cc engine update inspect --target PATH --source PATH --format human|json.",
+      "Usage: cc <validate|generate|check> [...], cc candidate prepare|apply [...], cc hooks inspect|install|uninstall [...], or cc engine update inspect|prepare|apply|publish prepare|publish apply [...].",
   });
 }
 
@@ -98,6 +98,43 @@ function parseArguments(args: string[]): Options {
     return { kind: "hooks", command: action, format };
   }
   if (command === "engine") {
+    if (
+      args.length === 11 &&
+      args[0] === "update" &&
+      args[1] === "publish" &&
+      args[2] === "prepare" &&
+      args[3] === "--target" &&
+      args[4] &&
+      args[5] === "--update-receipt" &&
+      args[6] &&
+      args[7] === "--publication-receipt" &&
+      args[8] &&
+      args[9] === "--out" &&
+      args[10]
+    )
+      return {
+        kind: "engine-update",
+        action: "publish-prepare",
+        args: ["update", "publish", "prepare", ...args.slice(3)],
+      };
+    if (
+      args.length === 9 &&
+      args[0] === "update" &&
+      args[1] === "publish" &&
+      args[2] === "apply" &&
+      args[3] === "--dir" &&
+      args[4] &&
+      args[5] === "--approve" &&
+      args[6] &&
+      /^sha256:[a-f0-9]{64}$/.test(args[6]) &&
+      args[7] === "--receipt" &&
+      args[8]
+    )
+      return {
+        kind: "engine-update",
+        action: "publish-apply",
+        args: ["update", "publish", "apply", ...args.slice(3)],
+      };
     if (
       args.length === 8 &&
       args[0] === "update" &&

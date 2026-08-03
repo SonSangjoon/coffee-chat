@@ -497,7 +497,7 @@
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:ae8004962012a1d7a7302eb823360ba3ec4b6f8e7d1cead2f1d9891cbec9baba",
+      "digest": "sha256:e087b7c8fe3d0c5d726f8e512f82635f08bb7a44e6d809f8dae7a5ea682b007b",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -509,7 +509,7 @@
     },
     {
       "path": "./tools/cc.ts",
-      "digest": "sha256:00b349dac07a7ff8f2bb9c125796e6bb70354883671c3fadea1612dcd8a387c9",
+      "digest": "sha256:65a89e62a7733d7c96724118f3f6347756a1261f591699994d0c5e65291ed712",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -696,8 +696,44 @@
       "class": "engine-delivery"
     },
     {
+      "path": "./schemas/engine-update-publication-candidate.schema.json",
+      "digest": "sha256:d4d251abdc11fbbde9f73165fd276f82f821b13846f80b58e648d747fc65b8b0",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-journal.schema.json",
+      "digest": "sha256:25c81a06c11725e55dc417dc5eb4a445e9bdca712a50dc01ec5a2a564579ef37",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-preview.schema.json",
+      "digest": "sha256:0083c7e756b75d9ad16fb98ed32bd212c56e58cfd0680326b6cfb823843bf14b",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-receipt.schema.json",
+      "digest": "sha256:c9d4aa563cdeb30d7d8b4cb9bc719eca1a19942089b75931926b44c625491b87",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
       "path": "./schemas/engine-update-receipt.schema.json",
       "digest": "sha256:7dcc583a48de019d42a4719d5f69d91d05d1879b4018343576e91ee11fc53762",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-publication-cli.test.ts",
+      "digest": "sha256:84e7ca55e8f162e64d1d041107283bf5b3f31114e076b2f2cb38de65daf61ea7",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-publication.test.ts",
+      "digest": "sha256:2c1e9dc86d72b8f602c38ffeebb54622b997d75dbfd47a289b034b765bb8686a",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -745,7 +781,13 @@
     },
     {
       "path": "./tools/engine-cli.ts",
-      "digest": "sha256:63d19a6c166e8ed9e5fe138b8def2e4d4cdea5413c18b1c3b1f22f1398fe801b",
+      "digest": "sha256:28c2956f808fe65960f6a24aef59a313741fdae3ee5f848c0698ce022a212687",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/engine-publication.ts",
+      "digest": "sha256:1e0b0d8796c35943c20d6eff9069fcb63945c1d69c44b25787c5124f2f90e801",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -774,5 +816,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:2cad8e9952f2a93b66fd8e0bbacdf935f2287d4b2cc021599567d729135725b6"
+  "release_digest": "sha256:fa86efc01aa158eca06f1cef340cd2711a91f3c88cab8f4624894323171a09f2"
 }

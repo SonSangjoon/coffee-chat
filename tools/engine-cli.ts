@@ -43,20 +43,40 @@ import {
   prepareEngineUpdate,
   type Sha256Digest,
 } from "./engine-update.ts";
+import {
+  applyEnginePublication,
+  createEnginePublicationDependencies,
+  prepareEnginePublication,
+} from "./engine-publication.ts";
 
 type EngineCommand = "generate" | "check";
-type UpdateOptions = {
-  kind: "update-inspect" | "update-prepare" | "update-apply";
-  target: string;
-  source?: string;
-  format: "human" | "json";
-  setup_receipt?: string;
-  receipt?: string;
-  out?: string;
-  candidate_dir?: string;
-  approve?: Sha256Digest;
-};
-
+type UpdateOptions =
+  | {
+      kind: "update-inspect" | "update-prepare" | "update-apply";
+      target: string;
+      source?: string;
+      format: "human" | "json";
+      setup_receipt?: string;
+      receipt?: string;
+      out?: string;
+      candidate_dir?: string;
+      approve?: Sha256Digest;
+    }
+  | {
+      kind: "publication-prepare";
+      worktree: string;
+      update_receipt: string;
+      publication_receipt: string;
+      out: string;
+      format: "json";
+    }
+  | {
+      kind: "publication-apply";
+      candidate_dir: string;
+      approve: Sha256Digest;
+      receipt: string;
+      format: "json";
+    };
 function usage(): never {
   throw new UnableToComplete({
     code: "engine-cli-usage",
@@ -75,6 +95,46 @@ function parseArgs(args: string[]):
   | UpdateOptions {
   const initialCommand = args.shift();
   if (initialCommand === "update") {
+    if (
+      args.length === 10 &&
+      args[0] === "publish" &&
+      args[1] === "prepare" &&
+      args[2] === "--target" &&
+      args[3] &&
+      args[4] === "--update-receipt" &&
+      args[5] &&
+      args[6] === "--publication-receipt" &&
+      args[7] &&
+      args[8] === "--out" &&
+      args[9]
+    )
+      return {
+        kind: "publication-prepare",
+        worktree: args[3],
+        update_receipt: args[5],
+        publication_receipt: args[7],
+        out: args[9],
+        format: "json",
+      };
+    if (
+      args.length === 8 &&
+      args[0] === "publish" &&
+      args[1] === "apply" &&
+      args[2] === "--dir" &&
+      args[3] &&
+      args[4] === "--approve" &&
+      args[5] &&
+      /^sha256:[a-f0-9]{64}$/.test(args[5]) &&
+      args[6] === "--receipt" &&
+      args[7]
+    )
+      return {
+        kind: "publication-apply",
+        candidate_dir: args[3],
+        approve: args[5] as Sha256Digest,
+        receipt: args[7],
+        format: "json",
+      };
     if (
       args.length === 7 &&
       args[0] === "inspect" &&
@@ -499,6 +559,41 @@ async function main(): Promise<void> {
   try {
     options = parseArgs(process.argv.slice(2));
     if ("kind" in options) {
+      if (options.kind === "publication-prepare") {
+        const preview = await prepareEnginePublication(
+          {
+            worktree_root: options.worktree,
+            update_receipt_path: options.update_receipt,
+            publication_receipt_path: options.publication_receipt,
+            out_dir: options.out,
+          },
+          createEnginePublicationDependencies(),
+        );
+        process.stdout.write(
+          `${JSON.stringify({
+            status: "prepared",
+            candidate_dir: options.out,
+            publication_digest: preview.publication_digest,
+            preview_json: resolve(options.out, "preview.json"),
+            preview_markdown: resolve(options.out, "preview.md"),
+          })}\n`,
+        );
+        process.exitCode = 0;
+        return;
+      }
+      if (options.kind === "publication-apply") {
+        const receipt = await applyEnginePublication(
+          {
+            candidate_dir: options.candidate_dir,
+            approval_digest: options.approve,
+            receipt_path: options.receipt,
+          },
+          createEnginePublicationDependencies(),
+        );
+        process.stdout.write(`${JSON.stringify(receipt)}\n`);
+        process.exitCode = receipt.status === "published" ? 0 : 2;
+        return;
+      }
       if (options.kind === "update-inspect") {
         const result = await inspectEngineUpdate(
           {
