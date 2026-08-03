@@ -2215,10 +2215,17 @@ export async function prepareCandidate(
       projectionOwnershipTarget,
     );
     const ownedStale = new Set(inspection.ownedStalePaths.map(repositoryPath));
+    const transitionOnlyPath = (path: string): boolean =>
+      parsed.request.mode === "make-mine" &&
+      (path === "./.coffee-chat/generated-files.json" ||
+        path.startsWith("./plugins/coffee-chat/") ||
+        path.startsWith("./skills/create-coffee-chat/"));
     if (
       inspection.blockingDiagnostics.length > 0 ||
       inspection.diagnostics.some(
-        (diagnostic) => !ownedStale.has(diagnostic.path),
+        (diagnostic) =>
+          !ownedStale.has(diagnostic.path) &&
+          !transitionOnlyPath(diagnostic.path),
       )
     ) {
       throw validationFailure(

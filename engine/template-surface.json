@@ -4,7 +4,7 @@
   "release": {
     "version": "1.1.0",
     "source_ref": "refs/tags/v1.1.0",
-    "release_digest": "sha256:b9e262d3424ec209558c83d3130eb414d78c3e11797c647f158d5eb93aaaf454"
+    "release_digest": "sha256:88a2ad5ab7520adadf7685ec65b7a1cb17b3f8090acf6c970e1eb001ebfbb547"
   },
   "files": [
     {
@@ -59,7 +59,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:0d28f9aeaf868abded54e20d25234eb0ff3f55b07131b43aa6eb4e8b41124e5d"
+        "digest": "sha256:8ec892de2198fab01ff588510a39939ae5abad2390707e8197bb87aa12aa9063"
       }
     },
     {
@@ -422,7 +422,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:cfdf298a83aa2590cf3427720b6b092759a688bf68e36169c854a963c2f9a453"
+        "digest": "sha256:ee8478e9c53dddbcebc296ae0db01f680b1b3c43ab7c532d41a6e8524b7eed14"
       }
     },
     {
@@ -509,7 +509,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:4c036690c225380d9c53b077f2eb6ccd79daecb3195a8bb028dee52639d57c12"
+        "digest": "sha256:2ea4f7599a643105113a9c2d815d6a80efc1708f27a714a0b17efa506c335d83"
       }
     },
     {
@@ -641,7 +641,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:cfdf298a83aa2590cf3427720b6b092759a688bf68e36169c854a963c2f9a453"
+        "digest": "sha256:ee8478e9c53dddbcebc296ae0db01f680b1b3c43ab7c532d41a6e8524b7eed14"
       }
     },
     {
@@ -1135,7 +1135,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:cfdf298a83aa2590cf3427720b6b092759a688bf68e36169c854a963c2f9a453"
+        "digest": "sha256:ee8478e9c53dddbcebc296ae0db01f680b1b3c43ab7c532d41a6e8524b7eed14"
       }
     },
     {
@@ -1644,6 +1644,17 @@
       }
     },
     {
+      "path": "./tests/transaction.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:43bc874d3d2a782b249919e0f5b7c3691640118c2a4bcc4178584e74702a9e45"
+      }
+    },
+    {
       "path": "./tests/workflow-contracts.test.ts",
       "mode": "100644",
       "engine_audience": "instance",
@@ -1662,7 +1673,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:229b7eaca724ea18ff1311fae0a08a1953ca2d7b70b9fbf3e08c307b1d654731"
+        "digest": "sha256:c8c48ed67d2f6d0eb35c2df469fd2c9045afefc3928d5016c60fe51e51b8a4b3"
       }
     },
     {
@@ -1673,7 +1684,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:4caad891f4951da51364dd7b9f0b612d837773d4f1a44f177033e25594746706"
+        "digest": "sha256:b5a67a4e668748099de59fea800244eb43204c1db5942646e121bc6f28035ae4"
       }
     },
     {
@@ -1750,7 +1761,7 @@
       "disposition": "remove-engine-only",
       "binding": {
         "kind": "content",
-        "digest": "sha256:357c481c9146e3fd047700fe5a107f0f4beaec1774bb8b022d5fef8832fed422"
+        "digest": "sha256:eef84a2293b9e72509d629dd77214dda0a0420ea5da1fd1e9ca5549c28ba4762"
       }
     },
     {
@@ -1827,7 +1838,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e5235118cd80272bd271e550e3a315264d89529be97452d306e55ad1ead7236f"
+        "digest": "sha256:4b021fae0416bd90f3dfdf0f6ecc05b26a540ab677a69312cc9a62f252c9e4ac"
       }
     },
     {
@@ -1908,6 +1919,17 @@
       }
     },
     {
+      "path": "./tools/transaction.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ee0ce4ad23f78f9e5b904dd2df12e690be7405900dd221adb17bec6207a336b3"
+      }
+    },
+    {
       "path": "./tools/update-advisory.ts",
       "mode": "100644",
       "engine_audience": "engine-only",
@@ -1952,5 +1974,5 @@
       }
     }
   ],
-  "surface_digest": "sha256:1d3242c25e137d64c0db01df9f331182ae8b595482fac7120076c814bcd94c1d"
+  "surface_digest": "sha256:9317b6ff7d16d244a1df759be9376bca7c4249e9d28d72e41cfd5442bb108e74"
 }

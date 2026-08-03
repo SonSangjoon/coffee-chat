@@ -484,6 +484,12 @@
       "class": "engine-source"
     },
     {
+      "path": "./tests/transaction.test.ts",
+      "digest": "sha256:43bc874d3d2a782b249919e0f5b7c3691640118c2a4bcc4178584e74702a9e45",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
       "path": "./tests/workflow-contracts.test.ts",
       "digest": "sha256:c7b713e6b6b8a29a0e1d8ec2f624b279d9380e9cec396fc3aa9af967108e6a05",
       "mode": "100644",
@@ -491,13 +497,13 @@
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:229b7eaca724ea18ff1311fae0a08a1953ca2d7b70b9fbf3e08c307b1d654731",
+      "digest": "sha256:c8c48ed67d2f6d0eb35c2df469fd2c9045afefc3928d5016c60fe51e51b8a4b3",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./tools/candidate.ts",
-      "digest": "sha256:4caad891f4951da51364dd7b9f0b612d837773d4f1a44f177033e25594746706",
+      "digest": "sha256:b5a67a4e668748099de59fea800244eb43204c1db5942646e121bc6f28035ae4",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -557,7 +563,7 @@
     },
     {
       "path": "./tools/projections.ts",
-      "digest": "sha256:e5235118cd80272bd271e550e3a315264d89529be97452d306e55ad1ead7236f",
+      "digest": "sha256:4b021fae0416bd90f3dfdf0f6ecc05b26a540ab677a69312cc9a62f252c9e4ac",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -600,6 +606,12 @@
     {
       "path": "./tools/temporal.ts",
       "digest": "sha256:e5272402703b9fdf2463a303bf3ca32d680838853c88e066b718f5d4d0e11d2b",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/transaction.ts",
+      "digest": "sha256:ee0ce4ad23f78f9e5b904dd2df12e690be7405900dd221adb17bec6207a336b3",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -697,7 +709,7 @@
     },
     {
       "path": "./tools/engine-update.ts",
-      "digest": "sha256:357c481c9146e3fd047700fe5a107f0f4beaec1774bb8b022d5fef8832fed422",
+      "digest": "sha256:eef84a2293b9e72509d629dd77214dda0a0420ea5da1fd1e9ca5549c28ba4762",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -714,5 +726,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:b9e262d3424ec209558c83d3130eb414d78c3e11797c647f158d5eb93aaaf454"
+  "release_digest": "sha256:88a2ad5ab7520adadf7685ec65b7a1cb17b3f8090acf6c970e1eb001ebfbb547"
 }

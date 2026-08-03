@@ -902,16 +902,19 @@ export async function inspectGeneratedProjections(
   // Candidate transaction converts it. Keep the engine provisioning Skill
   // visible during that pre-conversion inspection even though the eventual
   // ownership target is an instance package.
-  const allowedSkillNames =
+  const hasEngineProvisioningSurface =
     graph.manifest.repository_role === "engine" &&
-    (await snapshot.exists("skills/create-coffee-chat/SKILL.md"))
-      ? ENGINE_PLUGIN_SKILLS
-      : INSTANCE_SKILLS;
+    ((await snapshot.exists("skills/create-coffee-chat/SKILL.md")) ||
+      (await snapshot.exists(
+        "skills/create-coffee-chat/references/release.json",
+      )));
+  const allowedSkillNames = hasEngineProvisioningSurface
+    ? ENGINE_PLUGIN_SKILLS
+    : INSTANCE_SKILLS;
   const allowedSkillPaths = new Set([
     ...allowedSkillNames.map((name) => `skills/${name}/SKILL.md`),
     ...allowedSkillNames.map((name) => `skills/${name}/references/method.md`),
-    ...(graph.manifest.repository_role === "engine" &&
-    (await snapshot.exists("skills/create-coffee-chat/SKILL.md"))
+    ...(hasEngineProvisioningSurface
       ? [
           "skills/create-coffee-chat/references/engine-release.schema.json",
           "skills/create-coffee-chat/references/engine-template-surface.schema.json",
