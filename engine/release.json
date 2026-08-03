@@ -497,7 +497,7 @@
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:c8c48ed67d2f6d0eb35c2df469fd2c9045afefc3928d5016c60fe51e51b8a4b3",
+      "digest": "sha256:ae8004962012a1d7a7302eb823360ba3ec4b6f8e7d1cead2f1d9891cbec9baba",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -509,7 +509,7 @@
     },
     {
       "path": "./tools/cc.ts",
-      "digest": "sha256:0b45e12e850e40a0a8943d70f640ce2a16e73f294973dae8dde96d5c7f6542b1",
+      "digest": "sha256:00b349dac07a7ff8f2bb9c125796e6bb70354883671c3fadea1612dcd8a387c9",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -660,6 +660,18 @@
       "class": "engine-delivery"
     },
     {
+      "path": "./schemas/engine-review-setup-preview.schema.json",
+      "digest": "sha256:0ca104d61528c02ff5ea7be6ca0b95e8e700afff8c768436143091a3810620d2",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-review-setup-receipt.schema.json",
+      "digest": "sha256:5cf6b09b57d46c8bb764b9452a020e7a7ad372c0d6b1731196265c63405172af",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
       "path": "./schemas/engine-template-surface.schema.json",
       "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014",
       "mode": "100644",
@@ -672,8 +684,44 @@
       "class": "engine-delivery"
     },
     {
+      "path": "./schemas/engine-update-candidate.schema.json",
+      "digest": "sha256:0a6eb7f60d818fd6a65154103eda78b483de793258ec080d1ca145ab6cc6dbf9",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-preview.schema.json",
+      "digest": "sha256:ac875f3c7c52bebe357787a826e3d0d0bff6e5a95cbed528e501ce787bdd4bf0",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-receipt.schema.json",
+      "digest": "sha256:7dcc583a48de019d42a4719d5f69d91d05d1879b4018343576e91ee11fc53762",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
       "path": "./tests/engine-release.test.ts",
       "digest": "sha256:f57555fcd8d19885c4b354831c6f2547d9b6a2de59f214078f54307ec93c4e17",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-review-setup-skill.test.ts",
+      "digest": "sha256:e8bbe6e192f31c1c631495b74ab3201646c10bd6f63448fd8060759625e27243",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-review-setup.test.ts",
+      "digest": "sha256:82f3b959625550080fb60df5502f9a088dc15ac843bf1f07a77b4d04dcf75790",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-update-acceptance.test.ts",
+      "digest": "sha256:e2a692e3b49d200facf48f31dfb01dd5cdb897f92a94d3528855957fd41f667a",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -697,19 +745,19 @@
     },
     {
       "path": "./tools/engine-cli.ts",
-      "digest": "sha256:32ca75eb00bfa0a54229c0e18cb903a0b861fe7976bbbf2236055e7994a53b84",
+      "digest": "sha256:63d19a6c166e8ed9e5fe138b8def2e4d4cdea5413c18b1c3b1f22f1398fe801b",
       "mode": "100644",
       "class": "engine-delivery"
     },
     {
       "path": "./tools/engine-release.ts",
-      "digest": "sha256:066264f20af0a03a12781bbbe6383648505fae9354d4dac9dc69abb4d8ab5051",
+      "digest": "sha256:a9b729b030ab7287605d0f330ba233acd10046663cf7638b428de26c3ab25d3c",
       "mode": "100644",
       "class": "engine-delivery"
     },
     {
       "path": "./tools/engine-update.ts",
-      "digest": "sha256:eef84a2293b9e72509d629dd77214dda0a0420ea5da1fd1e9ca5549c28ba4762",
+      "digest": "sha256:9a4814b69073c7c6b1853161e8bd258e293a28d5e04e78dc2cfefd6b5406caf0",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -726,5 +774,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:88a2ad5ab7520adadf7685ec65b7a1cb17b3f8090acf6c970e1eb001ebfbb547"
+  "release_digest": "sha256:2cad8e9952f2a93b66fd8e0bbacdf935f2287d4b2cc021599567d729135725b6"
 }

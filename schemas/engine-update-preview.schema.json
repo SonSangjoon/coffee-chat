@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-preview.schema.json",
+  "title": "Coffee Chat engine update preview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "update_digest",
+    "target_fingerprint",
+    "source_fingerprint",
+    "current_engine",
+    "target_engine",
+    "migration_path",
+    "worktree_plan",
+    "receipt_plan",
+    "setup_observations",
+    "validation_commands",
+    "prepare_checks",
+    "changed_paths",
+    "conflicts",
+    "preservation",
+    "instance_plugin_version",
+    "validation"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "update_digest": { "$ref": "#/$defs/digest" },
+    "target_fingerprint": { "$ref": "#/$defs/target_fingerprint" },
+    "source_fingerprint": { "$ref": "#/$defs/source_fingerprint" },
+    "current_engine": { "$ref": "#/$defs/provenance" },
+    "target_engine": { "$ref": "#/$defs/provenance" },
+    "migration_path": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/migration_edge" }
+    },
+    "worktree_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_name",
+        "path",
+        "base_commit",
+        "empty_hooks_path",
+        "empty_hooks_path_digest",
+        "effective_config_digest",
+        "worktree_argv",
+        "tree_materialization",
+        "filters"
+      ],
+      "properties": {
+        "branch_name": {
+          "type": "string",
+          "pattern": "^coffee-chat/engine-v[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+        },
+        "path": { "$ref": "#/$defs/absolute_path" },
+        "base_commit": { "$ref": "#/$defs/commit" },
+        "empty_hooks_path": { "$ref": "#/$defs/absolute_path" },
+        "empty_hooks_path_digest": { "$ref": "#/$defs/digest" },
+        "effective_config_digest": { "$ref": "#/$defs/digest" },
+        "worktree_argv": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "-c" },
+            { "type": "string", "minLength": 1 },
+            { "const": "worktree" },
+            { "const": "add" },
+            { "const": "--no-checkout" },
+            { "const": "-b" },
+            { "type": "string", "minLength": 1 },
+            { "$ref": "#/$defs/absolute_path" },
+            { "$ref": "#/$defs/commit" }
+          ],
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "tree_materialization": { "const": "ls-tree-cat-file" },
+        "filters": { "const": "custom-filters-rejected" }
+      }
+    },
+    "receipt_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": { "path": { "$ref": "#/$defs/absolute_path" } }
+    },
+    "setup_observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/setup_observation" }
+    },
+    "validation_commands": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "prepare_checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/prepare_check" }
+    },
+    "changed_paths": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/changed_path" }
+    },
+    "conflicts": { "type": "array", "items": { "$ref": "#/$defs/conflict" } },
+    "preservation": { "$ref": "#/$defs/preservation" },
+    "instance_plugin_version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "before",
+        "after",
+        "before_content_digest",
+        "after_content_digest",
+        "reason"
+      ],
+      "properties": {
+        "before": { "$ref": "#/$defs/semver" },
+        "after": { "$ref": "#/$defs/semver" },
+        "before_content_digest": { "$ref": "#/$defs/digest" },
+        "after_content_digest": { "$ref": "#/$defs/digest" },
+        "reason": {
+          "enum": ["unchanged-package", "distributable-package-changed"]
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": { "status": { "enum": ["passed", "blocked"] } }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "source_commit", "release_digest"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/repo" },
+        "version": { "$ref": "#/$defs/semver" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "release_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "target_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "git_common_dir",
+        "origin_url",
+        "base_commit",
+        "pre_conversion_manifest_digest"
+      ],
+      "properties": {
+        "git_common_dir": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["real_path", "device", "inode"],
+          "properties": {
+            "real_path": { "$ref": "#/$defs/absolute_path" },
+            "device": { "type": "string", "pattern": "^[0-9]+$" },
+            "inode": { "type": "string", "pattern": "^[0-9]+$" }
+          }
+        },
+        "origin_url": { "$ref": "#/$defs/repo" },
+        "base_commit": { "$ref": "#/$defs/commit" },
+        "pre_conversion_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "source_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "real_path",
+        "origin_url",
+        "source_commit",
+        "source_tree",
+        "release_digest",
+        "registry_digest",
+        "package_lock_digest"
+      ],
+      "properties": {
+        "real_path": { "$ref": "#/$defs/absolute_path" },
+        "origin_url": { "$ref": "#/$defs/repo" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "source_tree": { "$ref": "#/$defs/commit" },
+        "release_digest": { "$ref": "#/$defs/digest" },
+        "registry_digest": { "$ref": "#/$defs/digest" },
+        "package_lock_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "migration_edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "from",
+        "to",
+        "document",
+        "document_digest",
+        "write_scopes"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "from": { "$ref": "#/$defs/identity" },
+        "to": { "$ref": "#/$defs/identity" },
+        "document": {
+          "type": "string",
+          "pattern": "^\\./engine/migrations/[A-Za-z0-9._-]+\\.json$"
+        },
+        "document_digest": { "$ref": "#/$defs/digest" },
+        "write_scopes": {
+          "type": "array",
+          "items": { "const": "manifest" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "release_digest"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/repo" },
+        "version": { "$ref": "#/$defs/semver" },
+        "release_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "setup_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "setup_digest",
+        "setup_receipt_digest",
+        "cwd",
+        "command",
+        "node_version",
+        "npm_version",
+        "lockfile_digest",
+        "registry_host",
+        "writes",
+        "exit_code",
+        "stdout_digest",
+        "stderr_digest"
+      ],
+      "properties": {
+        "kind": { "const": "npm-ci" },
+        "setup_digest": { "$ref": "#/$defs/digest" },
+        "setup_receipt_digest": { "$ref": "#/$defs/digest" },
+        "cwd": { "$ref": "#/$defs/absolute_path" },
+        "command": { "const": ["npm", "ci", "--ignore-scripts"] },
+        "node_version": { "const": "24.5.0" },
+        "npm_version": { "const": "11.5.1" },
+        "lockfile_digest": { "$ref": "#/$defs/digest" },
+        "registry_host": { "type": "string", "minLength": 1 },
+        "writes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "exit_code": { "const": 0 },
+        "stdout_digest": { "$ref": "#/$defs/digest" },
+        "stderr_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "prepare_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "diagnostic_codes"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["passed", "blocked"] },
+        "diagnostic_codes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "changed_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "change", "ownership"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[^\\u0000]+$"
+        },
+        "change": { "enum": ["create", "update", "delete"] },
+        "ownership": { "enum": ["engine", "manifest", "projection"] },
+        "before_digest": { "$ref": "#/$defs/digest" },
+        "after_digest": { "$ref": "#/$defs/digest" },
+        "before_mode": { "enum": ["100644", "100755"] },
+        "after_mode": { "enum": ["100644", "100755"] }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "expected_digest", "expected_mode", "actual"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^\\./" },
+        "expected_digest": { "$ref": "#/$defs/digest" },
+        "expected_mode": { "enum": ["100644", "100755"] },
+        "actual": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state", "digest", "mode"],
+              "properties": {
+                "state": { "const": "file" },
+                "digest": { "$ref": "#/$defs/digest" },
+                "mode": { "enum": ["100644", "100755"] }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state"],
+              "properties": {
+                "state": { "enum": ["missing", "symlink", "other"] }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "preservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before_semantic_digest", "after_semantic_digest", "fields"],
+      "properties": {
+        "before_semantic_digest": { "$ref": "#/$defs/digest" },
+        "after_semantic_digest": { "$ref": "#/$defs/digest" },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["pointer", "before_digest", "after_digest", "status"],
+            "properties": {
+              "pointer": { "type": "string", "pattern": "^/" },
+              "before_digest": { "$ref": "#/$defs/digest" },
+              "after_digest": { "$ref": "#/$defs/digest" },
+              "status": { "const": "preserved" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

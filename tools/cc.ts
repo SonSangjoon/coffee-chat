@@ -36,9 +36,8 @@ type HookOptions = {
 };
 type EngineUpdateOptions = {
   kind: "engine-update";
-  target: string;
-  source: string;
-  format: "human" | "json";
+  action: "inspect" | "prepare" | "apply";
+  args: string[];
 };
 type Options =
   | KnowledgeOptions
@@ -112,9 +111,47 @@ function parseArguments(args: string[]): Options {
     )
       return {
         kind: "engine-update",
-        target: args[3],
-        source: args[5],
-        format: args[7],
+        action: "inspect",
+        args: ["update", "inspect", ...args],
+      };
+    if (
+      args.length === 12 &&
+      args[0] === "update" &&
+      args[1] === "prepare" &&
+      args[2] === "--target" &&
+      args[3] &&
+      args[4] === "--source" &&
+      args[5] &&
+      args[6] === "--setup-receipt" &&
+      args[7] &&
+      args[8] === "--receipt" &&
+      args[9] &&
+      args[10] === "--out" &&
+      args[11]
+    )
+      return {
+        kind: "engine-update",
+        action: "prepare",
+        args: ["update", "prepare", ...args.slice(2)],
+      };
+    if (
+      args.length === 10 &&
+      args[0] === "update" &&
+      args[1] === "apply" &&
+      args[2] === "--target" &&
+      args[3] &&
+      args[4] === "--dir" &&
+      args[5] &&
+      args[6] === "--approve" &&
+      args[7] &&
+      /^sha256:[a-f0-9]{64}$/.test(args[7]) &&
+      args[8] === "--receipt" &&
+      args[9]
+    )
+      return {
+        kind: "engine-update",
+        action: "apply",
+        args: ["update", "apply", ...args.slice(2)],
       };
     throw usageFailure();
   }
@@ -315,13 +352,18 @@ async function main(): Promise<void> {
   }
 
   if (options.kind === "engine-update") {
+    const updateFormat: "human" | "json" =
+      options.args.includes("--format") &&
+      options.args[options.args.indexOf("--format") + 1] === "human"
+        ? "human"
+        : "json";
     try {
       const snapshot = await createSnapshot(cwd(), "worktree");
       const validation = await validateKnowledge(snapshot, {
         validateIndex: false,
       });
       if (!validation.graph || validation.diagnostics.length > 0) {
-        render(validation.diagnostics, options.format);
+        render(validation.diagnostics, updateFormat);
         process.exitCode = 1;
         return;
       }
@@ -335,21 +377,12 @@ async function main(): Promise<void> {
                 "Engine update inspection is available only from an engine checkout.",
             },
           ],
-          options.format,
+          updateFormat,
         );
         process.exitCode = 1;
         return;
       }
-      const result = await runEngineDelivery([
-        "update",
-        "inspect",
-        "--target",
-        options.target,
-        "--source",
-        options.source,
-        "--format",
-        options.format,
-      ]);
+      const result = await runEngineDelivery(options.args);
       if (result.stdout) process.stdout.write(result.stdout);
       if (result.stderr) process.stderr.write(result.stderr);
       process.exitCode = result.code;
@@ -362,7 +395,7 @@ async function main(): Promise<void> {
             message: "Engine update inspection could not be started.",
           },
         ],
-        options.format,
+        updateFormat,
       );
       process.exitCode = 2;
     }

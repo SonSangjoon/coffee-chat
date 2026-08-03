@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-review-setup-preview.schema.json",
+  "title": "Coffee Chat engine review setup preview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "setup_digest",
+    "source",
+    "checkout",
+    "effects"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "setup_digest": { "$ref": "#/$defs/digest" },
+    "source": { "$ref": "#/$defs/source" },
+    "checkout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "node_version", "npm_version", "receipt_path"],
+      "properties": {
+        "path": { "$ref": "#/$defs/absolute_path" },
+        "node_version": { "const": "24.5.0" },
+        "npm_version": { "const": "11.5.1" },
+        "receipt_path": { "$ref": "#/$defs/absolute_path" }
+      }
+    },
+    "effects": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/git_effect" },
+        { "$ref": "#/$defs/npm_effect" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "source_ref",
+        "source_commit",
+        "release_digest",
+        "registry_digest",
+        "package_lock_digest"
+      ],
+      "properties": {
+        "repository": { "$ref": "#/$defs/repository" },
+        "source_ref": { "type": "string", "pattern": "^refs/tags/v[^/]+$" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "release_digest": { "$ref": "#/$defs/digest" },
+        "registry_digest": { "$ref": "#/$defs/digest" },
+        "package_lock_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "safe_command": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "maxItems": 32
+    },
+    "safe_path": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "git_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "command", "network_hosts", "writes"],
+      "properties": {
+        "kind": { "const": "git-checkout" },
+        "command": { "$ref": "#/$defs/safe_command" },
+        "network_hosts": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "writes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/safe_path" },
+          "uniqueItems": true
+        }
+      }
+    },
+    "npm_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "command", "network_hosts", "writes"],
+      "properties": {
+        "kind": { "const": "npm-ci" },
+        "command": { "const": ["npm", "ci", "--ignore-scripts"] },
+        "network_hosts": { "const": ["registry.npmjs.org"] },
+        "writes": { "const": ["node_modules/**"] }
+      }
+    }
+  }
+}

@@ -403,6 +403,11 @@ export async function buildTemplateSurface(
         path: repositoryPath(path),
         message: "Local-only paths must not enter the template surface.",
       });
+    if (
+      state.audience === "engine-only" &&
+      currentPolicy.template_disposition === "remove-engine-only"
+    )
+      continue;
     const selfCopy = (
       TEMPLATE_SURFACE_SELF_COPY_PATHS as readonly string[]
     ).includes(repositoryPath(path));

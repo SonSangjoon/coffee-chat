@@ -4,7 +4,7 @@
   "release": {
     "version": "1.1.0",
     "source_ref": "refs/tags/v1.1.0",
-    "release_digest": "sha256:88a2ad5ab7520adadf7685ec65b7a1cb17b3f8090acf6c970e1eb001ebfbb547"
+    "release_digest": "sha256:2cad8e9952f2a93b66fd8e0bbacdf935f2287d4b2cc021599567d729135725b6"
   },
   "files": [
     {
@@ -59,7 +59,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:8ec892de2198fab01ff588510a39939ae5abad2390707e8197bb87aa12aa9063"
+        "digest": "sha256:662c275f172ec3429e491fde2231bc03bc5c7aaa3ea0dc6bfd01f8f50f72d2b4"
       }
     },
     {
@@ -294,148 +294,6 @@
       }
     },
     {
-      "path": "./docs/superpowers/plans/2026-08-01-coffee-chat-v1.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:e69fbbb7adcb3df452675fd168689497ab8d48e2d3cab34716db7de7e46857ec"
-      }
-    },
-    {
-      "path": "./docs/superpowers/plans/2026-08-02-codeql-merge-gate.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:883bf1e6d04e4088ac07accb25afd7125a2914513a9b90b42d7ed1e8fcc1321f"
-      }
-    },
-    {
-      "path": "./docs/superpowers/plans/2026-08-02-coffee-chat-engine-v1.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:16c55e3adb693c990caed5e04ce5348d84c854c2479450e7b531ab9a647d85b6"
-      }
-    },
-    {
-      "path": "./docs/superpowers/plans/2026-08-02-coffee-chat-readme.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8c8762368b62407bc5b644455defea94d35d06ea7583a23a4bc71df94f5b5848"
-      }
-    },
-    {
-      "path": "./docs/superpowers/plans/2026-08-03-coffee-chat-agent-lifecycle.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:e207cfc4c85b20b6f44350c64bf2a11f025022be8114df7c2e8477fd9b1d044d"
-      }
-    },
-    {
-      "path": "./docs/superpowers/specs/2026-07-30-coffee-chat-design.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:182a2d90dc87ab745e7896d86cd790353c05b24896ead635200d571532d8018e"
-      }
-    },
-    {
-      "path": "./docs/superpowers/specs/2026-08-02-coffee-chat-readme-design.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8b0adbd7952c9c0031f9ed00b9bc790d9f6abb7bdd891fd3f66f80d3d12c3f70"
-      }
-    },
-    {
-      "path": "./docs/superpowers/specs/2026-08-03-coffee-chat-agent-lifecycle-design.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:112f2ba9f4fd03e14c443b130b5649b3441cf04e6a8c27a3c09d284a8ce6c796"
-      }
-    },
-    {
-      "path": "./docs/testing.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8b966658f079deb38dc5377493edb6d957468eba4b84fda8cda7f912bb3a4d7f"
-      }
-    },
-    {
-      "path": "./engine/migrations/registry.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:92d08686a73e43e1c842a739f2f6d0018fca5995c12a6d55f5f597b31c4954c3"
-      }
-    },
-    {
-      "path": "./engine/release-config.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:829ad09f6456899f9bb2c41cd025b0f06d40678a52a9fcd8e497b4b14792f41b"
-      }
-    },
-    {
-      "path": "./engine/release.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:ee8478e9c53dddbcebc296ae0db01f680b1b3c43ab7c532d41a6e8524b7eed14"
-      }
-    },
-    {
-      "path": "./engine/template-surface.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "surface-self-copy"
-      }
-    },
-    {
       "path": "./method/shared-method.md",
       "mode": "100644",
       "engine_audience": "instance",
@@ -480,181 +338,6 @@
       }
     },
     {
-      "path": "./plugins/coffee-chat/.claude-plugin/plugin.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:46ae25dc13593d307767810f3991a951d1c1e3979634b9386f97059cc79355ea"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/.codex-plugin/plugin.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:2ea4f7599a643105113a9c2d815d6a80efc1708f27a714a0b17efa506c335d83"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/LICENSE",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:4e877a766f8f5ea05b55cd7447e272c9307e892014c573704a4b9f2c7146a0c0"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/apply-perspective/SKILL.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/apply-perspective/references/method.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/build-kg/SKILL.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/build-kg/references/method.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/coffee-chat/SKILL.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/coffee-chat/references/method.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/create-coffee-chat/SKILL.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:3b6b3daffd54b132ca3f3152e69ca351e82618d62ac9d1e2e9d2ec529008604a"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/engine-release.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/method.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:ee8478e9c53dddbcebc296ae0db01f680b1b3c43ab7c532d41a6e8524b7eed14"
-      }
-    },
-    {
-      "path": "./plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "surface-self-copy"
-      }
-    },
-    {
       "path": "./schemas/candidate-manifest.schema.json",
       "mode": "100644",
       "engine_audience": "instance",
@@ -696,72 +379,6 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:369bed55bacbb8e397aca41f742d3bc92cedb2d87d19cb43ba48ccf537d1d052"
-      }
-    },
-    {
-      "path": "./schemas/engine-migration-document.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:a74716a3d8bd1b0aac8a5fa7ff475208487f575c99b25fd72f3bd20741a26a5a"
-      }
-    },
-    {
-      "path": "./schemas/engine-migration-registry.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:f88958aea890636a48053ead87d2b0d94d384020f197275c66e10d84ee46397f"
-      }
-    },
-    {
-      "path": "./schemas/engine-release-config.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:d537331e421147ba9b6a5a9972d378108a4b1e60205f5ac830984bf4770fdb9d"
-      }
-    },
-    {
-      "path": "./schemas/engine-release.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4"
-      }
-    },
-    {
-      "path": "./schemas/engine-template-surface.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014"
-      }
-    },
-    {
-      "path": "./schemas/engine-update-advisory.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:adb3dd0de5b638d29bddda4b5fc11e54eada5df716682f9d483ea7943272d029"
       }
     },
     {
@@ -1084,71 +701,6 @@
       }
     },
     {
-      "path": "./skills/create-coffee-chat/SKILL.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:3b6b3daffd54b132ca3f3152e69ca351e82618d62ac9d1e2e9d2ec529008604a"
-      }
-    },
-    {
-      "path": "./skills/create-coffee-chat/references/engine-release.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4"
-      }
-    },
-    {
-      "path": "./skills/create-coffee-chat/references/engine-template-surface.schema.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014"
-      }
-    },
-    {
-      "path": "./skills/create-coffee-chat/references/method.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:80b3f9ccfda3de337f834c971610ec916c3b5e949623054f36927f67bbabde7f"
-      }
-    },
-    {
-      "path": "./skills/create-coffee-chat/references/release.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:ee8478e9c53dddbcebc296ae0db01f680b1b3c43ab7c532d41a6e8524b7eed14"
-      }
-    },
-    {
-      "path": "./skills/create-coffee-chat/references/template-surface.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "generated",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "surface-self-copy"
-      }
-    },
-    {
       "path": "./tests/artifact-boundaries.test.ts",
       "mode": "100644",
       "engine_audience": "instance",
@@ -1193,39 +745,6 @@
       }
     },
     {
-      "path": "./tests/engine-release.test.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:f57555fcd8d19885c4b354831c6f2547d9b6a2de59f214078f54307ec93c4e17"
-      }
-    },
-    {
-      "path": "./tests/engine-update-cli.test.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:c556ac1d480459ad40ffa778e94d443ee51866f608f847d43aa126bbde126de2"
-      }
-    },
-    {
-      "path": "./tests/engine-update.test.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:a5fa6588dc65b43a6c8e7ddb4092be57a87e3e5b1b09ce09730916e6580c024e"
-      }
-    },
-    {
       "path": "./tests/fixture-isolation.test.ts",
       "mode": "100644",
       "engine_audience": "instance",
@@ -1234,138 +753,6 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:c62770a291a7658e5b9bbd05a020c841bb6487fdb1cd1d0c4bcdc9ea57ed6fff"
-      }
-    },
-    {
-      "path": "./tests/fixtures/engine-valid/coffee-chat.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:dd8c970af312d471a63da569a9bfbc523e856ae8c0aa3dc0ecaa5251f3746949"
-      }
-    },
-    {
-      "path": "./tests/fixtures/example-input/README.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8a1d5588a13677f88746e7cad58081452191cee3ac34c2cfcbe60a74b6f95377"
-      }
-    },
-    {
-      "path": "./tests/fixtures/example-input/first-note-request.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:5cb28fb8b38623bd7e916be53090f30737cbf098c142a5b9516960d3e2dc5670"
-      }
-    },
-    {
-      "path": "./tests/fixtures/initialized-valid/.coffee-chat/engine-lock.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:a28affb7718a8956e1bb83e0f55db695e2d8b838045d429cf19e4e78053488b4"
-      }
-    },
-    {
-      "path": "./tests/fixtures/initialized-valid/coffee-chat.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:96dff4c12eb4e9b4a5e1474832fb410e02beef0d5d09748b4c0a64a78ebe9562"
-      }
-    },
-    {
-      "path": "./tests/fixtures/initialized-valid/knowledge/entities.yml",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:4334eae1a0cb7b768cc346e5a7611afb1a1bfa1cef42f1970822899ccd131c2d"
-      }
-    },
-    {
-      "path": "./tests/fixtures/initialized-valid/knowledge/notes/a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:59992301107d2aa8102cc26cbd8e0061d1e843e5cbc01bd225846e01bf5ebcd4"
-      }
-    },
-    {
-      "path": "./tests/fixtures/initialized-valid/knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:ca82f7c0cd224cd638be5ef88a258df807aaf459db9a0116d72893c00db3912f"
-      }
-    },
-    {
-      "path": "./tests/fixtures/synthetic-instance/.coffee-chat/engine-lock.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:a28affb7718a8956e1bb83e0f55db695e2d8b838045d429cf19e4e78053488b4"
-      }
-    },
-    {
-      "path": "./tests/fixtures/synthetic-instance/coffee-chat.json",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:8f48ff9f5905e19c0284eefc98da3fc9d915d00dbb89fdaadac437465edec988"
-      }
-    },
-    {
-      "path": "./tests/fixtures/synthetic-instance/knowledge/entities.yml",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:f381f46ad6dba0dc3ddf5b7be0e3c0293729c80f02b750e09893870acc6960e8"
-      }
-    },
-    {
-      "path": "./tests/fixtures/synthetic-instance/knowledge/notes/8a7b6c5d-4e3f-4a21-b098-7c6d5e4f3a2b.md",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "authored",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:d63fa587c263e3cb744648aeed858104380f9d3a02147365b0cb3370b9f96a75"
       }
     },
     {
@@ -1399,17 +786,6 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:83b18a94371e4cf60530140ad416f9f8d66191da76517b46637f62cb7886abca"
-      }
-    },
-    {
-      "path": "./tests/helpers/engine-update-fixture.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:536ded5b085b85fbd12b1e144375ef23decc5ed86e1bbd3993c2b24993b0c60e"
       }
     },
     {
@@ -1673,7 +1049,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c8c48ed67d2f6d0eb35c2df469fd2c9045afefc3928d5016c60fe51e51b8a4b3"
+        "digest": "sha256:ae8004962012a1d7a7302eb823360ba3ec4b6f8e7d1cead2f1d9891cbec9baba"
       }
     },
     {
@@ -1695,7 +1071,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:0b45e12e850e40a0a8943d70f640ce2a16e73f294973dae8dde96d5c7f6542b1"
+        "digest": "sha256:00b349dac07a7ff8f2bb9c125796e6bb70354883671c3fadea1612dcd8a387c9"
       }
     },
     {
@@ -1707,17 +1083,6 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:8a140eee299223c5d84daa859374b03dd79b96b021fea20112872dca51cbfe47"
-      }
-    },
-    {
-      "path": "./tools/engine-cli.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:32ca75eb00bfa0a54229c0e18cb903a0b861fe7976bbbf2236055e7994a53b84"
       }
     },
     {
@@ -1740,28 +1105,6 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:4db33062474be28bd90be871df4f6bfdeee7d584daae94a55ac9c1f9b6b4e317"
-      }
-    },
-    {
-      "path": "./tools/engine-release.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:066264f20af0a03a12781bbbe6383648505fae9354d4dac9dc69abb4d8ab5051"
-      }
-    },
-    {
-      "path": "./tools/engine-update.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:eef84a2293b9e72509d629dd77214dda0a0420ea5da1fd1e9ca5549c28ba4762"
       }
     },
     {
@@ -1817,17 +1160,6 @@
       "binding": {
         "kind": "content",
         "digest": "sha256:0b72448fb78b529f2bb9e88853994e6920b572ade988188ef743d08927097f3a"
-      }
-    },
-    {
-      "path": "./tools/migrations.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:bba67d6ec57466d630d43520eb492a7cdd39b055f01dbb00e71da3d6a2db3e93"
       }
     },
     {
@@ -1930,17 +1262,6 @@
       }
     },
     {
-      "path": "./tools/update-advisory.ts",
-      "mode": "100644",
-      "engine_audience": "engine-only",
-      "engine_ownership": "source",
-      "disposition": "remove-engine-only",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:de3826efc8bd3c773eb26b6922ffb7e0470de8b84e3d9f9bb0bd27ef8ff24dc1"
-      }
-    },
-    {
       "path": "./tools/workflow-projections.ts",
       "mode": "100644",
       "engine_audience": "instance",
@@ -1974,5 +1295,5 @@
       }
     }
   ],
-  "surface_digest": "sha256:9317b6ff7d16d244a1df759be9376bca7c4249e9d28d72e41cfd5442bb108e74"
+  "surface_digest": "sha256:75fa4a7df751d982143c0cb0e631595dc9554af84bc586abbd9ade03718b012c"
 }

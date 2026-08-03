@@ -36,14 +36,25 @@ import type {
   EngineReleaseConfig,
   RepositoryProjection,
 } from "./engine-contracts.ts";
-import { inspectEngineUpdate } from "./engine-update.ts";
+import {
+  applyEngineUpdate,
+  createEngineUpdateRuntime,
+  inspectEngineUpdate,
+  prepareEngineUpdate,
+  type Sha256Digest,
+} from "./engine-update.ts";
 
 type EngineCommand = "generate" | "check";
 type UpdateOptions = {
-  kind: "update";
+  kind: "update-inspect" | "update-prepare" | "update-apply";
   target: string;
-  source: string;
+  source?: string;
   format: "human" | "json";
+  setup_receipt?: string;
+  receipt?: string;
+  out?: string;
+  candidate_dir?: string;
+  approve?: Sha256Digest;
 };
 
 function usage(): never {
@@ -75,10 +86,54 @@ function parseArgs(args: string[]):
       (args[6] === "human" || args[6] === "json")
     )
       return {
-        kind: "update",
+        kind: "update-inspect",
         target: args[2],
         source: args[4],
         format: args[6],
+      };
+    if (
+      args.length === 11 &&
+      args[0] === "prepare" &&
+      args[1] === "--target" &&
+      args[2] &&
+      args[3] === "--source" &&
+      args[4] &&
+      args[5] === "--setup-receipt" &&
+      args[6] &&
+      args[7] === "--receipt" &&
+      args[8] &&
+      args[9] === "--out" &&
+      args[10]
+    )
+      return {
+        kind: "update-prepare",
+        target: args[2],
+        source: args[4],
+        setup_receipt: args[6],
+        receipt: args[8],
+        out: args[10],
+        format: "json",
+      };
+    if (
+      args.length === 9 &&
+      args[0] === "apply" &&
+      args[1] === "--target" &&
+      args[2] &&
+      args[3] === "--dir" &&
+      args[4] &&
+      args[5] === "--approve" &&
+      args[6] &&
+      /^sha256:[a-f0-9]{64}$/.test(args[6]) &&
+      args[7] === "--receipt" &&
+      args[8]
+    )
+      return {
+        kind: "update-apply",
+        target: args[2],
+        candidate_dir: args[4],
+        approve: args[6] as Sha256Digest,
+        receipt: args[8],
+        format: "json",
       };
     usage();
   }
@@ -444,18 +499,66 @@ async function main(): Promise<void> {
   try {
     options = parseArgs(process.argv.slice(2));
     if ("kind" in options) {
-      const result = await inspectEngineUpdate(
-        { target_root: options.target, source_root: options.source },
-        {
-          read_file: readFile,
-          lstat: (path) => lstat(path, { bigint: true }),
-          run_git_readonly: runGitReadonly,
-        },
-      );
-      renderUpdate(result, options.format);
-      process.exitCode = 0;
-      return;
+      if (options.kind === "update-inspect") {
+        const result = await inspectEngineUpdate(
+          {
+            target_root: options.target,
+            source_root: options.source as string,
+          },
+          {
+            read_file: readFile,
+            lstat: (path) => lstat(path, { bigint: true }),
+            run_git_readonly: runGitReadonly,
+          },
+        );
+        renderUpdate(result, options.format);
+        process.exitCode = 0;
+        return;
+      }
+      if (options.kind === "update-prepare") {
+        const preview = await prepareEngineUpdate(
+          {
+            target_root: options.target,
+            source_root: options.source as string,
+            setup_receipt_path: options.setup_receipt as string,
+            receipt_path: options.receipt as string,
+            out_dir: options.out as string,
+          },
+          createEngineUpdateRuntime(),
+        );
+        process.stdout.write(
+          JSON.stringify({
+            status: "prepared",
+            candidate_dir: options.out,
+            update_digest: preview.update_digest,
+            preview_json: resolve(options.out as string, "preview.json"),
+            preview_markdown: resolve(options.out as string, "preview.md"),
+          }) + "\n",
+        );
+        process.exitCode = 0;
+        return;
+      }
+      if (options.kind === "update-apply") {
+        const receipt = await applyEngineUpdate(
+          {
+            target_root: options.target,
+            candidate_dir: options.candidate_dir as string,
+            approval_digest: options.approve as Sha256Digest,
+            receipt_path: options.receipt as string,
+          },
+          createEngineUpdateRuntime(),
+        );
+        process.stdout.write(JSON.stringify(receipt) + "\n");
+        process.exitCode =
+          receipt.status === "applied"
+            ? 0
+            : receipt.status === "invalidated"
+              ? 1
+              : 2;
+        return;
+      }
     }
+    if ("kind" in options) throw new Error("engine-cli-usage");
     const root = process.cwd();
     const snapshot = await createSnapshot(root, options.snapshot);
     const projection = await expectedProjection(root, snapshot);
@@ -482,7 +585,7 @@ async function main(): Promise<void> {
             message: "Engine generation could not complete.",
           };
     process.stdout.write(`${JSON.stringify([diagnostic])}\n`);
-    process.exitCode = error instanceof UnableToComplete ? 2 : 1;
+    process.exitCode = error instanceof ValidationFailure ? 1 : 2;
   }
 }
 
