@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { Ajv2020 } from "ajv/dist/2020.js";
@@ -9,17 +9,6 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "..");
 const require = createRequire(import.meta.url);
 const addFormats = require("ajv-formats").default as FormatsPlugin;
-const schemaNames = [
-  "coffee-chat.schema.json",
-  "note-frontmatter.schema.json",
-  "entity-registry.schema.json",
-  "knowledge-index.schema.json",
-  "engine-lock.schema.json",
-  "candidate-request.schema.json",
-  "candidate-manifest.schema.json",
-  "preview.schema.json",
-  "receipt.schema.json",
-] as const;
 const targetFingerprint = {
   git_common_dir: {
     real_path: "/tmp/repository/.git",
@@ -40,6 +29,9 @@ async function contractValidator() {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
 
+  const schemaNames = (await readdir(resolve(root, "schemas")))
+    .filter((name) => name.endsWith(".schema.json"))
+    .sort();
   for (const name of schemaNames) {
     ajv.addSchema(await readJson<AnySchema>(`schemas/${name}`));
   }

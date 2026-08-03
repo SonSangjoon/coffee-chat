@@ -38,12 +38,26 @@ const addFormats = require("ajv-formats").default as FormatsPlugin;
 const uuidV4Pattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const fullDatePattern = /^\d{4}-\d{2}-\d{2}$/;
-const schemaFiles = [
-  "coffee-chat.schema.json",
-  "note-frontmatter.schema.json",
-  "entity-registry.schema.json",
-  "knowledge-index.schema.json",
-] as const;
+
+function compareCodePoints(left: string, right: string): number {
+  const leftPoints = Array.from(
+    left,
+    (value) => value.codePointAt(0) as number,
+  );
+  const rightPoints = Array.from(
+    right,
+    (value) => value.codePointAt(0) as number,
+  );
+  for (
+    let index = 0;
+    index < Math.min(leftPoints.length, rightPoints.length);
+    index += 1
+  ) {
+    const delta = leftPoints[index]! - rightPoints[index]!;
+    if (delta !== 0) return delta;
+  }
+  return leftPoints.length - rightPoints.length;
+}
 
 export type Citation = {
   url: string;
@@ -154,8 +168,10 @@ async function validators(snapshot: Snapshot): Promise<Validators> {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
   try {
-    for (const file of schemaFiles) {
-      const path = `schemas/${file}`;
+    const schemaFiles = (await snapshot.list("schemas"))
+      .filter((path) => path.endsWith(".schema.json"))
+      .sort(compareCodePoints);
+    for (const path of schemaFiles) {
       const { text } = await strictText(snapshot, path);
       ajv.addSchema(parseStrictJson(text, path) as object);
     }

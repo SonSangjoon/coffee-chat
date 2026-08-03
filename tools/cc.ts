@@ -1,4 +1,5 @@
 import { cwd } from "node:process";
+import { execFile } from "node:child_process";
 import { applyCandidate, prepareCandidate } from "./candidate.ts";
 import type { Diagnostic } from "./contracts.ts";
 import {
@@ -144,6 +145,29 @@ function render(diagnostics: Diagnostic[], format: "human" | "json"): void {
   }
 }
 
+function runEngineDelivery(
+  args: string[],
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      ["--experimental-strip-types", "tools/engine-cli.ts", ...args],
+      { cwd: cwd(), encoding: "utf8", maxBuffer: 32 * 1024 * 1024 },
+      (error, stdout, stderr) =>
+        resolve({
+          code:
+            error && typeof error.code === "number"
+              ? error.code
+              : error
+                ? 2
+                : 0,
+          stdout: String(stdout),
+          stderr: String(stderr),
+        }),
+    );
+  });
+}
+
 async function main(): Promise<void> {
   let options: Options;
   try {
@@ -256,6 +280,25 @@ async function main(): Promise<void> {
     if (!validation.graph || validation.diagnostics.length > 0) {
       render(validation.diagnostics, options.format);
       process.exitCode = 1;
+      return;
+    }
+
+    if (
+      validation.graph.manifest.repository_role === "engine" &&
+      (options.command === "generate" || options.command === "check")
+    ) {
+      const deliveryArgs: string[] = [options.command];
+      if (options.generationCheck) deliveryArgs.push("--check");
+      deliveryArgs.push(
+        "--snapshot",
+        options.snapshot,
+        "--format",
+        options.format,
+      );
+      const result = await runEngineDelivery(deliveryArgs);
+      if (result.stdout) process.stdout.write(result.stdout);
+      if (result.stderr) process.stderr.write(result.stderr);
+      process.exitCode = result.code;
       return;
     }
 

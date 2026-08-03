@@ -1,0 +1,1683 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "https://github.com/SonSangjoon/coffee-chat",
+  "release": {
+    "version": "1.1.0",
+    "source_ref": "refs/tags/v1.1.0",
+    "release_digest": "sha256:c417ea5eed145d608c13a9b2396c9feffc47b54efb94a72924976061dd1b0949"
+  },
+  "files": [
+    {
+      "path": "./.agents/plugins/marketplace.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e416a10d9708a4ed5915704ede2f7d32f6554ddeb996fffcb70d005de94404be"
+      }
+    },
+    {
+      "path": "./.claude-plugin/marketplace.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:cd1bc7e1b477195829965e7e8f6f8c3ad18e3432444f08bcd2fa05b00ce01766"
+      }
+    },
+    {
+      "path": "./.claude-plugin/plugin.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:46ae25dc13593d307767810f3991a951d1c1e3979634b9386f97059cc79355ea"
+      }
+    },
+    {
+      "path": "./.codex-plugin/plugin.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
+      }
+    },
+    {
+      "path": "./.editorconfig",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:a6b98ea7cb6d61ed8d430dd0dffa46c87012b5cf859d4ce7207898954951fdcd"
+      }
+    },
+    {
+      "path": "./.gitattributes",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8a0f8488eb7c7da84260209230d7982c1f80d4c8745b84ccbe97c247df24c0a6"
+      }
+    },
+    {
+      "path": "./.github/workflows/ci.yml",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:52b3bdc20797149feef8db028d9c33cb43d76783607d6eb99c0fe72eddf0b683"
+      }
+    },
+    {
+      "path": "./.github/workflows/codeql.yml",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:9847d44c9841ccedd4fc0780c08015f1371e79bc93da8d3693ab5b6fe2099c98"
+      }
+    },
+    {
+      "path": "./.github/workflows/pages.yml",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8b586216f6e8cf3cb4a118f5d93f2713143b82d70698a5b910c842b58a0cb32c"
+      }
+    },
+    {
+      "path": "./.gitignore",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8c1a0bf3df5030eb6d06659284c18b722a3bc3581ee5954730f0d2d7e42190fa"
+      }
+    },
+    {
+      "path": "./.gitleaks.toml",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4cb73cbd6e7a30e9a4a4d793ff7cb29d31063345e6917f32bfb3f6cbe614b48d"
+      }
+    },
+    {
+      "path": "./.node-version",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0667c9be2ca8fad9083f936776a81b73fb1c81e32f30cb4da5460f470a09f1c7"
+      }
+    },
+    {
+      "path": "./.pre-commit-config.yaml",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:2b5ea92fa21097814724f5e3f3c94dfef6188900be2ef385a2c034ee935941ed"
+      }
+    },
+    {
+      "path": "./.prettierignore",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:aa55697893fb2a053cd00aa9024e38ff8668659d220dbefc43b78a8e61bb21c2"
+      }
+    },
+    {
+      "path": "./AGENTS.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0913c98d563051bd753a8481787dde278d860a656c4e8ab735136a4463cdab49"
+      }
+    },
+    {
+      "path": "./CLAUDE.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49"
+      }
+    },
+    {
+      "path": "./CONTENT_LICENSE.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "authored",
+      "disposition": "replace-instance-authored",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:1ba2bb24cbae04acc784d025740241d3f093898a7b607104bc6ae75270838eca"
+      }
+    },
+    {
+      "path": "./LICENSE",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4e877a766f8f5ea05b55cd7447e272c9307e892014c573704a4b9f2c7146a0c0"
+      }
+    },
+    {
+      "path": "./README.ko.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:eae5fd51eea04a0878dbbae4cc117652f05915f44271ce6200c556468073c72b"
+      }
+    },
+    {
+      "path": "./README.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "generated",
+      "disposition": "replace-instance-generated",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:1610959378b4bb31a7eb46381efc8242b956aaf7bcf688a8ccab07ebbd70cb36"
+      }
+    },
+    {
+      "path": "./astro.config.mjs",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6756d1518872b9a170b8585a0033e103c54a81860517812ac1ba8d64344c05ec"
+      }
+    },
+    {
+      "path": "./coffee-chat.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "authored",
+      "disposition": "replace-instance-authored",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:dd8c970af312d471a63da569a9bfbc523e856ae8c0aa3dc0ecaa5251f3746949"
+      }
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-cover.png",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:88cf9c695c7793ef1a2ef28a1ad528c5b40ec4c6aed7e53495211d1a36ad48d9"
+      }
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-flow.en.png",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:399aeedde8920153d7c2fe9cc2d62d26ecc07a51d01d9f20e97ebb9ac180064c"
+      }
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-trust.en.png",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:fe668c6c795baeccd1f07fa586d30b4d1d0fcaa7077bba5c47d35f0874bf8df4"
+      }
+    },
+    {
+      "path": "./docs/superpowers/plans/2026-08-01-coffee-chat-v1.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e69fbbb7adcb3df452675fd168689497ab8d48e2d3cab34716db7de7e46857ec"
+      }
+    },
+    {
+      "path": "./docs/superpowers/plans/2026-08-02-codeql-merge-gate.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:883bf1e6d04e4088ac07accb25afd7125a2914513a9b90b42d7ed1e8fcc1321f"
+      }
+    },
+    {
+      "path": "./docs/superpowers/plans/2026-08-02-coffee-chat-engine-v1.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:16c55e3adb693c990caed5e04ce5348d84c854c2479450e7b531ab9a647d85b6"
+      }
+    },
+    {
+      "path": "./docs/superpowers/plans/2026-08-02-coffee-chat-readme.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8c8762368b62407bc5b644455defea94d35d06ea7583a23a4bc71df94f5b5848"
+      }
+    },
+    {
+      "path": "./docs/superpowers/plans/2026-08-03-coffee-chat-agent-lifecycle.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e207cfc4c85b20b6f44350c64bf2a11f025022be8114df7c2e8477fd9b1d044d"
+      }
+    },
+    {
+      "path": "./docs/superpowers/specs/2026-07-30-coffee-chat-design.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:182a2d90dc87ab745e7896d86cd790353c05b24896ead635200d571532d8018e"
+      }
+    },
+    {
+      "path": "./docs/superpowers/specs/2026-08-02-coffee-chat-readme-design.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8b0adbd7952c9c0031f9ed00b9bc790d9f6abb7bdd891fd3f66f80d3d12c3f70"
+      }
+    },
+    {
+      "path": "./docs/superpowers/specs/2026-08-03-coffee-chat-agent-lifecycle-design.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:112f2ba9f4fd03e14c443b130b5649b3441cf04e6a8c27a3c09d284a8ce6c796"
+      }
+    },
+    {
+      "path": "./docs/testing.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:363fd5730a2d6c97738f1ef53a743c6767423122967419332b2bf93ef76dfaa1"
+      }
+    },
+    {
+      "path": "./engine/migrations/registry.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:92d08686a73e43e1c842a739f2f6d0018fca5995c12a6d55f5f597b31c4954c3"
+      }
+    },
+    {
+      "path": "./engine/release-config.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:829ad09f6456899f9bb2c41cd025b0f06d40678a52a9fcd8e497b4b14792f41b"
+      }
+    },
+    {
+      "path": "./engine/release.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:a10bbe82e00205479458f9e278c10029e918d6e042106ec75bb3d46bb4e0d550"
+      }
+    },
+    {
+      "path": "./engine/template-surface.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "surface-self-copy"
+      }
+    },
+    {
+      "path": "./method/shared-method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:2402080f02a70f9d5ddc9ac2e46289318b48f70b9c5afdd8d78652b3547ad610"
+      }
+    },
+    {
+      "path": "./package-lock.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:cec8e9ad863861bc24b72691d43947ba394ed85fa5268fb3cda0f7280e8b339f"
+      }
+    },
+    {
+      "path": "./package.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e7f11ed7cc05bfeec14a837bc6a234c8e21515d6453454ba2622a30954bf275f"
+      }
+    },
+    {
+      "path": "./playwright.config.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:d45b65c5e38a604e89c8623e826a2f2ce3310f5d45c5b53fab10656ec13c2e30"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/.claude-plugin/plugin.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:46ae25dc13593d307767810f3991a951d1c1e3979634b9386f97059cc79355ea"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/.codex-plugin/plugin.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0f7f2c36aea86eb04ab560c8f9a7f5a1a6cce00be3619ce7d9ffb8f77cd27984"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:16db6198102a1ba15a14556ef2c3c123d095b0a6d8f25c77d050a01154876ce6"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/LICENSE",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4e877a766f8f5ea05b55cd7447e272c9307e892014c573704a4b9f2c7146a0c0"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/apply-perspective/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/apply-perspective/references/method.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/build-kg/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/build-kg/references/method.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/coffee-chat/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d"
+      }
+    },
+    {
+      "path": "./plugins/coffee-chat/skills/coffee-chat/references/method.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "generated",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      }
+    },
+    {
+      "path": "./schemas/candidate-manifest.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ffb20df1ad5c808b994f733114163a840ee3a3e0d72684df69070fbd187c01a7"
+      }
+    },
+    {
+      "path": "./schemas/candidate-request.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:1d2271cd353eff72c9683ee24e3fd410cf037a4b4f7cb83299f895da6446d83e"
+      }
+    },
+    {
+      "path": "./schemas/coffee-chat.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:c06ab3651a6167b5a2dfd098e67458f024135f160754d5250e6a1fb9a84935a5"
+      }
+    },
+    {
+      "path": "./schemas/engine-lock.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4b0b6f3d90648f0df330fd80788cf6cd7be7b93980ba7ab7767a8da326caa5a6"
+      }
+    },
+    {
+      "path": "./schemas/engine-migration-registry.schema.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f88958aea890636a48053ead87d2b0d94d384020f197275c66e10d84ee46397f"
+      }
+    },
+    {
+      "path": "./schemas/engine-release-config.schema.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:d537331e421147ba9b6a5a9972d378108a4b1e60205f5ac830984bf4770fdb9d"
+      }
+    },
+    {
+      "path": "./schemas/engine-release.schema.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4"
+      }
+    },
+    {
+      "path": "./schemas/engine-template-surface.schema.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014"
+      }
+    },
+    {
+      "path": "./schemas/entity-registry.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:de3e04fc7c8678e099a43b44b2fd91244655c94daeb94c509df737d4fd1e1430"
+      }
+    },
+    {
+      "path": "./schemas/knowledge-index.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:a2e3407389b69809014adfb476422e0ffa126668d4e73af1ece9cd426526e77b"
+      }
+    },
+    {
+      "path": "./schemas/note-frontmatter.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:2625547284873f8d53e335f1246e00c8828906987177f85b36224696d6ccd6e2"
+      }
+    },
+    {
+      "path": "./schemas/preview.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:d76c3a27698a7b36e5ff61cf72ece7aa60875abc675080b3a9aecb392cdde719"
+      }
+    },
+    {
+      "path": "./schemas/receipt.schema.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:d27ebee49cc1842f349b1a2d7eee762e62bf367f9edbd15b411cd03d0a2a9357"
+      }
+    },
+    {
+      "path": "./site/components/GraphView.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:2df86d3cd119fc8cced9301ff92fab1fe5f3a847424c9ab458a616b02d409a1c"
+      }
+    },
+    {
+      "path": "./site/components/KnowledgeList.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e8725ec974f23eef591340419bbf1ea878cb445534bffea122b926ef71e7d4c2"
+      }
+    },
+    {
+      "path": "./site/components/TemporalFilters.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:5dc16acbe535a8617990fb8504b4419bea281cc843929d5c3f70549cc3090f16"
+      }
+    },
+    {
+      "path": "./site/env.d.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:22ae54e67c4db7cdcf5d3893033581482486f25f0c0479f0bcddf87746dadd87"
+      }
+    },
+    {
+      "path": "./site/layouts/BaseLayout.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:1b0149848765b8ed2ae91ed7b11604c1e1b5ed7fbc7ceeab600afe1cfc84b6dd"
+      }
+    },
+    {
+      "path": "./site/lib/build-context.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:77531f02663cd4aa588e6aefd8507be0745d4f3cef6112a48b7c34d873a09edd"
+      }
+    },
+    {
+      "path": "./site/lib/load-site-model.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:60a840cba8a58504fa7edfdda7292eacfc36681e64feb30d51873de024f5f3e6"
+      }
+    },
+    {
+      "path": "./site/lib/render-markdown.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:fbaa6c0955a03b45151b8de71901ec5e7e3ee69e22f168432f76dfa567a141f5"
+      }
+    },
+    {
+      "path": "./site/lib/site-context.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4985442803264313912fed3fc92534cd2ee916d9a0786b1aa6be1b8eaf7d69fd"
+      }
+    },
+    {
+      "path": "./site/lib/view.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ce3f09c8b455d311a69a0d1b938a0265e65abf6ea980ae4cba864b93d9de38ef"
+      }
+    },
+    {
+      "path": "./site/pages/entities/[id].astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:81375275b0b5c63d669c01cee05e429f57de7b365b2236fb8e3089007e69f8b8"
+      }
+    },
+    {
+      "path": "./site/pages/graph.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:37b79d167b1acbaaf119ca3eaa1b9d034b6f1919283e86ec1f21d9d641bcb760"
+      }
+    },
+    {
+      "path": "./site/pages/index.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:be23d0e443aaede7dda70d9a153f2d808d3a85294c3c351baccd2c1760585935"
+      }
+    },
+    {
+      "path": "./site/pages/notes/[id].astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:c694fae9439e2ccc54c7c249a1e9001f1b868d70691a50df1be0af5b0b262302"
+      }
+    },
+    {
+      "path": "./site/pages/sources/[slug].astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f9f1789ff640130b780c88673cbd79e272598a5dcb801f67bde0b6a4d788748d"
+      }
+    },
+    {
+      "path": "./site/pages/timeline.astro",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f443cb93c990cb7cc545e7d0603201f2feb23fcdcb493ef3af2eb60b1372b17d"
+      }
+    },
+    {
+      "path": "./site/styles/global.css",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:14f6179ae264edbc1caabc1ff6ef5537137199ebb29b8494b45c703db5829cc4"
+      }
+    },
+    {
+      "path": "./skills/apply-perspective/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5"
+      }
+    },
+    {
+      "path": "./skills/apply-perspective/references/method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      }
+    },
+    {
+      "path": "./skills/build-kg/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71"
+      }
+    },
+    {
+      "path": "./skills/build-kg/references/method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      }
+    },
+    {
+      "path": "./skills/coffee-chat/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d"
+      }
+    },
+    {
+      "path": "./skills/coffee-chat/references/method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:6193e8797e8b35ea95a9d7063e1801cd9d9169d0215dbecb9ef11b0d33078293"
+      }
+    },
+    {
+      "path": "./tests/artifact-boundaries.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f72baec621bccb9f7f345e908444a6d6fc20da05b196a507d8ed5e4fe5bd75cc"
+      }
+    },
+    {
+      "path": "./tests/candidate-downstream-identity.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:efe5bee11e56e07479f55bc8a6c8cc52ca75c673e8fc9f9178fa4087f16a8223"
+      }
+    },
+    {
+      "path": "./tests/e2e/site.spec.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0856ddd20645c5f9c706ac08795c03c3a3f9001c82b036b7def21506b00da10f"
+      }
+    },
+    {
+      "path": "./tests/engine-provenance.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:082f36eb6c8e87ad67d7ca9ced7d898e6680ff5821479b10e79eab3cabc8eb78"
+      }
+    },
+    {
+      "path": "./tests/engine-release.test.ts",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f57555fcd8d19885c4b354831c6f2547d9b6a2de59f214078f54307ec93c4e17"
+      }
+    },
+    {
+      "path": "./tests/fixture-isolation.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4b258a0eb80290ef0b5dc3b0de4736b51abd9e16b6402b8c4828f5d8408061e0"
+      }
+    },
+    {
+      "path": "./tests/fixtures/engine-valid/coffee-chat.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:dd8c970af312d471a63da569a9bfbc523e856ae8c0aa3dc0ecaa5251f3746949"
+      }
+    },
+    {
+      "path": "./tests/fixtures/initialized-valid/.coffee-chat/engine-lock.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:a28affb7718a8956e1bb83e0f55db695e2d8b838045d429cf19e4e78053488b4"
+      }
+    },
+    {
+      "path": "./tests/fixtures/initialized-valid/coffee-chat.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:96dff4c12eb4e9b4a5e1474832fb410e02beef0d5d09748b4c0a64a78ebe9562"
+      }
+    },
+    {
+      "path": "./tests/fixtures/initialized-valid/knowledge/entities.yml",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:4334eae1a0cb7b768cc346e5a7611afb1a1bfa1cef42f1970822899ccd131c2d"
+      }
+    },
+    {
+      "path": "./tests/fixtures/initialized-valid/knowledge/notes/a41c7f5e-9f67-4fe8-b3c7-2c8b4bd79e61.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:59992301107d2aa8102cc26cbd8e0061d1e843e5cbc01bd225846e01bf5ebcd4"
+      }
+    },
+    {
+      "path": "./tests/fixtures/initialized-valid/knowledge/notes/b52d8b79-8247-4dce-96e8-35beb40137bc.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ca82f7c0cd224cd638be5ef88a258df807aaf459db9a0116d72893c00db3912f"
+      }
+    },
+    {
+      "path": "./tests/fixtures/son-input/README.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:9b33f8b9aa0f6e62fab2d2341ec2aff9eb26e3c829d8600e8a748a365cb5e36a"
+      }
+    },
+    {
+      "path": "./tests/fixtures/son-input/first-note-request.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:9db9f5309a5bf6e359e20e29a4ee9c633cc4e054f17ffe3fef2157a05739ad58"
+      }
+    },
+    {
+      "path": "./tests/fixtures/synthetic-instance/.coffee-chat/engine-lock.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:a28affb7718a8956e1bb83e0f55db695e2d8b838045d429cf19e4e78053488b4"
+      }
+    },
+    {
+      "path": "./tests/fixtures/synthetic-instance/coffee-chat.json",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8f48ff9f5905e19c0284eefc98da3fc9d915d00dbb89fdaadac437465edec988"
+      }
+    },
+    {
+      "path": "./tests/fixtures/synthetic-instance/knowledge/entities.yml",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f381f46ad6dba0dc3ddf5b7be0e3c0293729c80f02b750e09893870acc6960e8"
+      }
+    },
+    {
+      "path": "./tests/fixtures/synthetic-instance/knowledge/notes/8a7b6c5d-4e3f-4a21-b098-7c6d5e4f3a2b.md",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "authored",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:d63fa587c263e3cb744648aeed858104380f9d3a02147365b0cb3370b9f96a75"
+      }
+    },
+    {
+      "path": "./tests/foundation-contracts.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:2a1422ba1fdfae9c0fcb442200deb7500b1e892d6365337a803cc11a543d53c5"
+      }
+    },
+    {
+      "path": "./tests/gitleaks-contracts.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:83b18a94371e4cf60530140ad416f9f8d66191da76517b46637f62cb7886abca"
+      }
+    },
+    {
+      "path": "./tests/helpers/isolated-host-config.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:501d42a271bf482fcb4c47362d72edc83424c0dee8558a3e82e494c5f9f011bd"
+      }
+    },
+    {
+      "path": "./tests/helpers/site-fixture.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8e939c487e4d8b4e5cbe5f2f0979952e9c61ceb8e76fc3567c00ca4d59f7196e"
+      }
+    },
+    {
+      "path": "./tests/helpers/skill-harness.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:63a3f324607b36eae729730075e07dcdf2b1f647b4cc08ebe2263b8a2d0d1388"
+      }
+    },
+    {
+      "path": "./tests/isolated-host-config.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:27a047979e6951051420e6971fe162dec95d7690c2b26dd8fd476b1a1b6777dd"
+      }
+    },
+    {
+      "path": "./tests/make-mine-acceptance.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:010a3dacdf7c62b52600c5ecc13a5730e9480cbed593269b5dff9a44036d0d0b"
+      }
+    },
+    {
+      "path": "./tests/plugin-lifecycle.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:51148eca16b0937cc17af849528d7474dcdced4fb43f953a0dc0283bab3a6155"
+      }
+    },
+    {
+      "path": "./tests/readme-assets.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:c8673deb3fd181c7fa9a4398685737f37232813a52d034d6b21eb42f0fa5ecb8"
+      }
+    },
+    {
+      "path": "./tests/readme-projections.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0654b9ccc3abeef893f3022e9b1867a0a3f3dc22d77e9551a66428251fa252e7"
+      }
+    },
+    {
+      "path": "./tests/render-markdown.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ec54125aa18303d071a9d733710e918446a5c7dda09159cc1b3cc4f640638d5d"
+      }
+    },
+    {
+      "path": "./tests/role-contracts.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:9e6ad68b6d03c4dee9b0ad0683a22c73affbed51376d44c2d8c7705d6654b60a"
+      }
+    },
+    {
+      "path": "./tests/site-build.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e5b11484e5ed191e794758a923cc6726b17a4684a24ab00cd060058d5eb804ff"
+      }
+    },
+    {
+      "path": "./tests/site-model.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:66e7bdacc063fca686cfd44f2a8cf59a6e4b9e7bb0adbc32cb8b1bdacfccbe22"
+      }
+    },
+    {
+      "path": "./tests/site-publication-boundary.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:270c25739c0e41102529609552109d81e51ba8e4594675d353afea940bc1481a"
+      }
+    },
+    {
+      "path": "./tests/skill-contracts.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f50aba0a53d3522369d5ede356ba75cfae8468ca4f41fd05c69aa64f2ac889b7"
+      }
+    },
+    {
+      "path": "./tests/skill-evaluations.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:32fa9476e78f0e4f6526d5556ded6c8e737bcb5750aa13d0cade80a4ad0c06a1"
+      }
+    },
+    {
+      "path": "./tests/task-2-contracts.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:c5b78f13d2f33d47f8b283d9f6109e52bef4fa43ce6e751e2fe436ec487c36b1"
+      }
+    },
+    {
+      "path": "./tests/task-3-candidate.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e3855902d0df8c27d8c0ec586460d0c6ba310af18631d6ed48eaf201f30eeca1"
+      }
+    },
+    {
+      "path": "./tests/task-3-cli.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:555f978d6e9f7331da96a57db7feee753601490de1907b94be69b6602310c5e1"
+      }
+    },
+    {
+      "path": "./tests/task-3-hooks.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:45a4c696f1feece35b1888c5ceba4aa16813fc5e23a5eb7613285f263ae3b037"
+      }
+    },
+    {
+      "path": "./tests/task-4-candidate-projections.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:c3db6458e323ee893fd0c77415ee673000358156db41816b9e55132899939376"
+      }
+    },
+    {
+      "path": "./tests/task-4-projections.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:7ddc024ad13e397e9e8dcae9578fb411100562cee243ad85d36ba4a716a66845"
+      }
+    },
+    {
+      "path": "./tests/workflow-contracts.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e30cf131ba4986792f29caf10b5ce31d973ddffaab7516975cdb90ee029c7422"
+      }
+    },
+    {
+      "path": "./tools/artifact-inventory.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8f3795fa40a43411a03ec09b14469c32a6dcabbcdec5f16440018a9187ddc3f2"
+      }
+    },
+    {
+      "path": "./tools/candidate.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:215c785c36d4c7427bb04143798b0e8df77fcc3e257a5eaa27488339334d9823"
+      }
+    },
+    {
+      "path": "./tools/cc.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:947d9f1e05fc6ea6dca94ca2a442e89457be8770d377b93abc8211a616877840"
+      }
+    },
+    {
+      "path": "./tools/contracts.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:8a140eee299223c5d84daa859374b03dd79b96b021fea20112872dca51cbfe47"
+      }
+    },
+    {
+      "path": "./tools/engine-cli.ts",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:f109549e0fb6ccb10ca48d796221a9dbe6df87d1a6a5c5ab5bfd6bd211cd887c"
+      }
+    },
+    {
+      "path": "./tools/engine-contracts.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e18c15cc61a1ccaf1bb549f0dd02b1958a8874eceec8153fa065ff54db5ce1ff"
+      }
+    },
+    {
+      "path": "./tools/engine-provenance.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:44b5363112972a25b13b26c5b61a123ce46bd44b7a2d67851a9128782c38eb23"
+      }
+    },
+    {
+      "path": "./tools/engine-release.ts",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ceecbb16155ae133e1b5177c385711c695866eded5790f70cfd2109b358b6544"
+      }
+    },
+    {
+      "path": "./tools/generate.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:350c9c9ced9690a8494f2a3db8fef137e65b0dbeb70505e7222190ba6c8df7f5"
+      }
+    },
+    {
+      "path": "./tools/gitleaks.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ccc9cef0fa5f75cbec5867802c39ded7c60170136a4d52f76da107f3c971e606"
+      }
+    },
+    {
+      "path": "./tools/hooks.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:434d5fbaf2599fdbe05ad3e4ed1e7dbfecf4e45e0debeb5e78e0d103730b69a3"
+      }
+    },
+    {
+      "path": "./tools/knowledge.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0b72448fb78b529f2bb9e88853994e6920b572ade988188ef743d08927097f3a"
+      }
+    },
+    {
+      "path": "./tools/projections.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:44fb3592f4155a6e289d8a940d8806aa538bd44d6eddfdfa4eeda9f070ac592d"
+      }
+    },
+    {
+      "path": "./tools/readme-assets.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:41e2f840c1f57c1d143d13332cf213892196788a2f4e0984b66f22fab60232c2"
+      }
+    },
+    {
+      "path": "./tools/readme.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:b1761963cc38c63418d0475848798a2ebd6bb0afd60ca96098b79586377eb7af"
+      }
+    },
+    {
+      "path": "./tools/site-build.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:59751430ecf1ae3f777d41d1e2de5337d54d6c16c33d5ce3cd43daffd7f830de"
+      }
+    },
+    {
+      "path": "./tools/snapshot.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:cad8cf9c64602640c5e284a1d11d4c394363ddb33e48c53cc40a40d878727512"
+      }
+    },
+    {
+      "path": "./tools/strict-input.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:2a0f8a69744dc210f8f4398345037a5a11417eeeee41b7595218f5d47ba80f51"
+      }
+    },
+    {
+      "path": "./tools/temporal.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e5272402703b9fdf2463a303bf3ca32d680838853c88e066b718f5d4d0e11d2b"
+      }
+    },
+    {
+      "path": "./tools/workflow-projections.ts",
+      "mode": "100644",
+      "engine_audience": "engine-only",
+      "engine_ownership": "source",
+      "disposition": "remove-engine-only",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:10b50a4bd7fa3a25953fd06a1c2edd2b2ed11bb7e7c376e8cdd615a63ccce5f6"
+      }
+    },
+    {
+      "path": "./tsconfig.json",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:11442a7d75c49fe2d139ff2fcac00ebdd31291133aaf3460d0f9db0840389e5a"
+      }
+    },
+    {
+      "path": "./vitest.config.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:e9ae92a53caf71a7fd50e9e25db5a029c8eb2b93ee1a0229c0e9bc52279491a9"
+      }
+    }
+  ],
+  "surface_digest": "sha256:0d053e5e9b73ad93afc2f5f12d4680a155e1616eb04e9882eff4c429d2e74157"
+}

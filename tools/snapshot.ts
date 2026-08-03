@@ -6,6 +6,7 @@ import {
   ValidationFailure,
   repositoryPath,
 } from "./contracts.ts";
+import type { RepositorySnapshotEntry } from "./engine-contracts.ts";
 
 type GitEntry = { mode: string; path: string };
 
@@ -38,6 +39,7 @@ export interface Snapshot {
   list(prefix: string): Promise<string[]>;
   read(path: string): Promise<Buffer>;
   assertSafe(path: string): Promise<void>;
+  listRepositoryEntries(): Promise<RepositorySnapshotEntry[]>;
 }
 
 /** A snapshot whose observed repository inputs are retained for artifact provenance. */
@@ -196,6 +198,71 @@ class WorktreeSnapshot implements DependencyTrackingSnapshot {
       });
     }
   }
+
+  async listRepositoryEntries(): Promise<RepositorySnapshotEntry[]> {
+    let output: Buffer;
+    try {
+      output = (await git(this.root, [
+        "ls-files",
+        "--cached",
+        "--others",
+        "--exclude-standard",
+        "-z",
+      ])) as Buffer;
+    } catch {
+      throw new UnableToComplete({
+        code: "git-snapshot-unavailable",
+        path: ".",
+        message: "The worktree repository entries could not be resolved.",
+      });
+    }
+    const paths = output.toString("utf8").split("\0").filter(Boolean).sort();
+    let staged: Buffer;
+    try {
+      staged = (await git(this.root, ["ls-files", "--stage", "-z"])) as Buffer;
+    } catch {
+      throw new UnableToComplete({
+        code: "git-snapshot-unavailable",
+        path: ".",
+        message: "The worktree file modes could not be resolved.",
+      });
+    }
+    const modes = new Map<string, RepositorySnapshotEntry["mode"]>();
+    for (const record of staged.toString("utf8").split("\0")) {
+      if (!record) continue;
+      const match = /^(\d{6}) [0-9a-f]+(?: \d+)?\t([\s\S]+)$/.exec(record);
+      if (!match) continue;
+      const mode = match[1];
+      if (mode !== "100644" && mode !== "100755" && mode !== "120000") continue;
+      modes.set(match[2] as string, mode);
+    }
+    const entries: RepositorySnapshotEntry[] = [];
+    for (const path of paths) {
+      const trackedMode = modes.get(path);
+      if (trackedMode) {
+        entries.push({ path, mode: trackedMode });
+        continue;
+      }
+      try {
+        const stat = await lstat(resolve(this.root, ...path.split("/")));
+        entries.push({
+          path,
+          mode: stat.isSymbolicLink()
+            ? "120000"
+            : stat.mode & 0o111
+              ? "100755"
+              : "100644",
+        });
+      } catch {
+        throw new UnableToComplete({
+          code: "snapshot-read-failed",
+          path: repositoryPath(path),
+          message: "A worktree repository entry could not be inspected.",
+        });
+      }
+    }
+    return entries;
+  }
 }
 
 class GitSnapshot implements DependencyTrackingSnapshot {
@@ -339,6 +406,26 @@ class GitSnapshot implements DependencyTrackingSnapshot {
       });
     }
     return this.raw(resolved);
+  }
+
+  async listRepositoryEntries(): Promise<RepositorySnapshotEntry[]> {
+    const entries = await this.loadEntries();
+    return [...entries.values()]
+      .map((entry) => {
+        if (
+          entry.mode !== "100644" &&
+          entry.mode !== "100755" &&
+          entry.mode !== "120000"
+        )
+          throw pathFailure(entry.path, "unsupported-repository-mode");
+        return {
+          path: entry.path,
+          mode: entry.mode,
+        } as RepositorySnapshotEntry;
+      })
+      .sort((left, right) =>
+        left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+      );
   }
 }
 
