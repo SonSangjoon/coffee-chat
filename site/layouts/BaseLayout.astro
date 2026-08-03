@@ -32,6 +32,28 @@ const repositoryUrl = model.manifest.repository.url;
         />
       )
     }
+    {
+      model.role === "instance" && model.graph.engine_provenance && (
+        <>
+          <meta
+            name="coffee-chat:engine-repository"
+            content={model.graph.engine_provenance.repository}
+          />
+          <meta
+            name="coffee-chat:engine-version"
+            content={model.graph.engine_provenance.version}
+          />
+          <meta
+            name="coffee-chat:engine-source-commit"
+            content={model.graph.engine_provenance.source_commit}
+          />
+          <meta
+            name="coffee-chat:engine-release-digest"
+            content={model.graph.engine_provenance.release_digest}
+          />
+        </>
+      )
+    }
     <title>{title}</title>
   </head>
   <body data-repository-role={model.role}>
@@ -75,6 +97,21 @@ const repositoryUrl = model.manifest.repository.url;
       <a href={repositoryUrl} target="_blank" rel="noopener noreferrer">
         Repository / 저장소 <span aria-hidden="true">↗</span>
       </a>
+      {
+        model.role === "instance" && model.graph.engine_provenance && (
+          <p>
+            Built with{" "}
+            <a
+              href={model.graph.engine_provenance.repository}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Coffee Chat
+            </a>{" "}
+            · v{model.graph.engine_provenance.version}
+          </p>
+        )
+      }
     </footer>
   </body>
 </html>

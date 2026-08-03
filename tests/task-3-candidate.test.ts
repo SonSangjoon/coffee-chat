@@ -71,23 +71,72 @@ async function makeRepository(
   temporaryRoots.push(base);
   const root = resolve(base, "repository");
   await mkdir(root);
-  if (state === "initialized") await cp(fixtureRoot, root, { recursive: true });
-  else {
+  await symlink(
+    resolve(projectRoot, "node_modules"),
+    resolve(root, "node_modules"),
+    "dir",
+  );
+  if (state === "initialized") {
+    await cp(fixtureRoot, root, { recursive: true });
+  } else {
     await cp(
       resolve(projectRoot, "coffee-chat.json"),
       resolve(root, "coffee-chat.json"),
     );
     await mkdir(resolve(root, "knowledge/notes"), { recursive: true });
   }
+  await mkdir(resolve(root, "docs"), { recursive: true });
+  if (state === "pending") {
+    await mkdir(resolve(root, "method"), { recursive: true });
+    await cp(
+      resolve(projectRoot, "method/engine-update.md"),
+      resolve(root, "method/engine-update.md"),
+    );
+  }
+  // Both engine and instance README projections expose the content terms link.
+  await cp(
+    resolve(projectRoot, "CONTENT_LICENSE.md"),
+    resolve(root, "CONTENT_LICENSE.md"),
+  );
   await Promise.all([
+    cp(
+      resolve(projectRoot, "docs/assets/readme"),
+      resolve(root, "docs/assets/readme"),
+      { recursive: true },
+    ),
     cp(resolve(projectRoot, "schemas"), resolve(root, "schemas"), {
       recursive: true,
     }),
     cp(resolve(projectRoot, "tools"), resolve(root, "tools"), {
       recursive: true,
     }),
+    cp(resolve(projectRoot, "engine"), resolve(root, "engine"), {
+      recursive: true,
+    }),
+    cp(
+      resolve(projectRoot, "docs/testing.md"),
+      resolve(root, "docs/testing.md"),
+    ),
   ]);
+  if (state === "pending") {
+    const surface = JSON.parse(
+      await readFile(
+        resolve(projectRoot, "engine/template-surface.json"),
+        "utf8",
+      ),
+    ) as { files: Array<{ path: string; disposition: string }> };
+    for (const file of surface.files.filter(
+      (entry) => entry.disposition === "adopt-engine-source",
+    )) {
+      const relativePath = file.path.replace(/^\.\//, "");
+      const source = resolve(projectRoot, relativePath);
+      const destination = resolve(root, relativePath);
+      await mkdir(dirname(destination), { recursive: true });
+      await cp(source, destination, { recursive: true });
+    }
+  }
   await git(root, "init", "-q");
+  await writeFile(resolve(root, ".git/info/exclude"), "node_modules\n");
   await git(root, "config", "user.email", "candidate@example.com");
   await git(root, "config", "user.name", "Candidate Test");
   await git(
@@ -101,6 +150,24 @@ async function makeRepository(
   );
   await git(root, "add", ".");
   await git(root, "commit", "-qm", "fixture");
+  if (state === "pending")
+    try {
+      await execFileAsync(
+        process.execPath,
+        [
+          "--experimental-strip-types",
+          resolve(root, "tools/cc.ts"),
+          "generate",
+          "--format",
+          "json",
+        ],
+        { cwd: root, encoding: "utf8" },
+      );
+    } catch {
+      throw new Error("Fixture engine generation failed.");
+    }
+  if (state === "pending") await git(root, "add", ".");
+  await git(root, "commit", "--amend", "--no-edit", "-q");
   return {
     base,
     root,
@@ -132,6 +199,40 @@ function makeMineRequest(setupEffects: string[] = []): Record<string, unknown> {
       },
       content_notice:
         "# Candidate Content Notice\n\nCandidate Owner retains ownership of the authored public Notes.\n",
+      provenance: {
+        engine: {
+          repository: "https://github.com/sonsangjoon/coffee-chat",
+          version: "1.1.0",
+          source_commit: "a".repeat(40),
+          release_digest: `sha256:${"b".repeat(64)}`,
+        },
+        created_from: {
+          method: "github-template",
+          template_repository: "https://github.com/sonsangjoon/coffee-chat",
+        },
+      },
+      template_observation: {
+        source_repository_id: "1",
+        source_repository: "https://github.com/sonsangjoon/coffee-chat",
+        source_is_template: true,
+        source_visibility: "public",
+        source_default_branch: "main",
+        source_default_commit: "a".repeat(40),
+        source_default_tree: "c".repeat(40),
+        source_release_ref: "refs/tags/v1.1.0",
+        source_release_commit: "a".repeat(40),
+        source_release_tree: "c".repeat(40),
+        release_digest: `sha256:${"b".repeat(64)}`,
+        template_surface_digest: `sha256:${"d".repeat(64)}`,
+        target_repository_id: "2",
+        target_repository: "https://github.com/example/candidate",
+        target_description: "A downstream Coffee Chat instance.",
+        template_repository: "https://github.com/sonsangjoon/coffee-chat",
+        target_visibility: "public",
+        target_default_branch: "main",
+        target_initial_commit: "a".repeat(40),
+        target_initial_tree: "c".repeat(40),
+      },
     },
     entity_changes: [
       {
@@ -203,14 +304,68 @@ function fixedDependencies(
   return {
     clock: { now: () => new Date(date) },
     uuid: { next: () => remaining.shift() ?? NOTE_ID },
+    observeTemplate: async (expected) => expected,
   };
+}
+
+async function bindTemplateRequest(
+  fixture: RepositoryFixture,
+  request: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  if (request.mode !== "make-mine") return request;
+  const release = JSON.parse(
+    await readFile(resolve(fixture.root, "engine/release.json"), "utf8"),
+  ) as { version: string; source_ref: string; release_digest: string };
+  const surface = JSON.parse(
+    await readFile(
+      resolve(fixture.root, "engine/template-surface.json"),
+      "utf8",
+    ),
+  ) as { surface_digest: string };
+  const initialCommit = await git(
+    fixture.root,
+    "rev-list",
+    "--max-parents=0",
+    "HEAD",
+  );
+  const initialTree = await git(
+    fixture.root,
+    "rev-parse",
+    `${initialCommit}^{tree}`,
+  );
+  const configuration = request.instance_configuration as Record<
+    string,
+    unknown
+  >;
+  const provenance = configuration.provenance as Record<string, unknown>;
+  const engine = provenance.engine as Record<string, unknown>;
+  const observation = configuration.template_observation as Record<
+    string,
+    unknown
+  >;
+  engine.version = release.version;
+  engine.source_commit = initialCommit;
+  engine.release_digest = release.release_digest;
+  observation.source_default_commit = initialCommit;
+  observation.source_default_tree = initialTree;
+  observation.source_release_ref = release.source_ref;
+  observation.source_release_commit = initialCommit;
+  observation.source_release_tree = initialTree;
+  observation.release_digest = release.release_digest;
+  observation.template_surface_digest = surface.surface_digest;
+  observation.target_initial_commit = initialCommit;
+  observation.target_initial_tree = initialTree;
+  return request;
 }
 
 async function writeRequest(
   fixture: RepositoryFixture,
   request: Record<string, unknown>,
 ): Promise<void> {
-  await writeFile(fixture.requestPath, `${JSON.stringify(request, null, 2)}\n`);
+  await writeFile(
+    fixture.requestPath,
+    `${JSON.stringify(await bindTemplateRequest(fixture, request), null, 2)}\n`,
+  );
 }
 
 async function readJson<T>(path: string): Promise<T> {
@@ -720,6 +875,15 @@ describe("external-only complete Candidate materialization", () => {
       resolve(fixture.out, "preview.json"),
     );
     expect(prepared.candidateDigest).toBe(manifest.candidate_digest);
+    const materializedManifest = await readJson<Record<string, unknown>>(
+      resolve(fixture.out, "repository/coffee-chat.json"),
+    );
+    expect(materializedManifest).toMatchObject({
+      schema_version: "1.1.0",
+      provenance: expect.objectContaining({
+        created_from: expect.objectContaining({ method: "github-template" }),
+      }),
+    });
     expect(manifest).toMatchObject({
       schema_version: "1.0.0",
       candidate_format_version: "1.0.0",
@@ -780,8 +944,16 @@ describe("external-only complete Candidate materialization", () => {
         "utf8",
       ),
     ).toContain('accessed_on: "2026-07-31"');
-    const allCandidateText = Object.values(await bytesByPath(fixture.out))
-      .map((bytes) => Buffer.from(bytes, "base64").toString("utf8"))
+    const candidateFiles = await bytesByPath(fixture.out);
+    const adoptedEnginePaths = new Set(
+      manifest.outputs
+        .map((entry) => entry.path)
+        .filter((path) => path.startsWith("./"))
+        .map((path) => `repository/${path.slice(2)}`),
+    );
+    const allCandidateText = Object.entries(candidateFiles)
+      .filter(([path]) => !adoptedEnginePaths.has(path))
+      .map(([, bytes]) => Buffer.from(bytes, "base64").toString("utf8"))
       .join("\n");
     for (const key of ["owner_profile", "taste", "first_note"])
       expect(allCandidateText).not.toContain(key);
@@ -868,7 +1040,7 @@ describe("external-only complete Candidate materialization", () => {
       fixedDependencies(),
     );
     const makeMineText = Object.values(
-      await bytesByPath(resolve(makeMine.out, "repository")),
+      await canonicalBytes(resolve(makeMine.out, "repository")),
     )
       .map((value) => Buffer.from(value, "base64").toString("utf8"))
       .join("\n");

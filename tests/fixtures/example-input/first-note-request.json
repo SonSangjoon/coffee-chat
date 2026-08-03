@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "mode": "make-mine",
+  "instance_configuration": {
+    "profile": {
+      "temporary_key": "example_profile",
+      "display_name": "Example Author",
+      "short_name": "Example"
+    },
+    "time_zone": "UTC",
+    "repository": {
+      "url": "https://github.com/example/example-coffee-chat",
+      "default_branch": "main"
+    },
+    "pages_url": "https://example.github.io/example-coffee-chat/",
+    "plugin": {
+      "name": "coffee-chat-example",
+      "version": "1.0.0",
+      "description": "A fictional public Coffee Chat test instance."
+    },
+    "content_notice": "# Content License\n\nThis fixture is fictional public-domain test content.\n",
+    "provenance": {
+      "engine": {
+        "repository": "https://github.com/sonsangjoon/coffee-chat",
+        "version": "1.1.0",
+        "source_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
+        "release_digest": "sha256:e97899d330711df22643ba56204e619051b734f16fcd4c7f1d23e5a2292c0ceb"
+      },
+      "created_from": {
+        "method": "github-template",
+        "template_repository": "https://github.com/sonsangjoon/coffee-chat"
+      }
+    },
+    "template_observation": {
+      "source_repository_id": "1",
+      "source_repository": "https://github.com/sonsangjoon/coffee-chat",
+      "source_is_template": true,
+      "source_visibility": "public",
+      "source_default_branch": "main",
+      "source_default_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
+      "source_default_tree": "a0116bcc933b62cf380ff90dc7b16d68773f9b82",
+      "source_release_ref": "refs/tags/v1.1.0",
+      "source_release_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
+      "source_release_tree": "a0116bcc933b62cf380ff90dc7b16d68773f9b82",
+      "release_digest": "sha256:e97899d330711df22643ba56204e619051b734f16fcd4c7f1d23e5a2292c0ceb",
+      "template_surface_digest": "sha256:18b31aaedb6b58a26d4eed45ffadc74c6e255a12c7f7cb4eb8f9ba0cb3d1afca",
+      "target_repository_id": "2",
+      "target_repository": "https://github.com/example/example-coffee-chat",
+      "target_description": "A fictional Coffee Chat instance.",
+      "template_repository": "https://github.com/sonsangjoon/coffee-chat",
+      "target_visibility": "public",
+      "target_default_branch": "main",
+      "target_initial_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
+      "target_initial_tree": "a0116bcc933b62cf380ff90dc7b16d68773f9b82"
+    }
+  },
+  "entity_changes": [
+    {
+      "action": "create",
+      "temporary_key": "iteration",
+      "value": { "label": "Iteration", "kind": "process" }
+    }
+  ],
+  "note_changes": [
+    {
+      "action": "create",
+      "temporary_key": "first_note",
+      "value": {
+        "title": "Small loops make learning visible",
+        "temporal_coverage": "2026-08",
+        "sources": [
+          {
+            "url": "https://example.com/public-domain-loop",
+            "title": "Public-domain note on iterative work",
+            "published_on": "2026-08",
+            "accessed_on": "2026-08-03",
+            "retrieval_status": "succeeded"
+          }
+        ],
+        "entity_refs": ["iteration"],
+        "body": "A short, fictional public-domain observation: small loops make learning visible."
+      }
+    }
+  ],
+  "setup_effects": []
+}

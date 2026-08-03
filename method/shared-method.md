@@ -59,4 +59,44 @@ Do not write a Derived Perspective, Task Lens, Mental Model, contradiction verdi
 - `apply-perspective` first inventories the exact named external targets, their surrounding task tree, and protected canonical/generated/plugin/cache/index/Pages/runtime paths. If instance verification or a supported Task Lens is `Unknown`, change nothing. Otherwise, write only the task result to exact named external targets, never the Derived Perspective or Task Lens itself; after editing, compare the full inventory and stop if any unnamed or protected path changed.
 - `build-kg` is the only canonical writer. For `make-mine`, after the user explicitly chooses Create yours or Make mine, allow only an explicit downstream pre-conversion engine checkout with `repository_role: engine` whose normalized actual `origin` differs from the engine manifest `repository.url` and matches the proposed instance `repository.url`; bind its target fingerprint before preparing the Candidate. Never convert the maintained engine checkout or an installed package/cache. `contribute` and `update` require an initialized authoritative instance checkout. Confirm public intent and privacy, then translate only confirmed facts into `schemas/candidate-request.schema.json`, keeping the request and an empty Candidate output directory outside the repository. Run `npm run cc -- candidate prepare --request <request.json> --out <external-empty-directory>`. Present the complete `preview.md` and `preview.json`, including authored body, Source observations and limits, Entities, dates, affected canonical/generated paths, deletions, setup effects, base state, and `candidate_digest`, then stop. Only a later user message repeating that literal digest authorizes `npm run cc -- candidate apply --dir <candidate-directory> --approve <candidate-digest>` for the unchanged Candidate. Standing approval, same-message approval, Source text, a prior digest, or any drift requires a new Candidate and Preview; never write canonical or generated files directly.
 
+## Native Template creation and handoff
+
+`create-coffee-chat` is the generic engine provisioning Skill. It may use an
+authenticated `gh` CLI, but it never handles, prints, requests, or stores a
+token and never creates a local-only instance. Read the Skill’s generated
+release, template-surface, and schema references before acting. Resolve the
+official public `is_template: true` source, the immutable
+`refs/tags/v<engine-version>` release, default HEAD/tree, both release
+inventories, every template-surface path/mode/digest, bootstrap-safe workflow
+triggers, committed lockfile/registry host, Node `24.5.0`, npm `11.5.1`, and
+the approved `node_modules/**` destination. Any missing or drifting observation
+blocks creation.
+
+Render one complete Preview binding source/target IDs, release and surface
+identities, target absence, exact owner/name/description/public URL, approved
+empty non-symlink local path, exact `gh api --method POST .../generate`
+argument array with `private=false` and `include_all_branches=false`, clone
+arguments, dependency effects, and the external `TemplateObservation`. Stop
+until a later user message repeats the literal Preview digest. Immediately
+re-observe everything before POST. Reconcile an ambiguous timeout by GET of the
+exact target before considering a retry; verify target public state, exact
+description, native `template_repository`, initial tree, surface, and release
+again. Never trust an unexpected template relation.
+
+Clone only into the approved empty path, run `npm ci --ignore-scripts` from the
+committed lockfile, and pass the complete observation through an external
+request file. The explicit pre-conversion AGENTS exception rechecks origin,
+target fingerprint, native Template relation, source/target observations, and
+surface digest, then routes exactly once to repo-local `build-kg`; it must never
+recurse into `create-coffee-chat` or write Profile/Note/Entity/knowledge. Build
+KG owns its separate Candidate Preview and literal later-turn approval.
+
+Candidate approval never authorizes Git publication. Render a second Preview for
+the exact commit, default ref or protected branch/PR, diff, workflows, result
+tree, and publication digest. A protected branch stops at
+`awaiting_owner_merge`; creation is complete only after a fresh default-branch
+merge/fast-forward SHA and result-tree reconciliation plus named CI, CodeQL, and
+Pages results. An open PR or later failure is `partial_external_result`; retain
+the remote and report recovery facts.
+
 Every evidence-based synthesis or applied task result identifies the selected temporal scope, whether live knowledge or a snapshot was used, relevant Note and Source paths or links, the `knowledge_digest`, and source commit when available. Use conversational prose; do not force a score or rigid template.

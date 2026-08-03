@@ -50,6 +50,8 @@
       "type": "string",
       "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*-marketplace$"
     },
+    "provenance": { "$ref": "#/$defs/instance_provenance" },
+    "template_observation": { "$ref": "#/$defs/template_observation" },
     "content_notice": { "type": "string", "minLength": 1 },
     "time_zone": { "type": "string" },
     "frozen_date": { "$ref": "#/$defs/date" },
@@ -197,12 +199,20 @@
       },
       "then": {
         "type": "object",
-        "properties": { "content_notice": true },
-        "required": ["content_notice"]
+        "properties": {
+          "content_notice": true,
+          "provenance": true,
+          "template_observation": true
+        },
+        "required": ["content_notice", "provenance", "template_observation"]
       },
       "else": {
         "type": "object",
-        "properties": { "content_notice": false }
+        "properties": {
+          "content_notice": false,
+          "provenance": false,
+          "template_observation": false
+        }
       }
     }
   ],
@@ -257,6 +267,8 @@
           "$ref": "#/properties/proposed_time_zone"
         },
         "marketplace_name": { "$ref": "#/properties/marketplace_name" },
+        "provenance": { "$ref": "#/properties/provenance" },
+        "template_observation": { "$ref": "#/properties/template_observation" },
         "content_notice": { "$ref": "#/properties/content_notice" },
         "time_zone": { "$ref": "#/properties/time_zone" },
         "frozen_date": { "$ref": "#/properties/frozen_date" },
@@ -278,6 +290,97 @@
         "validation": { "$ref": "#/properties/validation" }
       },
       "allOf": [{ "$ref": "#/allOf/0" }]
+    },
+    "instance_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine", "created_from"],
+      "properties": {
+        "engine": { "$ref": "#/$defs/engine_provenance" },
+        "created_from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["method", "template_repository"],
+          "properties": {
+            "method": { "const": "github-template" },
+            "template_repository": { "$ref": "#/$defs/github_repository" }
+          }
+        }
+      }
+    },
+    "engine_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "source_commit", "release_digest"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/github_repository" },
+        "version": { "$ref": "#/$defs/semver" },
+        "source_commit": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "release_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "github_repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[a-z0-9.-]+/[a-z0-9._-]+$"
+    },
+    "object_id": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "decimal_id": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$"
+    },
+    "template_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_repository_id",
+        "source_repository",
+        "source_is_template",
+        "source_visibility",
+        "source_default_branch",
+        "source_default_commit",
+        "source_default_tree",
+        "source_release_ref",
+        "source_release_commit",
+        "source_release_tree",
+        "release_digest",
+        "template_surface_digest",
+        "target_repository_id",
+        "target_repository",
+        "target_description",
+        "template_repository",
+        "target_visibility",
+        "target_default_branch",
+        "target_initial_commit",
+        "target_initial_tree"
+      ],
+      "properties": {
+        "source_repository_id": { "$ref": "#/$defs/decimal_id" },
+        "source_repository": { "$ref": "#/$defs/github_repository" },
+        "source_is_template": { "const": true },
+        "source_visibility": { "const": "public" },
+        "source_default_branch": { "type": "string", "minLength": 1 },
+        "source_default_commit": { "$ref": "#/$defs/object_id" },
+        "source_default_tree": { "$ref": "#/$defs/object_id" },
+        "source_release_ref": { "type": "string", "minLength": 1 },
+        "source_release_commit": { "$ref": "#/$defs/object_id" },
+        "source_release_tree": { "$ref": "#/$defs/object_id" },
+        "release_digest": { "$ref": "#/$defs/digest" },
+        "template_surface_digest": { "$ref": "#/$defs/digest" },
+        "target_repository_id": { "$ref": "#/$defs/decimal_id" },
+        "target_repository": { "$ref": "#/$defs/github_repository" },
+        "target_description": { "type": "string" },
+        "template_repository": { "$ref": "#/$defs/github_repository" },
+        "target_visibility": { "const": "public" },
+        "target_default_branch": { "type": "string", "minLength": 1 },
+        "target_initial_commit": { "$ref": "#/$defs/object_id" },
+        "target_initial_tree": { "$ref": "#/$defs/object_id" }
+      }
     },
     "semver": {
       "type": "string",
@@ -331,7 +434,7 @@
     },
     "repository_path": {
       "type": "string",
-      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+/?$"
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._\\-\\[\\]]+/)*[A-Za-z0-9._\\-\\[\\]]+/?$"
     },
     "path_digest": {
       "type": "object",

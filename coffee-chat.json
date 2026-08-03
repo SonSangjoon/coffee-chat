@@ -1,6 +1,6 @@
 {
   "schema_url": "./schemas/coffee-chat.schema.json",
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "repository_role": "engine",
   "repository": {
     "url": "https://github.com/SonSangjoon/coffee-chat",
@@ -9,7 +9,7 @@
   "pages_url": "https://sonsangjoon.github.io/coffee-chat/",
   "plugin": {
     "name": "coffee-chat",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Converse with and apply a public, dated perspective graph."
   },
   "marketplace_name": "coffee-chat-marketplace",

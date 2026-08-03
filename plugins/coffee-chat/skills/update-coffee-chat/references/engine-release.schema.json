@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-release.schema.json",
+  "title": "Coffee Chat Engine Release",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "version",
+    "source_ref",
+    "target_manifest_schema_version",
+    "migration_registry",
+    "managed_files",
+    "delivery_files",
+    "release_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "repository": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/github_repository"
+    },
+    "version": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/semver"
+    },
+    "source_ref": {
+      "type": "string",
+      "pattern": "^refs/tags/v(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "target_manifest_schema_version": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/semver"
+    },
+    "migration_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "const": "./engine/migrations/registry.json" },
+        "digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/digest"
+        }
+      }
+    },
+    "managed_files": {
+      "type": "array",
+      "items": {
+        "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/managed_file"
+      },
+      "uniqueItems": true
+    },
+    "delivery_files": {
+      "type": "array",
+      "items": {
+        "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/delivery_file"
+      },
+      "uniqueItems": true
+    },
+    "release_digest": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "github_repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?:[A-Za-z0-9._\\-\\[\\]]+/)*[A-Za-z0-9._\\-\\[\\]]+$"
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "mode": { "enum": ["100644", "100755"] },
+    "managed_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "class", "digest", "mode"],
+      "properties": {
+        "path": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/path"
+        },
+        "class": { "const": "engine-source" },
+        "digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/digest"
+        },
+        "mode": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/mode"
+        }
+      }
+    },
+    "delivery_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "class", "digest", "mode"],
+      "properties": {
+        "path": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/path"
+        },
+        "class": { "const": "engine-delivery" },
+        "digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/digest"
+        },
+        "mode": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-release.schema.json#/$defs/mode"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-candidate.schema.json",
+  "title": "Coffee Chat engine update candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "update_digest",
+    "preview",
+    "proposed_files",
+    "deletions",
+    "support_files"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "update_digest": { "$ref": "#/$defs/digest" },
+    "preview": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-update-preview.schema.json"
+    },
+    "proposed_files": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/proposed_file" },
+      "uniqueItems": true
+    },
+    "deletions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/deletion" },
+      "uniqueItems": true
+    },
+    "support_files": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/support_file" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9._\\-\\[\\]]+(?:/[A-Za-z0-9._\\-\\[\\]]+)*$"
+    },
+    "proposed_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_path", "target_path", "digest", "mode"],
+      "properties": {
+        "candidate_path": {
+          "type": "string",
+          "pattern": "^\\./files/(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9._\\-\\[\\]]+(?:/[A-Za-z0-9._\\-\\[\\]]+)*$"
+        },
+        "target_path": { "$ref": "#/$defs/path" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "mode": { "enum": ["100644", "100755"] }
+      }
+    },
+    "deletion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_path", "before_digest", "before_mode"],
+      "properties": {
+        "target_path": { "$ref": "#/$defs/path" },
+        "before_digest": { "$ref": "#/$defs/digest" },
+        "before_mode": { "enum": ["100644", "100755"] }
+      }
+    },
+    "support_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^\\./schemas/[A-Za-z0-9._-]+\\.json$"
+        },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

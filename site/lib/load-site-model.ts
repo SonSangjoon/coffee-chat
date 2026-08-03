@@ -19,6 +19,7 @@ import {
   type LoadedNote,
   validateKnowledge,
 } from "../../tools/knowledge.ts";
+import type { EngineProvenance } from "../../tools/engine-provenance.ts";
 import { createSnapshot } from "../../tools/snapshot.ts";
 import {
   recordedOnThrough,
@@ -121,6 +122,7 @@ export type InstanceSiteModel = {
   entities: SiteEntity[];
   sources: SiteSource[];
   edges: SiteEdge[];
+  engine_provenance?: EngineProvenance;
 };
 
 export type SiteModel =
@@ -338,6 +340,9 @@ export async function loadSiteModel(
       entities: siteEntities(validation.graph.entities, edges),
       sources: siteSources(validation.graph.notes),
       edges,
+      ...(validation.graph.manifest.provenance
+        ? { engine_provenance: validation.graph.manifest.provenance.engine }
+        : {}),
     },
   };
 }

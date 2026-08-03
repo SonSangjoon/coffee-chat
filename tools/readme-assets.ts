@@ -162,7 +162,7 @@ export async function validateReadmeLinks(
       throw failure(
         "missing-readme-link",
         target,
-        "Generated README links to a missing local repository path.",
+        `Generated README links to a missing local repository path: ${target}.`,
       );
     }
   }

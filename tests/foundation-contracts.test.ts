@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { Ajv2020 } from "ajv/dist/2020.js";
@@ -9,16 +9,6 @@ import { describe, expect, it } from "vitest";
 const root = resolve(import.meta.dirname, "..");
 const require = createRequire(import.meta.url);
 const addFormats = require("ajv-formats").default as FormatsPlugin;
-const schemaNames = [
-  "coffee-chat.schema.json",
-  "note-frontmatter.schema.json",
-  "entity-registry.schema.json",
-  "knowledge-index.schema.json",
-  "candidate-request.schema.json",
-  "candidate-manifest.schema.json",
-  "preview.schema.json",
-  "receipt.schema.json",
-] as const;
 const targetFingerprint = {
   git_common_dir: {
     real_path: "/tmp/repository/.git",
@@ -39,6 +29,9 @@ async function contractValidator() {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
 
+  const schemaNames = (await readdir(resolve(root, "schemas")))
+    .filter((name) => name.endsWith(".schema.json"))
+    .sort();
   for (const name of schemaNames) {
     ajv.addSchema(await readJson<AnySchema>(`schemas/${name}`));
   }
@@ -57,11 +50,11 @@ describe("Coffee Chat foundation contracts", () => {
     expect(validate).toBeDefined();
     expect(validate?.(manifest)).toBe(true);
     expect(manifest).toMatchObject({
-      schema_version: "1.0.0",
+      schema_version: "1.1.0",
       repository_role: "engine",
       repository: { url: "https://github.com/SonSangjoon/coffee-chat" },
       pages_url: "https://sonsangjoon.github.io/coffee-chat/",
-      plugin: { name: "coffee-chat", version: "1.0.0" },
+      plugin: { name: "coffee-chat", version: "1.1.0" },
       marketplace_name: "coffee-chat-marketplace",
     });
     expect(manifest).not.toHaveProperty("profile");
@@ -117,6 +110,17 @@ describe("Coffee Chat foundation contracts", () => {
         nodes: [],
         edges: [],
       },
+      "https://coffee-chat.dev/schemas/engine-lock.schema.json": {
+        schema_version: "1.0.0",
+        engine: {
+          repository: "https://github.com/sonsangjoon/coffee-chat",
+          version: "1.1.0",
+          source_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          release_digest:
+            "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        },
+        managed_files: [],
+      },
       "https://coffee-chat.dev/schemas/candidate-request.schema.json": {
         schema_version: "1.0.0",
         mode: "make-mine",
@@ -138,6 +142,43 @@ describe("Coffee Chat foundation contracts", () => {
             description: "A public perspective graph.",
           },
           content_notice: "# Content Notice\n",
+          provenance: {
+            engine: {
+              repository: "https://github.com/sonsangjoon/coffee-chat",
+              version: "1.1.0",
+              source_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              release_digest:
+                "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            },
+            created_from: {
+              method: "github-template",
+              template_repository: "https://github.com/sonsangjoon/coffee-chat",
+            },
+          },
+          template_observation: {
+            source_repository_id: "1",
+            source_repository: "https://github.com/sonsangjoon/coffee-chat",
+            source_is_template: true,
+            source_visibility: "public",
+            source_default_branch: "main",
+            source_default_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            source_default_tree: "cccccccccccccccccccccccccccccccccccccccc",
+            source_release_ref: "refs/tags/v1.1.0",
+            source_release_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            source_release_tree: "cccccccccccccccccccccccccccccccccccccccc",
+            release_digest:
+              "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            template_surface_digest:
+              "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+            target_repository_id: "2",
+            target_repository: "https://github.com/example/downstream",
+            target_description: "Example downstream",
+            template_repository: "https://github.com/sonsangjoon/coffee-chat",
+            target_visibility: "public",
+            target_default_branch: "main",
+            target_initial_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            target_initial_tree: "cccccccccccccccccccccccccccccccccccccccc",
+          },
         },
         entity_changes: [
           {
@@ -581,9 +622,8 @@ describe("Coffee Chat foundation contracts", () => {
       'MIT License\n\nCopyright (c) 2026 Coffee Chat\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the "Software"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n',
     );
     expect(contentLicense).toContain("Downstream authors retain ownership");
-    expect(contentLicense).toContain(
-      "Only `tests/fixtures/son-input/**` is © 2026 Son, All rights reserved",
-    );
+    expect(contentLicense).not.toContain("son-input");
+    expect(contentLicense).not.toContain("© 2026 Son");
     expect(contentLicense).toContain(
       "Third-party Sources retain their own terms",
     );

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-publication-candidate.schema.json",
+  "title": "Coffee Chat engine update publication candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "publication_digest",
+    "preview",
+    "copied_update_receipt",
+    "support_files"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "publication_digest": { "$ref": "#/$defs/digest" },
+    "preview": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-update-publication-preview.schema.json"
+    },
+    "copied_update_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "const": "./update-receipt.json" },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "support_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "digest"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^\\./schemas/[A-Za-z0-9._-]+\\.json$"
+          },
+          "digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

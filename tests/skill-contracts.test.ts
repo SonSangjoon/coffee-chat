@@ -8,7 +8,16 @@ import { generatedProjectionBytes } from "../tools/projections.ts";
 import { createSnapshot } from "../tools/snapshot.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
-const skillNames = ["coffee-chat", "apply-perspective", "build-kg"] as const;
+const instanceSkillNames = [
+  "coffee-chat",
+  "apply-perspective",
+  "build-kg",
+] as const;
+const engineSkillNames = [
+  ...instanceSkillNames,
+  "create-coffee-chat",
+  "update-coffee-chat",
+] as const;
 const temporaryRoots: string[] = [];
 
 afterEach(async () => {
@@ -17,7 +26,7 @@ afterEach(async () => {
   );
 });
 
-async function readSkill(name: (typeof skillNames)[number]) {
+async function readSkill(name: (typeof engineSkillNames)[number]) {
   const text = await readFile(
     resolve(projectRoot, "skills", name, "SKILL.md"),
     "utf8",
@@ -64,7 +73,7 @@ async function instanceProjection() {
 }
 
 describe("Task 4 Agent Skill contracts", () => {
-  it.each(skillNames)(
+  it.each(engineSkillNames)(
     "%s is a concise Agent Skills router with standard compatibility metadata",
     async (name) => {
       const skill = await readSkill(name);
@@ -89,13 +98,65 @@ describe("Task 4 Agent Skill contracts", () => {
       const entries = await readdir(resolve(projectRoot, "skills", name), {
         recursive: true,
       });
-      expect(entries.sort()).toEqual([
-        "SKILL.md",
-        "references",
-        "references/method.md",
-      ]);
+      const expectedReferences =
+        name === "create-coffee-chat"
+          ? [
+              "references",
+              "references/engine-release.schema.json",
+              "references/engine-template-surface.schema.json",
+              "references/method.md",
+              "references/release.json",
+              "references/template-surface.json",
+            ]
+          : name === "update-coffee-chat"
+            ? [
+                "references",
+                "references/advisory.json",
+                "references/engine-migration-document.schema.json",
+                "references/engine-migration-registry.schema.json",
+                "references/engine-release.schema.json",
+                "references/engine-update-advisory.schema.json",
+                "references/method.md",
+                "references/migration-registry.json",
+                "references/release.json",
+              ]
+            : ["references", "references/method.md"];
+      expect(entries.sort()).toEqual(["SKILL.md", ...expectedReferences]);
     },
   );
+
+  it("keeps the creation Skill instruction-only and binds the complete Preview protocol", async () => {
+    const skill = await readSkill("create-coffee-chat");
+    for (const phrase of [
+      "generic engine Skill",
+      "gh auth status",
+      "is_template",
+      "refs/tags/v",
+      "template-surface",
+      "complete Preview",
+      "gh api --method POST",
+      "private=false",
+      "template_repository",
+      "npm ci --ignore-scripts",
+      "Node 24.5.0",
+      "npm 11.5.1",
+      "node_modules/**",
+      "TemplateObservation",
+      "pre-conversion",
+      "repo-local `build-kg`",
+      "publication Preview",
+      "awaiting_owner_merge",
+      "partial_external_result",
+    ])
+      expect(skill.body).toContain(phrase);
+    for (const forbidden of [
+      "MCP server",
+      "mcpServers",
+      "agent definition",
+      "service",
+    ])
+      expect(skill.body).not.toContain(forbidden);
+  });
 
   it("routes engine and instance entry from repository role without a default person", async () => {
     const agents = await readFile(resolve(projectRoot, "AGENTS.md"), "utf8");
@@ -110,6 +171,12 @@ describe("Task 4 Agent Skill contracts", () => {
     expect(agents).toContain("downstream pre-conversion engine checkout");
     expect(agents).toContain("origin and target-fingerprint rules");
     expect(agents).toContain("maintained engine checkout");
+    expect(agents).toContain(
+      "After the user explicitly chooses **Create yours**, route to `skills/create-coffee-chat/SKILL.md`",
+    );
+    expect(agents).toContain(
+      "Create yours to `skills/create-coffee-chat/SKILL.md`",
+    );
     expect(agents).toContain(
       "`contribute` and `update` require an initialized authoritative instance checkout",
     );
@@ -164,7 +231,7 @@ describe("Task 4 Agent Skill contracts", () => {
       validation.graph!,
     );
 
-    for (const name of skillNames) {
+    for (const name of instanceSkillNames) {
       expect(
         projected.get(`plugins/coffee-chat/skills/${name}/SKILL.md`),
       ).toEqual(await snapshot.read(`skills/${name}/SKILL.md`));

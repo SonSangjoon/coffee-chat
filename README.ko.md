@@ -113,7 +113,7 @@ Do not write the synthesis back to Coffee Chat.
 → Coffee Chat과 작업 활용
 ```
 
-이 중립 엔진에서 별도의 인스턴스를 만드세요. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않으며, 첫 승인 Note 하나만으로도 질문이나 관련 작업을 바로 지원할 수 있습니다.
+범용 `coffee-chat` 플러그인에서 **Create yours**를 선택하세요. 공식 GitHub Template 흐름으로 공개 체크아웃을 만들고 `skills/create-coffee-chat/SKILL.md`와 Build KG로 넘깁니다. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않으며, 첫 승인 Note 하나만으로도 질문이나 관련 작업을 바로 지원할 수 있습니다.
 
 주인이 자신의 Agent와 그래프를 쓰는 것이 핵심 반복입니다. 공개 대화와 다른 사람의 신중한 활용은 같은 기록에서 생기는 배포·협업의 반복입니다.
 

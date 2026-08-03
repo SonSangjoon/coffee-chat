@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json",
+  "title": "Coffee Chat Engine Template Surface",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository",
+    "release",
+    "files",
+    "surface_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "repository": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/github_repository"
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "source_ref", "release_digest"],
+      "properties": {
+        "version": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/semver"
+        },
+        "source_ref": { "type": "string", "pattern": "^refs/tags/v" },
+        "release_digest": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/digest"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/file"
+      },
+      "uniqueItems": true
+    },
+    "surface_digest": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "github_repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)(?:[A-Za-z0-9._\\-\\[\\]]+/)*[A-Za-z0-9._\\-\\[\\]]+$"
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "mode",
+        "engine_audience",
+        "engine_ownership",
+        "disposition",
+        "binding"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/path"
+        },
+        "mode": { "enum": ["100644", "100755"] },
+        "engine_audience": { "enum": ["instance", "engine-only"] },
+        "engine_ownership": { "enum": ["source", "generated", "authored"] },
+        "disposition": {
+          "enum": [
+            "adopt-engine-source",
+            "replace-instance-authored",
+            "replace-instance-generated",
+            "remove-engine-only"
+          ]
+        },
+        "binding": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "digest"],
+              "properties": {
+                "kind": { "const": "content" },
+                "digest": {
+                  "$ref": "https://coffee-chat.dev/schemas/engine-template-surface.schema.json#/$defs/digest"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind"],
+              "properties": { "kind": { "const": "surface-self-copy" } }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

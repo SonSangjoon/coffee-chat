@@ -17,6 +17,12 @@ import {
   repositoryPath,
   sortDiagnostics,
 } from "./contracts.ts";
+import {
+  assertLockMatchesManifest,
+  parseEngineLock,
+  validateInstanceProvenance,
+  type InstanceProvenance,
+} from "./engine-provenance.ts";
 import type { Snapshot } from "./snapshot.ts";
 import { createBaseSnapshot } from "./snapshot.ts";
 import {
@@ -32,12 +38,26 @@ const addFormats = require("ajv-formats").default as FormatsPlugin;
 const uuidV4Pattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const fullDatePattern = /^\d{4}-\d{2}-\d{2}$/;
-const schemaFiles = [
-  "coffee-chat.schema.json",
-  "note-frontmatter.schema.json",
-  "entity-registry.schema.json",
-  "knowledge-index.schema.json",
-] as const;
+
+function compareCodePoints(left: string, right: string): number {
+  const leftPoints = Array.from(
+    left,
+    (value) => value.codePointAt(0) as number,
+  );
+  const rightPoints = Array.from(
+    right,
+    (value) => value.codePointAt(0) as number,
+  );
+  for (
+    let index = 0;
+    index < Math.min(leftPoints.length, rightPoints.length);
+    index += 1
+  ) {
+    const delta = leftPoints[index]! - rightPoints[index]!;
+    if (delta !== 0) return delta;
+  }
+  return leftPoints.length - rightPoints.length;
+}
 
 export type Citation = {
   url: string;
@@ -85,6 +105,7 @@ export type InstanceManifest = {
   plugin: { name: string; version: string; description: string };
   marketplace_name: string;
   paths: { knowledge_index: string; skills: string; method: string };
+  provenance?: InstanceProvenance;
 };
 
 export type Manifest = EngineManifest | InstanceManifest;
@@ -147,8 +168,10 @@ async function validators(snapshot: Snapshot): Promise<Validators> {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
   try {
-    for (const file of schemaFiles) {
-      const path = `schemas/${file}`;
+    const schemaFiles = (await snapshot.list("schemas"))
+      .filter((path) => path.endsWith(".schema.json"))
+      .sort(compareCodePoints);
+    for (const path of schemaFiles) {
       const { text } = await strictText(snapshot, path);
       ajv.addSchema(parseStrictJson(text, path) as object);
     }
@@ -542,7 +565,7 @@ function markdownLinks(
 function supportedSchemaVersion(value: unknown): boolean {
   if (typeof value !== "string") return false;
   const match = /^(\d+)\.(\d+)\.(\d+)/.exec(value);
-  return Boolean(match && Number(match[1]) === 1 && Number(match[2]) <= 0);
+  return Boolean(match && Number(match[1]) === 1 && Number(match[2]) <= 1);
 }
 
 function validTimeZone(value: unknown): boolean {
@@ -637,6 +660,29 @@ export async function validateKnowledge(
     const unicodeFailure = unicodeScalarDiagnostic(value, "coffee-chat.json");
     if (unicodeFailure) diagnostics.push(unicodeFailure);
     const rawProfile = recordValue(recordValue(value)?.profile);
+    const rawManifest = recordValue(value);
+    if (
+      rawManifest?.repository_role === "engine" &&
+      "provenance" in rawManifest
+    ) {
+      diagnostics.push({
+        code: "schema-additional-property",
+        path: "./coffee-chat.json",
+        pointer: "/provenance",
+        message: "Engine manifests do not allow provenance.",
+      });
+    }
+    if (
+      rawManifest?.repository_role === "instance" &&
+      rawManifest.schema_version === "1.1.0"
+    ) {
+      diagnostics.push(
+        ...validateInstanceProvenance(
+          rawManifest.provenance,
+          "coffee-chat.json",
+        ),
+      );
+    }
     if (rawProfile?.id !== undefined && !validUuid(rawProfile.id)) {
       diagnostics.push({
         code: "invalid-uuid-v4",
@@ -668,6 +714,17 @@ export async function validateKnowledge(
           pointer: "/time_zone",
           message: "Configured time zone must be a valid IANA zone.",
         });
+      }
+      if (isInstanceManifest(manifest) && manifest.schema_version === "1.1.0") {
+        try {
+          const lock = parseEngineLock(
+            await snapshot.read(".coffee-chat/engine-lock.json"),
+            ".coffee-chat/engine-lock.json",
+          );
+          diagnostics.push(...assertLockMatchesManifest(manifest, lock));
+        } catch (error) {
+          addFailure(diagnostics, error);
+        }
       }
       if (manifest.marketplace_name !== `${manifest.plugin.name}-marketplace`) {
         diagnostics.push({

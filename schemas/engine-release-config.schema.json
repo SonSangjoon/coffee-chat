@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-release-config.schema.json",
+  "title": "Coffee Chat Engine Release Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "version",
+    "source_ref",
+    "target_manifest_schema_version"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "version": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-release-config.schema.json#/$defs/semver"
+    },
+    "source_ref": {
+      "type": "string",
+      "pattern": "^refs/tags/v(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "target_manifest_schema_version": {
+      "$ref": "https://coffee-chat.dev/schemas/engine-release-config.schema.json#/$defs/semver"
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-9-]+)*)?(?:\\+[0-9A-Za-z-9-]+(?:\\.[0-9A-Za-z-9-]+)*)?$"
+    }
+  }
+}

@@ -111,6 +111,19 @@ test("discloses the current knowledge digest and source Git commit", async ({
   await expect(page.locator("body")).toContainText(fixture!.knowledgeDigest);
   await expect(page.locator("body")).toContainText(fixture!.head);
   expect(fixture!.knowledgeDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+  await expect(
+    page.locator('meta[name="coffee-chat:engine-repository"]'),
+  ).toHaveAttribute("content", "https://github.com/sonsangjoon/coffee-chat");
+  await expect(
+    page.locator('meta[name="coffee-chat:engine-version"]'),
+  ).toHaveAttribute("content", "1.1.0");
+  await expect(
+    page.locator('meta[name="coffee-chat:engine-source-commit"]'),
+  ).toHaveAttribute("content", "a".repeat(40));
+  await expect(
+    page.locator('meta[name="coffee-chat:engine-release-digest"]'),
+  ).toHaveAttribute("content", `sha256:${"b".repeat(64)}`);
+  await expect(page.locator("footer")).toContainText("Built with");
 });
 
 test("shares perspective and first-recorded filter state across Timeline and Graph", async ({

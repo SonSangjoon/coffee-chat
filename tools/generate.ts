@@ -10,6 +10,8 @@ import type { InstanceGraph } from "./knowledge.ts";
 import { sha256 } from "./knowledge.ts";
 import type { Snapshot } from "./snapshot.ts";
 
+export const KNOWLEDGE_INDEX_SCHEMA_VERSION = "1.0.0" as const;
+
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
 export function compareCodePoints(left: string, right: string): number {
@@ -161,13 +163,13 @@ export function buildKnowledgeIndex(
     .map(([, edge]) => edge);
 
   const digestInput: Record<string, Json> = {
-    schema_version: graph.manifest.schema_version,
+    schema_version: KNOWLEDGE_INDEX_SCHEMA_VERSION,
     profile_id: profileId,
     nodes,
     edges: sortedEdges,
   };
   return {
-    schema_version: graph.manifest.schema_version,
+    schema_version: KNOWLEDGE_INDEX_SCHEMA_VERSION,
     profile_id: profileId,
     knowledge_digest: sha256(canonicalizeJson(digestInput)),
     nodes,

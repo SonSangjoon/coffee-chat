@@ -13,6 +13,8 @@ import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterEach, describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
+import { createHash } from "node:crypto";
+import { compareCodePoints } from "../tools/generate.ts";
 import {
   checkGeneratedProjections,
   generatedProjectionBytes,
@@ -25,6 +27,10 @@ const projectRoot = resolve(import.meta.dirname, "..");
 const cliPath = resolve(projectRoot, "tools/cc.ts");
 const execFileAsync = promisify(execFile);
 const temporaryRoots: string[] = [];
+
+function digest(value: string): `sha256:${string}` {
+  return `sha256:${createHash("sha256").update(value, "utf8").digest("hex")}`;
+}
 
 async function projectGraph(root = projectRoot) {
   const snapshot = await createSnapshot(root, "worktree");
@@ -78,7 +84,7 @@ afterEach(async () => {
 });
 
 describe("Task 4 deterministic delivery projections", () => {
-  it("exports exactly the three declared Agent Skills and no runtime surface", async () => {
+  it("exports the three instance Skills plus engine lifecycle Skills without a runtime surface", async () => {
     const skillNames = (
       await readdir(resolve(projectRoot, "skills"), {
         withFileTypes: true,
@@ -91,9 +97,17 @@ describe("Task 4 deterministic delivery projections", () => {
       "apply-perspective",
       "build-kg",
       "coffee-chat",
+      "create-coffee-chat",
+      "update-coffee-chat",
     ]);
 
-    for (const name of skillNames) {
+    for (const name of [
+      "coffee-chat",
+      "apply-perspective",
+      "build-kg",
+      "create-coffee-chat",
+      "update-coffee-chat",
+    ]) {
       const skill = await readFile(
         resolve(projectRoot, "skills", name, "SKILL.md"),
         "utf8",
@@ -122,12 +136,85 @@ describe("Task 4 deterministic delivery projections", () => {
       ).toBe(true);
     }
     expect(
+      generated.has(
+        "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
+      ),
+    ).toBe(true);
+    expect(
+      generated.has(
+        "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+      ),
+    ).toBe(true);
+    for (const name of [
+      "engine-release.schema.json",
+      "engine-migration-registry.schema.json",
+      "engine-update-advisory.schema.json",
+      "engine-migration-document.schema.json",
+      "release.json",
+      "migration-registry.json",
+      "advisory.json",
+    ])
+      expect(
+        generated.has(
+          `plugins/coffee-chat/skills/update-coffee-chat/references/${name}`,
+        ),
+      ).toBe(true);
+    expect(
       [...generated.keys()].filter((path) =>
         /(?:^|\/)(?:hooks|agents|apps|settings|bin|lspServers|mcpServers)(?:\/|$)/.test(
           path,
         ),
       ),
     ).toEqual([]);
+  });
+
+  it("keeps the personal instance package closed to engine provisioning", async () => {
+    const root = await mkdtemp(
+      resolve(tmpdir(), "coffee-chat-task-5-instance-"),
+    );
+    temporaryRoots.push(root);
+    for (const path of [
+      "coffee-chat.json",
+      "schemas",
+      "method",
+      "skills",
+      "docs/assets/readme",
+      "docs/testing.md",
+      "LICENSE",
+      "CONTENT_LICENSE.md",
+    ])
+      await cp(resolve(projectRoot, path), resolve(root, path), {
+        recursive: true,
+      });
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/coffee-chat.json"),
+      resolve(root, "coffee-chat.json"),
+    );
+    await cp(
+      resolve(projectRoot, "tests/fixtures/initialized-valid/knowledge"),
+      resolve(root, "knowledge"),
+      { recursive: true },
+    );
+    const { snapshot, graph } = await projectGraph(root);
+    const generated = await generatedProjectionBytes(snapshot, graph);
+    expect(
+      [...generated.keys()].filter((path) =>
+        path.includes("create-coffee-chat"),
+      ),
+    ).toEqual([]);
+    const packageRoot = `plugins/${graph.manifest.plugin.name}`;
+    expect(
+      [...generated.keys()]
+        .filter((path) => path.startsWith(`${packageRoot}/skills/`))
+        .sort(),
+    ).toEqual(
+      ["apply-perspective", "build-kg", "coffee-chat"]
+        .flatMap((name) => [
+          `${packageRoot}/skills/${name}/SKILL.md`,
+          `${packageRoot}/skills/${name}/references/method.md`,
+        ])
+        .sort(),
+    );
   });
 
   it("projects the shared method, thin routers, package, marketplace, and README for the generic engine", async () => {
@@ -167,7 +254,7 @@ describe("Task 4 deterministic delivery projections", () => {
     ) as Record<string, unknown>;
     expect(codexManifest).toMatchObject({
       name: "coffee-chat",
-      version: "1.0.0",
+      version: "1.1.0",
       repository: "https://github.com/SonSangjoon/coffee-chat",
       skills: "./skills/",
       license: "MIT",
@@ -369,7 +456,7 @@ describe("Task 4 deterministic delivery projections", () => {
       "Downstream authors retain ownership of the Notes",
     );
     expect(combined).not.toContain("Sangjoon Son");
-    expect(instanceReadme).toContain(
+    expect(instanceReadme).not.toContain(
       "https://github.com/SonSangjoon/coffee-chat",
     );
     expect(combined).not.toContain("coffee-chat-sangjoon");
@@ -460,15 +547,38 @@ describe("Task 4 deterministic delivery projections", () => {
     const currentMarkerValue = JSON.parse(
       await readFile(currentMarker, "utf8"),
     ) as {
-      owned_paths: string[];
+      owned_files: Array<{ path: string; digest: string }>;
     };
-    currentMarkerValue.owned_paths.push(
-      "plugins/coffee-chat/knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
-      "plugins/coffee-chat/hooks/hooks.json",
+    currentMarkerValue.owned_files.push(
+      {
+        path: "./knowledge/notes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.md",
+        digest: digest("stale\n"),
+      },
+      { path: "./hooks/hooks.json", digest: digest("{}\n") },
     );
-    await writeFile(
-      currentMarker,
+    currentMarkerValue.owned_files.sort((left, right) =>
+      compareCodePoints(left.path, right.path),
+    );
+    const currentMarkerBytes = Buffer.from(
       `${JSON.stringify(currentMarkerValue, null, 2)}\n`,
+    );
+    await writeFile(currentMarker, currentMarkerBytes);
+    const repositoryMarkerPath = resolve(
+      root,
+      ".coffee-chat/generated-files.json",
+    );
+    const repositoryMarker = JSON.parse(
+      await readFile(repositoryMarkerPath, "utf8"),
+    ) as { owned_files: Array<{ path: string; digest: string }> };
+    const packageEntry = repositoryMarker.owned_files.find(
+      (entry) =>
+        entry.path === "./plugins/coffee-chat/.coffee-chat-generated.json",
+    );
+    expect(packageEntry).toBeDefined();
+    packageEntry!.digest = digest(currentMarkerBytes.toString("utf8"));
+    await writeFile(
+      repositoryMarkerPath,
+      `${JSON.stringify(repositoryMarker, null, 2)}\n`,
     );
 
     const obsoletePackage = resolve(root, "plugins/coffee-chat-obsolete");
@@ -478,14 +588,8 @@ describe("Task 4 deterministic delivery projections", () => {
       ".coffee-chat-generated.json",
     );
     const marker = JSON.parse(await readFile(obsoleteMarker, "utf8")) as {
-      package_name?: string;
-      owned_paths: string[];
+      owned_files: Array<{ path: string; digest: string }>;
     };
-    delete marker.package_name;
-    marker.owned_paths = marker.owned_paths.map((path) =>
-      path.replace("plugins/coffee-chat/", "plugins/coffee-chat-obsolete/"),
-    );
-    await writeFile(obsoleteMarker, `${JSON.stringify(marker, null, 2)}\n`);
     for (const relativePath of [".codex-plugin/plugin.json"]) {
       const path = resolve(obsoletePackage, relativePath);
       const value = JSON.parse(await readFile(path, "utf8")) as {
@@ -496,7 +600,13 @@ describe("Task 4 deterministic delivery projections", () => {
         value.name = "coffee-chat-obsolete";
       else value.plugin!.name = "coffee-chat-obsolete";
       await writeFile(path, `${JSON.stringify(value, null, 2)}\n`);
+      const entry = marker.owned_files.find(
+        (candidate) => candidate.path === `./${relativePath}`,
+      );
+      expect(entry).toBeDefined();
+      entry!.digest = digest(await readFile(path, "utf8"));
     }
+    await writeFile(obsoleteMarker, `${JSON.stringify(marker, null, 2)}\n`);
     const unlisted = resolve(obsoletePackage, "user-content/keep.txt");
     await mkdir(resolve(obsoletePackage, "user-content"), { recursive: true });
     await writeFile(unlisted, "do not delete\n");
@@ -595,10 +705,10 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(await readFile(reference, "utf8")).toBe("drift\n");
 
     expect(await runCli(root, "generate", "--format", "json")).toEqual({
-      exitCode: 0,
-      stdout: "[]\n",
+      exitCode: 1,
+      stdout: expect.stringContaining('"code":"generated-owned-file-conflict"'),
     });
-    expect(await readFile(reference, "utf8")).not.toBe("drift\n");
+    expect(await readFile(reference, "utf8")).toBe("drift\n");
   });
 
   it("checks the staged virtual tree without reading worktree projection drift", async () => {
@@ -639,9 +749,9 @@ describe("Task 4 deterministic delivery projections", () => {
       "plugins/coffee-chat/.coffee-chat-generated.json",
     );
     const marker = JSON.parse(await readFile(markerPath, "utf8")) as {
-      owned_paths: string[];
+      owned_files: Array<{ path: string; digest: string }>;
     };
-    marker.owned_paths.reverse();
+    marker.owned_files.reverse();
     await writeFile(markerPath, `${JSON.stringify(marker, null, 2)}\n`);
 
     const checked = await runCli(root, "check", "--format", "json");

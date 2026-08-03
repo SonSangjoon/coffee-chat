@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-publication-journal.schema.json",
+  "title": "Coffee Chat engine update publication journal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "publication_digest",
+    "candidate_bytes_digest",
+    "receipt_path",
+    "journal_path",
+    "state"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "publication_digest": { "$ref": "#/$defs/digest" },
+    "candidate_bytes_digest": { "$ref": "#/$defs/digest" },
+    "receipt_path": { "type": "string", "minLength": 1 },
+    "journal_path": { "type": "string", "minLength": 1 },
+    "state": {
+      "type": "object",
+      "required": ["phase", "known_completed_effects"],
+      "properties": {
+        "phase": {
+          "enum": [
+            "intent",
+            "attempting",
+            "indeterminate",
+            "invalidated",
+            "committed",
+            "pushed",
+            "pull-request-created",
+            "finalized"
+          ]
+        },
+        "known_completed_effects": {
+          "enum": [
+            [],
+            ["commit"],
+            ["commit", "push"],
+            ["commit", "push", "pull-request"]
+          ]
+        },
+        "attempted_effect": {
+          "enum": ["commit", "push", "pull-request", "receipt-finalization"]
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

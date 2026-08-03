@@ -147,10 +147,44 @@ describe("localized README projections", () => {
     expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
     expect(korean).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
     expect(korean).toContain(
-      "[**나만의 Coffee Chat 만들기**](https://github.com/SonSangjoon/coffee-chat)",
+      "[**나만의 Coffee Chat 만들기**](#build-your-coffee-chat)",
     );
     expect(english).not.toContain("Sangjoon Son");
     expect(korean).not.toContain("Sangjoon Son");
+    expect(english).not.toContain("Built with [Coffee Chat]");
+    expect(korean).not.toContain("Built with [Coffee Chat]");
+  });
+
+  it("renders instance attribution only from canonical provenance", async () => {
+    const manifest = JSON.parse(
+      await readFile(
+        resolve(initializedFixtureRoot, "coffee-chat.json"),
+        "utf8",
+      ),
+    ) as Manifest & { provenance?: unknown };
+    manifest.schema_version = "1.1.0";
+    manifest.provenance = {
+      engine: {
+        repository: "https://github.com/example/coffee-chat-engine",
+        version: "1.1.0",
+        source_commit: "a".repeat(40),
+        release_digest: `sha256:${"b".repeat(64)}`,
+      },
+      created_from: {
+        method: "github-template",
+        template_repository: "https://github.com/example/coffee-chat-engine",
+      },
+    };
+    const projected = renderReadmes(manifest);
+    for (const readme of projected.values()) {
+      const lines = readme.toString("utf8").trimEnd().split("\n");
+      expect(lines.at(-1)).toBe(
+        "Built with [Coffee Chat](https://github.com/example/coffee-chat-engine) · v1.1.0",
+      );
+      expect(readme.toString("utf8")).not.toContain(
+        "https://github.com/SonSangjoon/coffee-chat",
+      );
+    }
   });
 
   it("joins instance Pages routes when pages_url has no trailing slash", async () => {

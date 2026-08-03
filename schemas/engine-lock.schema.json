@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-lock.schema.json",
+  "title": "Coffee Chat Instance Engine Lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "engine", "managed_files"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "engine": { "$ref": "#/$defs/engine_provenance" },
+    "managed_files": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/managed_file" }
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[a-z0-9.-]+/[a-z0-9._-]+$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "engine_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "source_commit", "release_digest"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/repository" },
+        "version": { "$ref": "#/$defs/semver" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "release_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "managed_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "class", "digest", "mode"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^\\./(?!.*(?:^|/)\\.\\.(?:/|$))(?:[A-Za-z0-9._\\-\\[\\]]+/)*[A-Za-z0-9._\\-\\[\\]]+$"
+        },
+        "class": { "const": "engine-source" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "mode": { "enum": ["100644", "100755"] }
+      }
+    }
+  }
+}

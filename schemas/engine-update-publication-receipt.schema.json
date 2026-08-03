@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-publication-receipt.schema.json",
+  "title": "Coffee Chat engine update publication receipt",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "publication_digest",
+        "status",
+        "commit_sha",
+        "remote_head_sha",
+        "pull_request",
+        "completed_effects"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "publication_digest": { "$ref": "#/$defs/digest" },
+        "status": { "const": "published" },
+        "commit_sha": { "$ref": "#/$defs/commit" },
+        "remote_head_sha": { "$ref": "#/$defs/commit" },
+        "pull_request": { "$ref": "#/$defs/pr" },
+        "completed_effects": { "const": ["commit", "push", "pull-request"] }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "publication_digest",
+        "status",
+        "reason_codes",
+        "completed_effects"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "publication_digest": { "$ref": "#/$defs/digest" },
+        "status": { "const": "invalidated" },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "completed_effects": { "const": [] }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "publication_digest",
+        "status",
+        "known_completed_effects",
+        "indeterminate_effect",
+        "returned_identifiers",
+        "observed_identifiers",
+        "recovery"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "publication_digest": { "$ref": "#/$defs/digest" },
+        "status": { "const": "partial_remote_result" },
+        "known_completed_effects": {
+          "enum": [[], ["commit"], ["commit", "push"]]
+        },
+        "indeterminate_effect": { "enum": ["commit", "push", "pull-request"] },
+        "returned_identifiers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "observed_identifiers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "recovery": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "publication_digest",
+        "status",
+        "commit_sha",
+        "completed_effects",
+        "recovery"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "publication_digest": { "$ref": "#/$defs/digest" },
+        "status": { "const": "partial_remote_result" },
+        "commit_sha": { "$ref": "#/$defs/commit" },
+        "completed_effects": { "const": ["commit"] },
+        "recovery": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "publication_digest",
+        "status",
+        "commit_sha",
+        "remote_head_sha",
+        "completed_effects",
+        "recovery"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "publication_digest": { "$ref": "#/$defs/digest" },
+        "status": { "const": "partial_remote_result" },
+        "commit_sha": { "$ref": "#/$defs/commit" },
+        "remote_head_sha": { "$ref": "#/$defs/commit" },
+        "completed_effects": { "const": ["commit", "push"] },
+        "recovery": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "publication_digest",
+        "status",
+        "commit_sha",
+        "remote_head_sha",
+        "pull_request",
+        "known_completed_effects",
+        "indeterminate_effect",
+        "returned_identifiers",
+        "observed_identifiers",
+        "recovery"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "publication_digest": { "$ref": "#/$defs/digest" },
+        "status": { "const": "partial_remote_result" },
+        "commit_sha": { "$ref": "#/$defs/commit" },
+        "remote_head_sha": { "$ref": "#/$defs/commit" },
+        "pull_request": { "$ref": "#/$defs/pr" },
+        "known_completed_effects": {
+          "const": ["commit", "push", "pull-request"]
+        },
+        "indeterminate_effect": { "const": "receipt-finalization" },
+        "returned_identifiers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "observed_identifiers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "recovery": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "pr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "repository_id",
+        "state",
+        "base",
+        "head",
+        "title",
+        "body"
+      ],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "repository_id": { "type": "string", "minLength": 1 },
+        "state": { "const": "open" },
+        "base": { "type": "string", "minLength": 1 },
+        "head": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "body": { "type": "string" }
+      }
+    }
+  }
+}

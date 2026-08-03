@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/engine-update-receipt.schema.json",
+  "title": "Coffee Chat engine update receipt",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "update_digest",
+        "base_commit",
+        "current_engine",
+        "target_engine",
+        "source_fingerprint",
+        "migration_edge_ids",
+        "changed_paths",
+        "preservation",
+        "command_results",
+        "status",
+        "branch_name",
+        "worktree_path",
+        "result_tree"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "update_digest": { "$ref": "#/$defs/digest" },
+        "base_commit": { "$ref": "#/$defs/commit" },
+        "current_engine": { "$ref": "#/$defs/provenance" },
+        "target_engine": { "$ref": "#/$defs/provenance" },
+        "source_fingerprint": { "$ref": "#/$defs/source_fingerprint" },
+        "migration_edge_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "changed_paths": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\./" },
+          "uniqueItems": true
+        },
+        "preservation": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-update-preview.schema.json#/$defs/preservation"
+        },
+        "command_results": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/command_result" }
+        },
+        "status": { "const": "applied" },
+        "branch_name": { "type": "string", "minLength": 1 },
+        "worktree_path": { "$ref": "#/$defs/absolute_path" },
+        "result_tree": { "$ref": "#/$defs/result_tree" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "update_digest",
+        "base_commit",
+        "current_engine",
+        "target_engine",
+        "source_fingerprint",
+        "migration_edge_ids",
+        "changed_paths",
+        "preservation",
+        "command_results",
+        "status",
+        "reason_codes",
+        "completed_steps"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "update_digest": { "$ref": "#/$defs/digest" },
+        "base_commit": { "$ref": "#/$defs/commit" },
+        "current_engine": { "$ref": "#/$defs/provenance" },
+        "target_engine": { "$ref": "#/$defs/provenance" },
+        "source_fingerprint": { "$ref": "#/$defs/source_fingerprint" },
+        "migration_edge_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "changed_paths": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\./" },
+          "uniqueItems": true
+        },
+        "preservation": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-update-preview.schema.json#/$defs/preservation"
+        },
+        "command_results": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/command_result" }
+        },
+        "status": { "const": "invalidated" },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "completed_steps": { "const": [] }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "update_digest",
+        "base_commit",
+        "current_engine",
+        "target_engine",
+        "source_fingerprint",
+        "migration_edge_ids",
+        "changed_paths",
+        "preservation",
+        "command_results",
+        "status",
+        "completed_steps",
+        "recovery"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0.0" },
+        "update_digest": { "$ref": "#/$defs/digest" },
+        "base_commit": { "$ref": "#/$defs/commit" },
+        "current_engine": { "$ref": "#/$defs/provenance" },
+        "target_engine": { "$ref": "#/$defs/provenance" },
+        "source_fingerprint": { "$ref": "#/$defs/source_fingerprint" },
+        "migration_edge_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "changed_paths": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\./" },
+          "uniqueItems": true
+        },
+        "preservation": {
+          "$ref": "https://coffee-chat.dev/schemas/engine-update-preview.schema.json#/$defs/preservation"
+        },
+        "command_results": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/command_result" }
+        },
+        "status": { "const": "partial_apply_result" },
+        "branch_name": { "type": "string", "minLength": 1 },
+        "worktree_path": { "$ref": "#/$defs/absolute_path" },
+        "completed_steps": {
+          "type": "array",
+          "items": {
+            "enum": ["branch-created", "worktree-created", "files-applied"]
+          },
+          "uniqueItems": true
+        },
+        "recovery": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "repo": {
+      "type": "string",
+      "pattern": "^https://github\\.com/[A-Za-z0-9.-]+/[A-Za-z0-9._-]+$"
+    },
+    "absolute_path": {
+      "type": "string",
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)(?:[^/\\u0000]+/)*[^/\\u0000]+$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "version", "source_commit", "release_digest"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/repo" },
+        "version": { "$ref": "#/$defs/semver" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "release_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "source_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "real_path",
+        "origin_url",
+        "source_commit",
+        "source_tree",
+        "release_digest",
+        "registry_digest",
+        "package_lock_digest"
+      ],
+      "properties": {
+        "real_path": { "$ref": "#/$defs/absolute_path" },
+        "origin_url": { "$ref": "#/$defs/repo" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "source_tree": { "$ref": "#/$defs/commit" },
+        "release_digest": { "$ref": "#/$defs/digest" },
+        "registry_digest": { "$ref": "#/$defs/digest" },
+        "package_lock_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "command_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "exit_code", "stdout_digest", "stderr_digest"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "exit_code": { "type": "integer", "minimum": 0 },
+        "stdout_digest": { "$ref": "#/$defs/digest" },
+        "stderr_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "result_tree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "git_tree_sha",
+        "inventory_digest",
+        "base_index_tree_sha",
+        "unstaged_diff_digest",
+        "changed_paths"
+      ],
+      "properties": {
+        "git_tree_sha": { "$ref": "#/$defs/commit" },
+        "inventory_digest": { "$ref": "#/$defs/digest" },
+        "base_index_tree_sha": { "$ref": "#/$defs/commit" },
+        "unstaged_diff_digest": { "$ref": "#/$defs/digest" },
+        "changed_paths": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^\\./" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

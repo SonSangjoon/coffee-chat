@@ -13,48 +13,35 @@ jobs:
     permissions:
       contents: read
     steps:
-      # actions/checkout v4
       - name: Check out repository without persisted credentials
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
           fetch-depth: 0
-
-      # actions/setup-node v4
       - name: Set up pinned Node.js
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 24.5.0
           cache: npm
-
       - name: Install locked dependencies
         run: npm ci
-
       - name: Scan repository with verified Gitleaks v8.30.1
         run: node --experimental-strip-types tools/gitleaks.ts scan --mode repository --redact=100
-
       - name: Run complete test suite
         run: npm test
-
       - name: Type-check source
         run: npm run typecheck
-
       - name: Verify deterministic graph and projections
         run: |
           npm run cc -- check --snapshot worktree --format json
           npm run cc -- generate --check --format json
-
       - name: Validate generic plugin and Agent Skills
         run: npm test -- tests/skill-contracts.test.ts tests/task-4-projections.test.ts
-
       - name: Build documentation-only engine site
         run: npm run site:build
-
       - name: Verify isolated synthetic instance package
         run: npm test -- tests/fixture-isolation.test.ts
-
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-
       - name: Verify synthetic instance Pages and accessibility
         run: npm run test:site

@@ -1,0 +1,826 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "https://github.com/SonSangjoon/coffee-chat",
+  "version": "1.1.0",
+  "source_ref": "refs/tags/v1.1.0",
+  "target_manifest_schema_version": "1.1.0",
+  "migration_registry": {
+    "path": "./engine/migrations/registry.json",
+    "digest": "sha256:92d08686a73e43e1c842a739f2f6d0018fca5995c12a6d55f5f597b31c4954c3"
+  },
+  "managed_files": [
+    {
+      "path": "./.editorconfig",
+      "digest": "sha256:a6b98ea7cb6d61ed8d430dd0dffa46c87012b5cf859d4ce7207898954951fdcd",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.gitattributes",
+      "digest": "sha256:8a0f8488eb7c7da84260209230d7982c1f80d4c8745b84ccbe97c247df24c0a6",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.github/workflows/ci.yml",
+      "digest": "sha256:52b3bdc20797149feef8db028d9c33cb43d76783607d6eb99c0fe72eddf0b683",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.gitignore",
+      "digest": "sha256:8c1a0bf3df5030eb6d06659284c18b722a3bc3581ee5954730f0d2d7e42190fa",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.gitleaks.toml",
+      "digest": "sha256:4cb73cbd6e7a30e9a4a4d793ff7cb29d31063345e6917f32bfb3f6cbe614b48d",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.node-version",
+      "digest": "sha256:0667c9be2ca8fad9083f936776a81b73fb1c81e32f30cb4da5460f470a09f1c7",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.pre-commit-config.yaml",
+      "digest": "sha256:2b5ea92fa21097814724f5e3f3c94dfef6188900be2ef385a2c034ee935941ed",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.prettierignore",
+      "digest": "sha256:aa55697893fb2a053cd00aa9024e38ff8668659d220dbefc43b78a8e61bb21c2",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./LICENSE",
+      "digest": "sha256:4e877a766f8f5ea05b55cd7447e272c9307e892014c573704a4b9f2c7146a0c0",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./astro.config.mjs",
+      "digest": "sha256:6756d1518872b9a170b8585a0033e103c54a81860517812ac1ba8d64344c05ec",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-cover.png",
+      "digest": "sha256:88cf9c695c7793ef1a2ef28a1ad528c5b40ec4c6aed7e53495211d1a36ad48d9",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-flow.en.png",
+      "digest": "sha256:399aeedde8920153d7c2fe9cc2d62d26ecc07a51d01d9f20e97ebb9ac180064c",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-trust.en.png",
+      "digest": "sha256:fe668c6c795baeccd1f07fa586d30b4d1d0fcaa7077bba5c47d35f0874bf8df4",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./method/shared-method.md",
+      "digest": "sha256:776ec1e855fcec8ee5cbf7f37f8f47b2dd56220af9f0b5b9c4a17ee75807d01b",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./package-lock.json",
+      "digest": "sha256:cec8e9ad863861bc24b72691d43947ba394ed85fa5268fb3cda0f7280e8b339f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./package.json",
+      "digest": "sha256:e7f11ed7cc05bfeec14a837bc6a234c8e21515d6453454ba2622a30954bf275f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./playwright.config.ts",
+      "digest": "sha256:d45b65c5e38a604e89c8623e826a2f2ce3310f5d45c5b53fab10656ec13c2e30",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/candidate-manifest.schema.json",
+      "digest": "sha256:428d8f596c775ca3007bd6fec5edc29b5f04a736b403483146284019afecae70",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/candidate-request.schema.json",
+      "digest": "sha256:8273db9a54075a3ebde7fa958c9aea2f0dcef9392c7f367fce4ea187eff6b1a9",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/coffee-chat.schema.json",
+      "digest": "sha256:c06ab3651a6167b5a2dfd098e67458f024135f160754d5250e6a1fb9a84935a5",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/engine-lock.schema.json",
+      "digest": "sha256:369bed55bacbb8e397aca41f742d3bc92cedb2d87d19cb43ba48ccf537d1d052",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/entity-registry.schema.json",
+      "digest": "sha256:de3e04fc7c8678e099a43b44b2fd91244655c94daeb94c509df737d4fd1e1430",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/generated-ownership.schema.json",
+      "digest": "sha256:fb3cb54dafdb65a33f70acf11a66fd51c7033a6c6036ae6c4019efecd86b19a3",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/knowledge-index.schema.json",
+      "digest": "sha256:a2e3407389b69809014adfb476422e0ffa126668d4e73af1ece9cd426526e77b",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/note-frontmatter.schema.json",
+      "digest": "sha256:2625547284873f8d53e335f1246e00c8828906987177f85b36224696d6ccd6e2",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/preview.schema.json",
+      "digest": "sha256:31484847db24e68af41f7d806e3e577d0605e2a5e51811a187099e56bf5ebf57",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/receipt.schema.json",
+      "digest": "sha256:dba9c0288f2cc50e1653d9a51a98804bf5902619a766e0aa7754f9603c0d06cc",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/components/GraphView.astro",
+      "digest": "sha256:2df86d3cd119fc8cced9301ff92fab1fe5f3a847424c9ab458a616b02d409a1c",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/components/KnowledgeList.astro",
+      "digest": "sha256:e8725ec974f23eef591340419bbf1ea878cb445534bffea122b926ef71e7d4c2",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/components/TemporalFilters.astro",
+      "digest": "sha256:5dc16acbe535a8617990fb8504b4419bea281cc843929d5c3f70549cc3090f16",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/env.d.ts",
+      "digest": "sha256:22ae54e67c4db7cdcf5d3893033581482486f25f0c0479f0bcddf87746dadd87",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/layouts/BaseLayout.astro",
+      "digest": "sha256:d00c0c7850a5038a8aae61705baa2a73fd0db3741f2ffcd97caa2a43f82a0dda",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/lib/build-context.ts",
+      "digest": "sha256:77531f02663cd4aa588e6aefd8507be0745d4f3cef6112a48b7c34d873a09edd",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/lib/load-site-model.ts",
+      "digest": "sha256:7fe8c47094857cc4f276efc19fb20b08351d73fb19dd31d236b024e8b07ca50c",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/lib/render-markdown.ts",
+      "digest": "sha256:fbaa6c0955a03b45151b8de71901ec5e7e3ee69e22f168432f76dfa567a141f5",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/lib/site-context.ts",
+      "digest": "sha256:4985442803264313912fed3fc92534cd2ee916d9a0786b1aa6be1b8eaf7d69fd",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/lib/view.ts",
+      "digest": "sha256:ce3f09c8b455d311a69a0d1b938a0265e65abf6ea980ae4cba864b93d9de38ef",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/pages/entities/[id].astro",
+      "digest": "sha256:81375275b0b5c63d669c01cee05e429f57de7b365b2236fb8e3089007e69f8b8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/pages/graph.astro",
+      "digest": "sha256:37b79d167b1acbaaf119ca3eaa1b9d034b6f1919283e86ec1f21d9d641bcb760",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/pages/index.astro",
+      "digest": "sha256:454a45656854ccd78d6e5081bbd69127712e1eddab4432f98a14dd92e980252f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/pages/notes/[id].astro",
+      "digest": "sha256:c694fae9439e2ccc54c7c249a1e9001f1b868d70691a50df1be0af5b0b262302",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/pages/sources/[slug].astro",
+      "digest": "sha256:f9f1789ff640130b780c88673cbd79e272598a5dcb801f67bde0b6a4d788748d",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/pages/timeline.astro",
+      "digest": "sha256:f443cb93c990cb7cc545e7d0603201f2feb23fcdcb493ef3af2eb60b1372b17d",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./site/styles/global.css",
+      "digest": "sha256:14f6179ae264edbc1caabc1ff6ef5537137199ebb29b8494b45c703db5829cc4",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./skills/apply-perspective/SKILL.md",
+      "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./skills/apply-perspective/references/method.md",
+      "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./skills/build-kg/SKILL.md",
+      "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./skills/build-kg/references/method.md",
+      "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./skills/coffee-chat/SKILL.md",
+      "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./skills/coffee-chat/references/method.md",
+      "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/artifact-boundaries.test.ts",
+      "digest": "sha256:f72baec621bccb9f7f345e908444a6d6fc20da05b196a507d8ed5e4fe5bd75cc",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/candidate-downstream-identity.test.ts",
+      "digest": "sha256:0018acaf4331fcccc501fc69c9f449ea6229afe8691810fa2951991a849a6cdb",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/e2e/site.spec.ts",
+      "digest": "sha256:a903d92db647fe47a5019c0808636f8eb0c2cc452464f8f1f527b068c4ce168f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/engine-provenance.test.ts",
+      "digest": "sha256:082f36eb6c8e87ad67d7ca9ced7d898e6680ff5821479b10e79eab3cabc8eb78",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/fixture-isolation.test.ts",
+      "digest": "sha256:c62770a291a7658e5b9bbd05a020c841bb6487fdb1cd1d0c4bcdc9ea57ed6fff",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/foundation-contracts.test.ts",
+      "digest": "sha256:dba22cc9b54eeda48bed4ccb09531c7b06fcc727dd51a60a8fc67bde9cd5520f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/generated-ownership.test.ts",
+      "digest": "sha256:fadc8b2ab205b011b23f2cce587f363b125cdf538a5e2e060fc4deef127fb40a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/gitleaks-contracts.test.ts",
+      "digest": "sha256:83b18a94371e4cf60530140ad416f9f8d66191da76517b46637f62cb7886abca",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/helpers/isolated-host-config.ts",
+      "digest": "sha256:501d42a271bf482fcb4c47362d72edc83424c0dee8558a3e82e494c5f9f011bd",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/helpers/site-fixture.ts",
+      "digest": "sha256:8e939c487e4d8b4e5cbe5f2f0979952e9c61ceb8e76fc3567c00ca4d59f7196e",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/helpers/skill-harness.ts",
+      "digest": "sha256:4ca61bba47f6ff791a3a736397884c782e969428a39a86ee211efd708f3eeeb8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/isolated-host-config.test.ts",
+      "digest": "sha256:27a047979e6951051420e6971fe162dec95d7690c2b26dd8fd476b1a1b6777dd",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/make-mine-acceptance.test.ts",
+      "digest": "sha256:1821dbe0e0f30d3f92f8d559eca891fb35fe2e762069240201203636d4f2fd07",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/plugin-lifecycle.test.ts",
+      "digest": "sha256:33b6fc7cfc1b3bdaba75c8d1c863396955867f5c13fc856aefd5fa419e0f676b",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/readme-assets.test.ts",
+      "digest": "sha256:c8673deb3fd181c7fa9a4398685737f37232813a52d034d6b21eb42f0fa5ecb8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/readme-projections.test.ts",
+      "digest": "sha256:6d7218b556474542487970558e40513c0cca13471d6f0358ca40ee98add2f028",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/render-markdown.test.ts",
+      "digest": "sha256:ec54125aa18303d071a9d733710e918446a5c7dda09159cc1b3cc4f640638d5d",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/role-contracts.test.ts",
+      "digest": "sha256:9e6ad68b6d03c4dee9b0ad0683a22c73affbed51376d44c2d8c7705d6654b60a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/site-build.test.ts",
+      "digest": "sha256:e5b11484e5ed191e794758a923cc6726b17a4684a24ab00cd060058d5eb804ff",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/site-model.test.ts",
+      "digest": "sha256:9be2b04ae671e7183aebd4dfed8596d4fb88a092a9dba8f31794f2e3a352be20",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/site-publication-boundary.test.ts",
+      "digest": "sha256:270c25739c0e41102529609552109d81e51ba8e4594675d353afea940bc1481a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/skill-contracts.test.ts",
+      "digest": "sha256:974d82299832bfd0ca11464b0a031c4cbd39f07ddede3736d9b903b4595b3442",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/skill-evaluations.test.ts",
+      "digest": "sha256:5f4d9297f784ef91ee74d8b4c9356625c0e96f15f32e7608bd02c654ec83e96b",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/task-2-contracts.test.ts",
+      "digest": "sha256:c5b78f13d2f33d47f8b283d9f6109e52bef4fa43ce6e751e2fe436ec487c36b1",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/task-3-candidate.test.ts",
+      "digest": "sha256:e5182b4c5f3a2f6aeb24b17761ddf47bb71883d38c33ad46511179b4ced6f883",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/task-3-cli.test.ts",
+      "digest": "sha256:555f978d6e9f7331da96a57db7feee753601490de1907b94be69b6602310c5e1",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/task-3-hooks.test.ts",
+      "digest": "sha256:45a4c696f1feece35b1888c5ceba4aa16813fc5e23a5eb7613285f263ae3b037",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/task-4-candidate-projections.test.ts",
+      "digest": "sha256:b11ec5a654683cfe411b027f7bda71896d1d986cca2972c06477526f21735067",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/task-4-projections.test.ts",
+      "digest": "sha256:f17ea68d40fe03302c599915eefec9c3483790259b91fe0d334b0923258d3fb8",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/transaction.test.ts",
+      "digest": "sha256:43bc874d3d2a782b249919e0f5b7c3691640118c2a4bcc4178584e74702a9e45",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/workflow-contracts.test.ts",
+      "digest": "sha256:c7b713e6b6b8a29a0e1d8ec2f624b279d9380e9cec396fc3aa9af967108e6a05",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/artifact-inventory.ts",
+      "digest": "sha256:adb15872afe94816ec046455c173346e63a5798cfc5a7da2a6a63745397d0ec3",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/candidate.ts",
+      "digest": "sha256:0fda8aec6fc7bd47c25dc0a9e432e0957ddcdff215767f6928890a9fe84a729f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/cc.ts",
+      "digest": "sha256:65a89e62a7733d7c96724118f3f6347756a1261f591699994d0c5e65291ed712",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/contracts.ts",
+      "digest": "sha256:8a140eee299223c5d84daa859374b03dd79b96b021fea20112872dca51cbfe47",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/engine-contracts.ts",
+      "digest": "sha256:e18c15cc61a1ccaf1bb549f0dd02b1958a8874eceec8153fa065ff54db5ce1ff",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/engine-provenance.ts",
+      "digest": "sha256:4db33062474be28bd90be871df4f6bfdeee7d584daae94a55ac9c1f9b6b4e317",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/generate.ts",
+      "digest": "sha256:350c9c9ced9690a8494f2a3db8fef137e65b0dbeb70505e7222190ba6c8df7f5",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/generated-ownership.ts",
+      "digest": "sha256:3a6dd110e85daab612a58b39b9709fadefba4e0e355db03f098b8e9a09280b63",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/gitleaks.ts",
+      "digest": "sha256:ccc9cef0fa5f75cbec5867802c39ded7c60170136a4d52f76da107f3c971e606",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/hooks.ts",
+      "digest": "sha256:434d5fbaf2599fdbe05ad3e4ed1e7dbfecf4e45e0debeb5e78e0d103730b69a3",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/knowledge.ts",
+      "digest": "sha256:0b72448fb78b529f2bb9e88853994e6920b572ade988188ef743d08927097f3a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/projections.ts",
+      "digest": "sha256:6d67da0633b0c3f5201fe56f1fb1190c45df585f508e3ce7678807748b95aee9",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/readme-assets.ts",
+      "digest": "sha256:e845b30b6d9000cd901db1ec7c402bf5802a675a6ad442b0abf576613fd81433",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/readme.ts",
+      "digest": "sha256:c02c10ca81f3bcc63a41a1487559e9123fb59e9544ec42a308c1590b27823800",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/site-build.ts",
+      "digest": "sha256:59751430ecf1ae3f777d41d1e2de5337d54d6c16c33d5ce3cd43daffd7f830de",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/snapshot.ts",
+      "digest": "sha256:cad8cf9c64602640c5e284a1d11d4c394363ddb33e48c53cc40a40d878727512",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/strict-input.ts",
+      "digest": "sha256:2a0f8a69744dc210f8f4398345037a5a11417eeeee41b7595218f5d47ba80f51",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/template-adoption.ts",
+      "digest": "sha256:bd84a3bf5907075b0be6e78a4cbec82bb580fc8bfe872d6694190715b70d93d6",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/temporal.ts",
+      "digest": "sha256:e5272402703b9fdf2463a303bf3ca32d680838853c88e066b718f5d4d0e11d2b",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/transaction.ts",
+      "digest": "sha256:ee0ce4ad23f78f9e5b904dd2df12e690be7405900dd221adb17bec6207a336b3",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/workflow-projections.ts",
+      "digest": "sha256:10b50a4bd7fa3a25953fd06a1c2edd2b2ed11bb7e7c376e8cdd615a63ccce5f6",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tsconfig.json",
+      "digest": "sha256:11442a7d75c49fe2d139ff2fcac00ebdd31291133aaf3460d0f9db0840389e5a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./vitest.config.ts",
+      "digest": "sha256:0fce59f26ad1a17b47a5fd9571dc235aa7f48f88397f35ce8f120b7deecb29dd",
+      "mode": "100644",
+      "class": "engine-source"
+    }
+  ],
+  "delivery_files": [
+    {
+      "path": "./schemas/engine-migration-document.schema.json",
+      "digest": "sha256:a74716a3d8bd1b0aac8a5fa7ff475208487f575c99b25fd72f3bd20741a26a5a",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-migration-registry.schema.json",
+      "digest": "sha256:f88958aea890636a48053ead87d2b0d94d384020f197275c66e10d84ee46397f",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-release-config.schema.json",
+      "digest": "sha256:d537331e421147ba9b6a5a9972d378108a4b1e60205f5ac830984bf4770fdb9d",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-release.schema.json",
+      "digest": "sha256:8e9a1edbc18c77f2003b73e8037ce07eec96bfa62b7bc0fb1248595bf92772e4",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-review-setup-preview.schema.json",
+      "digest": "sha256:0ca104d61528c02ff5ea7be6ca0b95e8e700afff8c768436143091a3810620d2",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-review-setup-receipt.schema.json",
+      "digest": "sha256:5cf6b09b57d46c8bb764b9452a020e7a7ad372c0d6b1731196265c63405172af",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-template-surface.schema.json",
+      "digest": "sha256:b3b1bb053ffb81db2908a63706110294771439e1c7d774b0bcc5af3e5b379014",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-advisory.schema.json",
+      "digest": "sha256:adb3dd0de5b638d29bddda4b5fc11e54eada5df716682f9d483ea7943272d029",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-candidate.schema.json",
+      "digest": "sha256:0a6eb7f60d818fd6a65154103eda78b483de793258ec080d1ca145ab6cc6dbf9",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-preview.schema.json",
+      "digest": "sha256:ac875f3c7c52bebe357787a826e3d0d0bff6e5a95cbed528e501ce787bdd4bf0",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-candidate.schema.json",
+      "digest": "sha256:d4d251abdc11fbbde9f73165fd276f82f821b13846f80b58e648d747fc65b8b0",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-journal.schema.json",
+      "digest": "sha256:25c81a06c11725e55dc417dc5eb4a445e9bdca712a50dc01ec5a2a564579ef37",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-preview.schema.json",
+      "digest": "sha256:0083c7e756b75d9ad16fb98ed32bd212c56e58cfd0680326b6cfb823843bf14b",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-publication-receipt.schema.json",
+      "digest": "sha256:c9d4aa563cdeb30d7d8b4cb9bc719eca1a19942089b75931926b44c625491b87",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./schemas/engine-update-receipt.schema.json",
+      "digest": "sha256:7dcc583a48de019d42a4719d5f69d91d05d1879b4018343576e91ee11fc53762",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-publication-cli.test.ts",
+      "digest": "sha256:84e7ca55e8f162e64d1d041107283bf5b3f31114e076b2f2cb38de65daf61ea7",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-publication.test.ts",
+      "digest": "sha256:2c1e9dc86d72b8f602c38ffeebb54622b997d75dbfd47a289b034b765bb8686a",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-release.test.ts",
+      "digest": "sha256:f57555fcd8d19885c4b354831c6f2547d9b6a2de59f214078f54307ec93c4e17",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-review-setup-skill.test.ts",
+      "digest": "sha256:e8bbe6e192f31c1c631495b74ab3201646c10bd6f63448fd8060759625e27243",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-review-setup.test.ts",
+      "digest": "sha256:82f3b959625550080fb60df5502f9a088dc15ac843bf1f07a77b4d04dcf75790",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-update-acceptance.test.ts",
+      "digest": "sha256:e2a692e3b49d200facf48f31dfb01dd5cdb897f92a94d3528855957fd41f667a",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-update-cli.test.ts",
+      "digest": "sha256:c556ac1d480459ad40ffa778e94d443ee51866f608f847d43aa126bbde126de2",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-update-skill.test.ts",
+      "digest": "sha256:e108d876546f9afbfad00372315f73dffd9f624bafce5795e51c1c053eb11ac4",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/engine-update.test.ts",
+      "digest": "sha256:a5fa6588dc65b43a6c8e7ddb4092be57a87e3e5b1b09ce09730916e6580c024e",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/helpers/engine-update-fixture.ts",
+      "digest": "sha256:536ded5b085b85fbd12b1e144375ef23decc5ed86e1bbd3993c2b24993b0c60e",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/engine-cli.ts",
+      "digest": "sha256:60757b64a5c5565c621e230a15a54912249774a4cd6250616b40c7d30dc9b265",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/engine-publication.ts",
+      "digest": "sha256:1e0b0d8796c35943c20d6eff9069fcb63945c1d69c44b25787c5124f2f90e801",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/engine-release.ts",
+      "digest": "sha256:d274188f63e834b7e4dbe41c2bbea2df5570a252928ddbb25cebca00113350e8",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/engine-update.ts",
+      "digest": "sha256:9a4814b69073c7c6b1853161e8bd258e293a28d5e04e78dc2cfefd6b5406caf0",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/migrations.ts",
+      "digest": "sha256:bba67d6ec57466d630d43520eb492a7cdd39b055f01dbb00e71da3d6a2db3e93",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/update-advisory.ts",
+      "digest": "sha256:de3826efc8bd3c773eb26b6922ffb7e0470de8b84e3d9f9bb0bd27ef8ff24dc1",
+      "mode": "100644",
+      "class": "engine-delivery"
+    }
+  ],
+  "release_digest": "sha256:721573b91fe197d16c945c2b1f102228deeb2d6b0f3050eae215964d63a6b2d2"
+}
