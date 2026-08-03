@@ -415,8 +415,18 @@ async function expectedProjection(
       message: "Engine release generation requires an engine-role checkout.",
     });
   const config = await readConfig(snapshot);
-  const release = await buildEngineRelease(snapshot, manifest, config);
-  const generated = await generatedProjectionBytes(snapshot, validation.graph);
+  const workflow = renderRoleWorkflows("engine");
+  const release = await buildEngineRelease(
+    snapshot,
+    manifest,
+    config,
+    workflow,
+  );
+  const generated = await generatedProjectionBytes(
+    snapshot,
+    validation.graph,
+    workflow,
+  );
   const baseProjection: RepositoryProjection = {
     outputs: [...generated.entries()].map(([path, bytes]) => ({
       path,
@@ -425,7 +435,6 @@ async function expectedProjection(
     })),
     deletions: [],
   };
-  const workflow = renderRoleWorkflows("engine");
   const releaseProjection: RepositoryProjection = {
     outputs: [
       {

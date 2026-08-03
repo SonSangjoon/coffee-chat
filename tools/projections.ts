@@ -58,12 +58,9 @@ import {
   type KnowledgeGraph,
   type Manifest,
 } from "./knowledge.ts";
-import { buildEngineRelease, engineReleaseBytes } from "./engine-release.ts";
-import {
-  buildEngineUpdateAdvisory,
-  type MigrationRegistry,
-} from "./migrations.ts";
 import type { EngineReleaseConfig } from "./engine-contracts.ts";
+import type { RepositoryProjection } from "./engine-contracts.ts";
+import type { MigrationRegistry } from "./migrations.ts";
 import { validateReadmeAssets, validateReadmeLinks } from "./readme-assets.ts";
 import { renderReadmes } from "./readme.ts";
 import type { DependencyTrackingSnapshot, Snapshot } from "./snapshot.ts";
@@ -282,6 +279,8 @@ function agentRouter(manifest: Manifest): Buffer {
 export async function generatedProjectionBytes(
   snapshot: Snapshot,
   graph: KnowledgeGraph,
+  releaseOverlay?: RepositoryProjection,
+  options: { allowUnclassifiedPaths?: boolean } = {},
 ): Promise<Map<string, Buffer>> {
   await validateReadmeAssets(snapshot);
   const manifest = graph.manifest;
@@ -384,6 +383,10 @@ export async function generatedProjectionBytes(
       // Disposable legacy engine fixtures may not contain the updater inputs.
       // The maintained engine release always does.
     } else {
+      const { buildEngineRelease, engineReleaseBytes } = await import(
+        "./engine-release.ts"
+      );
+      const { buildEngineUpdateAdvisory } = await import("./migrations.ts");
       const releaseConfig = parseStrictJson(
         decodeCanonicalText(
           await snapshot.read("engine/release-config.json"),
@@ -395,6 +398,8 @@ export async function generatedProjectionBytes(
         snapshot,
         manifest,
         releaseConfig,
+        releaseOverlay,
+        options,
       );
       const migrationRegistryBytes = await snapshot.read(
         "engine/migrations/registry.json",
@@ -540,7 +545,12 @@ export async function buildProjectionBundle(
       message:
         "Ephemeral test projections must be generated outside the checkout.",
     });
-  const files = await generatedProjectionBytes(snapshot, graph);
+  const files = await generatedProjectionBytes(
+    snapshot,
+    graph,
+    undefined,
+    context.allow_unclassified_paths ? { allowUnclassifiedPaths: true } : {},
+  );
   const dependencies = snapshot.dependencies();
   await assertBoundary(context, dependencies);
   return {
@@ -892,11 +902,15 @@ export async function inspectGeneratedProjections(
     repositoryRole: graph.manifest.repository_role,
     packageName: graph.manifest.plugin.name,
   },
+  options: { allowUnclassifiedPaths?: boolean } = {},
 ): Promise<GeneratedProjectionInspection> {
   const expected = (
     await buildProjectionBundle(snapshot, graph, {
       artifact_class: "release",
       output_root: snapshot.root,
+      ...(options.allowUnclassifiedPaths
+        ? { allow_unclassified_paths: true }
+        : {}),
     })
   ).files;
   const diagnostics: Diagnostic[] = [];
@@ -1108,9 +1122,11 @@ export async function generatedProjectionStatePaths(
     repositoryRole: "engine" | "instance";
     packageName: string;
   },
+  options: { allowUnclassifiedPaths?: boolean } = {},
 ): Promise<string[]> {
-  return (await inspectGeneratedProjections(snapshot, graph, ownershipTarget))
-    .statePaths;
+  return (
+    await inspectGeneratedProjections(snapshot, graph, ownershipTarget, options)
+  ).statePaths;
 }
 
 export async function checkGeneratedProjections(

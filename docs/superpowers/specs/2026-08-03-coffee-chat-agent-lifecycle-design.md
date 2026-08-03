@@ -48,13 +48,13 @@ The maintained repository has `repository_role: "engine"` and contains no Profil
 
 Its generic plugin is named `coffee-chat` and contains five Skills:
 
-| Skill | Responsibility |
-| --- | --- |
-| `coffee-chat` | Read-only conversation with an explicit verified instance |
-| `apply-perspective` | Apply a temporary Task Lens to an explicitly named external task |
-| `build-kg` | The only writer of Profile, Note, Entity, and other canonical KG state |
+| Skill                | Responsibility                                                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coffee-chat`        | Read-only conversation with an explicit verified instance                                                                                          |
+| `apply-perspective`  | Apply a temporary Task Lens to an explicitly named external task                                                                                   |
+| `build-kg`           | The only writer of Profile, Note, Entity, and other canonical KG state                                                                             |
 | `create-coffee-chat` | Provision an independent repository with the GitHub Template API, verify native provenance, clone it, and hand off to its repo-local Build KG flow |
-| `update-coffee-chat` | Inspect and migrate an existing instance from a verified engine release through Preview, approval, isolated application, and optional PR |
+| `update-coffee-chat` | Inspect and migrate an existing instance from a verified engine release through Preview, approval, isolated application, and optional PR           |
 
 The generic plugin remains Skill-only. It does not package a custom executable, daemon, MCP server, runtime Hook, agent definition, or credential store.
 
@@ -80,12 +80,12 @@ Creation and engine migration always come from a separately installed, verified 
 
 Four versions have different meanings and must never be substituted for one another:
 
-| Field | Meaning |
-| --- | --- |
-| `coffee-chat.json.schema_version` | Root manifest contract |
-| `knowledge/index.json.schema_version` | Knowledge-index and knowledge-digest contract |
-| `coffee-chat.json.provenance.engine.version` | Adopted Coffee Chat engine release |
-| `coffee-chat.json.plugin.version` | Personal or generic plugin package version |
+| Field                                        | Meaning                                       |
+| -------------------------------------------- | --------------------------------------------- |
+| `coffee-chat.json.schema_version`            | Root manifest contract                        |
+| `knowledge/index.json.schema_version`        | Knowledge-index and knowledge-digest contract |
+| `coffee-chat.json.provenance.engine.version` | Adopted Coffee Chat engine release            |
+| `coffee-chat.json.plugin.version`            | Personal or generic plugin package version    |
 
 The knowledge digest must use the knowledge-index schema version, not the root manifest schema version. Adding provenance or migrating engine structure must not change `knowledge_digest` when the knowledge semantics are unchanged.
 

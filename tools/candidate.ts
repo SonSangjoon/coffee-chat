@@ -1320,9 +1320,15 @@ async function deliveryProjectionPaths(
     repositoryRole: "engine" | "instance";
     packageName: string;
   },
+  options: { allowUnclassifiedPaths?: boolean } = {},
 ): Promise<string[]> {
   if (!(await hasDeliveryProjectionInputs(snapshot))) return [];
-  return generatedProjectionStatePaths(snapshot, graph, ownershipTarget);
+  return generatedProjectionStatePaths(
+    snapshot,
+    graph,
+    ownershipTarget,
+    options,
+  );
 }
 
 async function repositoryStatePaths(
@@ -1333,12 +1339,18 @@ async function repositoryStatePaths(
     repositoryRole: "engine" | "instance";
     packageName: string;
   },
+  options: { allowUnclassifiedPaths?: boolean } = {},
 ): Promise<string[]> {
   const snapshot = await createSnapshot(root, "worktree");
   return sortedStrings([
     ...new Set([
       ...(await canonicalPaths(root, fileSystem)),
-      ...(await deliveryProjectionPaths(snapshot, graph, ownershipTarget)),
+      ...(await deliveryProjectionPaths(
+        snapshot,
+        graph,
+        ownershipTarget,
+        options,
+      )),
     ]),
   ]);
 }
@@ -2172,6 +2184,33 @@ export async function prepareCandidate(
     baseValidation.graph.manifest,
     repository.targetFingerprint,
   );
+  // Mint and validate request-generated identities before observing any
+  // external Template state. Invalid requests must fail locally and
+  // deterministically without requiring a complete remote Template checkout.
+  const graphIds = new Set([
+    ...(isInstanceGraph(baseValidation.graph)
+      ? [baseValidation.graph.manifest.profile.id]
+      : []),
+    ...baseValidation.graph.entities.map((entity) => entity.id),
+    ...baseValidation.graph.notes.map((note) => note.frontmatter.id),
+  ]);
+  const minted = mintIds(parsed.request, graphIds, deps.uuid);
+  const knownEntityIds = new Set(
+    baseValidation.graph.entities.map((entity) => entity.id),
+  );
+  for (const change of parsed.request.note_changes)
+    resolveEntityRefs(change.value.entity_refs, minted, knownEntityIds);
+  for (const change of parsed.request.entity_changes)
+    if (change.action === "retire")
+      for (const remap of change.note_remaps)
+        resolveEntityRefs(remap.entity_refs, minted, knownEntityIds);
+  // Bind the external Candidate parent before any Template observation. This
+  // keeps a raced output location from being masked by a later remote check.
+  await requireCandidateLocation(
+    candidateLocation,
+    "before-candidate-root-create",
+    deps.fileSystem,
+  );
   let makeMine: MakeMineBinding | undefined;
   if (parsed.request.mode === "make-mine") {
     try {
@@ -2207,12 +2246,16 @@ export async function prepareCandidate(
     snapshot,
     baseValidation.graph,
     projectionOwnershipTarget,
+    parsed.request.mode === "make-mine" ? { allowUnclassifiedPaths: true } : {},
   );
   if (baseProjectionPaths.length > 0) {
     const inspection = await inspectGeneratedProjections(
       snapshot,
       baseValidation.graph,
       projectionOwnershipTarget,
+      parsed.request.mode === "make-mine"
+        ? { allowUnclassifiedPaths: true }
+        : {},
     );
     const ownedStale = new Set(inspection.ownedStalePaths.map(repositoryPath));
     const transitionOnlyPath = (path: string): boolean =>
@@ -2235,14 +2278,6 @@ export async function prepareCandidate(
       );
     }
   }
-  const graphIds = new Set([
-    ...(isInstanceGraph(baseValidation.graph)
-      ? [baseValidation.graph.manifest.profile.id]
-      : []),
-    ...baseValidation.graph.entities.map((entity) => entity.id),
-    ...baseValidation.graph.notes.map((note) => note.frontmatter.id),
-  ]);
-  const minted = mintIds(parsed.request, graphIds, deps.uuid);
   const frozenDate = configuredDate(
     deps.clock.now(),
     parsed.request.instance_configuration?.time_zone ??
@@ -2263,10 +2298,24 @@ export async function prepareCandidate(
     repository.root,
     deps.fileSystem,
   );
+  const makeMineEngineOnlyPaths: string[] = [];
+  if (makeMine) {
+    const engineOnly = new Set<string>([
+      ...(await snapshot.list("engine")),
+      "method/engine-update.md",
+      "skills/create-coffee-chat/SKILL.md",
+      "skills/update-coffee-chat/SKILL.md",
+      ...makeMine.release.delivery_files.map((file) => logicalPath(file.path)),
+    ]);
+    for (const path of engineOnly)
+      if (await pathExists(deps.fileSystem, resolve(repository.root, path)))
+        makeMineEngineOnlyPaths.push(path);
+  }
   const currentState = sortedStrings([
     ...new Set([
       ...currentCanonical,
       ...baseProjectionPaths,
+      ...makeMineEngineOnlyPaths,
       ...(makeMine
         ? makeMine.surface.files.map((file) => logicalPath(file.path))
         : []),
@@ -3735,22 +3784,35 @@ async function validateAppliedState(
     !validation.graph ||
     validation.diagnostics.length > 0 ||
     !isInstanceGraph(validation.graph)
-  )
+  ) {
     return false;
-  if ((await checkGeneratedIndex(snapshot, validation.graph)).length > 0)
+  }
+  const indexDiagnostics = await checkGeneratedIndex(
+    snapshot,
+    validation.graph,
+  );
+  if (indexDiagnostics.length > 0) {
     return false;
-  if (
-    (await deliveryProjectionPaths(snapshot, validation.graph)).length > 0 &&
-    (await checkGeneratedProjections(snapshot, validation.graph)).length > 0
-  )
-    return false;
+  }
+  const deliveryPaths = await deliveryProjectionPaths(
+    snapshot,
+    validation.graph,
+  );
+  if (deliveryPaths.length > 0) {
+    const projectionDiagnostics = await checkGeneratedProjections(
+      snapshot,
+      validation.graph,
+    );
+    if (projectionDiagnostics.length > 0) return false;
+  }
   const bytes = generatedIndexBytes(validation.graph);
   if (!bytes) return false;
   const index = parseStrictJson(
     decodeCanonicalText(bytes, "knowledge/index.json"),
     "knowledge/index.json",
   ) as { knowledge_digest: string };
-  return index.knowledge_digest === manifest.knowledge_digest;
+  const matches = index.knowledge_digest === manifest.knowledge_digest;
+  return matches;
 }
 
 export async function applyCandidate(

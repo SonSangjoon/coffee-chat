@@ -54,7 +54,7 @@ describe("Coffee Chat foundation contracts", () => {
       repository_role: "engine",
       repository: { url: "https://github.com/SonSangjoon/coffee-chat" },
       pages_url: "https://sonsangjoon.github.io/coffee-chat/",
-      plugin: { name: "coffee-chat", version: "1.0.0" },
+      plugin: { name: "coffee-chat", version: "1.1.0" },
       marketplace_name: "coffee-chat-marketplace",
     });
     expect(manifest).not.toHaveProperty("profile");

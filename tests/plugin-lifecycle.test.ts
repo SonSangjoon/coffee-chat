@@ -470,6 +470,10 @@ async function createFictionalInstanceMarketplace(
     recursive: true,
     force: true,
   });
+  await rm(resolve(root, "skills/update-coffee-chat"), {
+    recursive: true,
+    force: true,
+  });
   const manifestPath = resolve(root, "coffee-chat.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
     profile: { id: string; display_name: string; short_name: string };
@@ -630,6 +634,15 @@ async function assertV1SkillOnlySurface(
       "skills/create-coffee-chat/references/method.md",
       "skills/create-coffee-chat/references/release.json",
       "skills/create-coffee-chat/references/template-surface.json",
+      "skills/update-coffee-chat/SKILL.md",
+      "skills/update-coffee-chat/references/advisory.json",
+      "skills/update-coffee-chat/references/engine-migration-document.schema.json",
+      "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
+      "skills/update-coffee-chat/references/engine-release.schema.json",
+      "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
+      "skills/update-coffee-chat/references/method.md",
+      "skills/update-coffee-chat/references/migration-registry.json",
+      "skills/update-coffee-chat/references/release.json",
     );
   const notes = paths.filter((path) =>
     /^knowledge\/notes\/[0-9a-f-]+\.md$/.test(path),

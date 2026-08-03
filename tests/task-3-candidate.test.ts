@@ -86,12 +86,24 @@ async function makeRepository(
     await mkdir(resolve(root, "knowledge/notes"), { recursive: true });
   }
   await mkdir(resolve(root, "docs"), { recursive: true });
+  if (state === "pending") {
+    await mkdir(resolve(root, "method"), { recursive: true });
+    await cp(
+      resolve(projectRoot, "method/engine-update.md"),
+      resolve(root, "method/engine-update.md"),
+    );
+  }
   // Both engine and instance README projections expose the content terms link.
   await cp(
     resolve(projectRoot, "CONTENT_LICENSE.md"),
     resolve(root, "CONTENT_LICENSE.md"),
   );
   await Promise.all([
+    cp(
+      resolve(projectRoot, "docs/assets/readme"),
+      resolve(root, "docs/assets/readme"),
+      { recursive: true },
+    ),
     cp(resolve(projectRoot, "schemas"), resolve(root, "schemas"), {
       recursive: true,
     }),

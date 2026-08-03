@@ -22,6 +22,8 @@ export type ArtifactClass = "release" | "ephemeral-test";
 export type ProjectionContext = {
   artifact_class: ArtifactClass;
   output_root: string;
+  /** Candidate pre-conversion may preserve unrelated user files. */
+  allow_unclassified_paths?: boolean;
 };
 
 type BundleFields = {
@@ -376,6 +378,19 @@ export function artifactPolicyForPath(
     };
   }
   if (normalized.startsWith(FIXTURE_PATH_PREFIX))
+    return {
+      path: normalized,
+      states: {
+        "engine-repository": { audience: "engine-only", ownership: "authored" },
+        "template-copy": { audience: "engine-only", ownership: "authored" },
+      },
+      template_disposition: "remove-engine-only",
+      release_class: "excluded",
+    };
+  // Plugin packages are independently-owned projections. Keep arbitrary
+  // downstream packages out of the engine release and Template surface while
+  // allowing Make mine to preserve them for their owners.
+  if (normalized.startsWith("plugins/"))
     return {
       path: normalized,
       states: {

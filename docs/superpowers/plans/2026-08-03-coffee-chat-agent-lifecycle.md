@@ -31,19 +31,19 @@
 
 ## File responsibility map
 
-| Unit | Responsibility | Primary files |
-| --- | --- | --- |
-| Manifest and provenance | Strict engine/instance identities, immutable template origin, adopted release lock, knowledge-version separation | `coffee-chat.json`, `schemas/coffee-chat.schema.json`, `schemas/engine-lock.schema.json`, `tools/engine-provenance.ts`, `tools/knowledge.ts` |
+| Unit                        | Responsibility                                                                                                                                       | Primary files                                                                                                                                                                    |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Manifest and provenance     | Strict engine/instance identities, immutable template origin, adopted release lock, knowledge-version separation                                     | `coffee-chat.json`, `schemas/coffee-chat.schema.json`, `schemas/engine-lock.schema.json`, `tools/engine-provenance.ts`, `tools/knowledge.ts`                                     |
 | Release and artifact policy | Canonical engine release version/ref, exact adopted source inventory, closed role/phase-aware template surface, independent migration catalog digest | `engine/release-config.json`, `engine/release.json`, `engine/template-surface.json`, `engine/migrations/registry.json`, `tools/engine-release.ts`, `tools/artifact-inventory.ts` |
-| Generated ownership | Repository/package generated-path preimages and safe stale deletion | `schemas/generated-ownership.schema.json`, `.coffee-chat/generated-files.json`, `tools/projections.ts` |
-| Creation | Instruction-only native GitHub Template provisioning and Build KG handoff | `skills/create-coffee-chat/SKILL.md`, its generated references, `method/shared-method.md` |
-| Knowledge Candidate | First-Note requirement, live template observation, downstream fingerprint, atomic engine-to-instance conversion | Candidate schemas, `tools/candidate.ts`, `tools/snapshot.ts` |
-| Migration resolution | Advisory table, verified release graph, declarative migration documents, update CLI parsing | `tools/update-advisory.ts`, `tools/migrations.ts`, `tools/engine-update.ts`, engine-update schemas |
-| Filesystem transaction | Preimage-bound atomic replace/delete and rollback shared by both Candidate families | `tools/transaction.ts` |
-| Update publication | Digest-bound commit, push, and PR target/effects with reconciliation | `tools/engine-publication.ts`, publication schemas |
-| Agent delivery | Five-Skill generic plugin, three-Skill personal plugin, AGENTS local advisory routing, host-specific refresh | `skills/update-coffee-chat/**`, `tools/projections.ts`, plugin lifecycle tests |
-| Public surfaces | Agent-first creation CTA and canonical Built with attribution | `tools/readme.ts`, `site/lib/load-site-model.ts`, `site/layouts/BaseLayout.astro` |
-| Acceptance and release | Read-only PR gates, remote release/template activation, `coffee-chat-son` dogfood | workflows, acceptance tests, `docs/testing.md` |
+| Generated ownership         | Repository/package generated-path preimages and safe stale deletion                                                                                  | `schemas/generated-ownership.schema.json`, `.coffee-chat/generated-files.json`, `tools/projections.ts`                                                                           |
+| Creation                    | Instruction-only native GitHub Template provisioning and Build KG handoff                                                                            | `skills/create-coffee-chat/SKILL.md`, its generated references, `method/shared-method.md`                                                                                        |
+| Knowledge Candidate         | First-Note requirement, live template observation, downstream fingerprint, atomic engine-to-instance conversion                                      | Candidate schemas, `tools/candidate.ts`, `tools/snapshot.ts`                                                                                                                     |
+| Migration resolution        | Advisory table, verified release graph, declarative migration documents, update CLI parsing                                                          | `tools/update-advisory.ts`, `tools/migrations.ts`, `tools/engine-update.ts`, engine-update schemas                                                                               |
+| Filesystem transaction      | Preimage-bound atomic replace/delete and rollback shared by both Candidate families                                                                  | `tools/transaction.ts`                                                                                                                                                           |
+| Update publication          | Digest-bound commit, push, and PR target/effects with reconciliation                                                                                 | `tools/engine-publication.ts`, publication schemas                                                                                                                               |
+| Agent delivery              | Five-Skill generic plugin, three-Skill personal plugin, AGENTS local advisory routing, host-specific refresh                                         | `skills/update-coffee-chat/**`, `tools/projections.ts`, plugin lifecycle tests                                                                                                   |
+| Public surfaces             | Agent-first creation CTA and canonical Built with attribution                                                                                        | `tools/readme.ts`, `site/lib/load-site-model.ts`, `site/layouts/BaseLayout.astro`                                                                                                |
+| Acceptance and release      | Read-only PR gates, remote release/template activation, `coffee-chat-son` dogfood                                                                    | workflows, acceptance tests, `docs/testing.md`                                                                                                                                   |
 
 ---
 
@@ -123,7 +123,9 @@ In `tests/engine-provenance.test.ts`, require a schema-1.1 instance fixture and 
 ```ts
 expect(validateInstance(validInstance)).toEqual([]);
 expect(validateInstance(validLegacyInstance)).toEqual([]);
-expect(classifyInstanceProvenance(validLegacyInstance)).toEqual({ status: "legacy" });
+expect(classifyInstanceProvenance(validLegacyInstance)).toEqual({
+  status: "legacy",
+});
 expect(validateInstance(schema11WithoutProvenance)).toContainEqual(
   expect.objectContaining({ code: "schema-required", pointer: "/provenance" }),
 );
@@ -134,7 +136,10 @@ expect(validateInstance(withCredentialUrl)).toContainEqual(
   expect.objectContaining({ code: "repository-url-invalid" }),
 );
 expect(validateEngine(engineWithProvenance)).toContainEqual(
-  expect.objectContaining({ code: "schema-additional-property", pointer: "/provenance" }),
+  expect.objectContaining({
+    code: "schema-additional-property",
+    pointer: "/provenance",
+  }),
 );
 ```
 
@@ -171,7 +176,10 @@ export function normalizeGitHubRepositoryUrl(value: string): string;
 export function classifyInstanceProvenance(
   manifest: InstanceManifest,
 ): { status: "legacy" } | { status: "bound"; provenance: InstanceProvenance };
-export function validateEngineProvenance(value: unknown, path: string): Diagnostic[];
+export function validateEngineProvenance(
+  value: unknown,
+  path: string,
+): Diagnostic[];
 export function parseEngineLock(bytes: Buffer, path: string): EngineLock;
 export function assertLockMatchesManifest(
   manifest: InstanceManifest,
@@ -476,7 +484,10 @@ export type GeneratedOwnershipMarker = {
     path: `./${string}`;
     digest: `sha256:${string}`;
   }>;
-  adopted_engine?: Pick<EngineProvenance, "repository" | "version" | "release_digest">;
+  adopted_engine?: Pick<
+    EngineProvenance,
+    "repository" | "version" | "release_digest"
+  >;
 };
 ```
 
@@ -732,7 +743,9 @@ expect(receipt.target_fingerprint).toEqual(preview.target_fingerprint);
 expect(receipt.provenance).toEqual(candidateManifest.provenance);
 expect(canonicalManifest.provenance).toEqual(receipt.provenance);
 expect(canonicalManifest.profile.id).toBe(receipt.minted_ids.profile);
-expect(canonicalManifest.pages_url).toBe(request.instance_configuration.pages_url);
+expect(canonicalManifest.pages_url).toBe(
+  request.instance_configuration.pages_url,
+);
 expect(readContentNotice()).toBe(request.instance_configuration.content_notice);
 expect(receipt.knowledge_digest).toBe(generatedIndex.knowledge_digest);
 ```
@@ -980,7 +993,9 @@ export type EngineUpdateAdvisory = {
   }>;
 };
 
-export type BoundUpdaterReference<Path extends `./references/${string}.schema.json`> = {
+export type BoundUpdaterReference<
+  Path extends `./references/${string}.schema.json`,
+> = {
   path: Path;
   digest: `sha256:${string}`;
 };
@@ -1296,7 +1311,10 @@ export type CompletedEngineReviewSetupReceipt = {
     registry_host: string;
     writes: ["node_modules/**"];
   };
-  command_results: [EngineReviewSetupCommandResult, EngineReviewSetupCommandResult];
+  command_results: [
+    EngineReviewSetupCommandResult,
+    EngineReviewSetupCommandResult,
+  ];
   completed_effects: ["git-checkout", "npm-ci"];
 };
 
@@ -1371,7 +1389,17 @@ export type EngineUpdatePreview = {
     empty_hooks_path: string;
     empty_hooks_path_digest: `sha256:${string}`;
     effective_config_digest: `sha256:${string}`;
-    worktree_argv: ["-c", string, "worktree", "add", "--no-checkout", "-b", string, string, string];
+    worktree_argv: [
+      "-c",
+      string,
+      "worktree",
+      "add",
+      "--no-checkout",
+      "-b",
+      string,
+      string,
+      string,
+    ];
     tree_materialization: "ls-tree-cat-file";
     filters: "custom-filters-rejected";
   };
@@ -1477,7 +1505,9 @@ export type PartialEngineUpdateReceipt = EngineUpdateReceiptCommon & {
   status: "partial_apply_result";
   branch_name?: string;
   worktree_path?: string;
-  completed_steps: Array<"branch-created" | "worktree-created" | "files-applied">;
+  completed_steps: Array<
+    "branch-created" | "worktree-created" | "files-applied"
+  >;
   recovery: string[];
 };
 
@@ -1771,7 +1801,12 @@ export type EnginePublicationPreview = {
   };
   workflow_effects: Array<{
     path: `./.github/workflows/${string}.${"yml" | "yaml"}`;
-    event: "push" | "pull_request" | "pull_request_target" | "workflow_run" | "workflow_call";
+    event:
+      | "push"
+      | "pull_request"
+      | "pull_request_target"
+      | "workflow_run"
+      | "workflow_call";
     source: "result-tree" | "remote-base";
     source_commit: string;
     workflow_digest: `sha256:${string}`;

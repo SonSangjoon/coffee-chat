@@ -225,15 +225,35 @@ export async function buildEngineRelease(
   snapshot: Snapshot,
   manifest: EngineManifest,
   config: EngineReleaseConfig,
+  overlay?: RepositoryProjection,
+  options: { allowUnclassifiedPaths?: boolean } = {},
 ): Promise<EngineReleaseManifest> {
   assertConfig(config);
   const repository = repositoryOf(manifest);
   const entries = await snapshot.listRepositoryEntries();
+  const overlayByPath = new Map(
+    (overlay?.outputs ?? []).map((output) => [
+      output.path.replace(/^\.\//, ""),
+      output,
+    ]),
+  );
+  for (const [path, output] of overlayByPath) {
+    const existing = entries.find((entry) => entry.path === path);
+    if (existing) existing.mode = output.mode;
+    else entries.push({ path, mode: output.mode });
+  }
   const entryByPath = new Map(entries.map((entry) => [entry.path, entry]));
   const managed: EngineManagedFile[] = [];
   const delivery: EngineDeliveryFile[] = [];
   for (const entry of entries) {
-    const policy = policyFor(entry.path);
+    let policy: EngineArtifactPolicy;
+    try {
+      policy = policyFor(entry.path);
+    } catch (error) {
+      if (options.allowUnclassifiedPaths && error instanceof ValidationFailure)
+        continue;
+      throw error;
+    }
     if (policy.release_class === "excluded") continue;
     if (entry.mode === "120000")
       throw new ValidationFailure({
@@ -242,7 +262,7 @@ export async function buildEngineRelease(
         message: "Release inventory cannot bind a symbolic link.",
       });
     const path = ensureFilePath(entry.path, policy.release_class);
-    const bytes = await snapshot.read(path);
+    const bytes = overlayByPath.get(path)?.bytes ?? (await snapshot.read(path));
     const commonFile = {
       path: repositoryPath(path) as `./${string}`,
       digest: digest(bytes),

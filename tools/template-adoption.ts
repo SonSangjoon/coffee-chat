@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { lstat, readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import { resolve } from "node:path";
 import type {
@@ -11,6 +11,7 @@ import type {
 } from "./engine-contracts.ts";
 import {
   TEMPLATE_SURFACE_SELF_COPY_PATHS,
+  artifactPolicyForPath,
   engineManagedSourcePaths,
   engineDeliverySourcePaths,
 } from "./artifact-inventory.ts";
@@ -300,19 +301,53 @@ export async function readEngineAdoptionInputs(root: string): Promise<{
     const surfaceByPath = new Map(
       surface.files.map((file) => [file.path, file]),
     );
-    for (const file of [...release.managed_files, ...release.delivery_files]) {
-      const surfaceFile = surfaceByPath.get(file.path);
-      if (
-        !surfaceFile ||
-        surfaceFile.binding.kind !== "content" ||
-        surfaceFile.binding.digest !== file.digest
-      )
-        throw new Error("release/surface file mismatch");
-      const bytes = await readFile(
-        resolve(root, ...file.path.slice(2).split("/")),
-      );
-      if (digest(bytes) !== file.digest) throw new Error("release file drift");
-    }
+    await Promise.all(
+      [...release.managed_files, ...release.delivery_files].map(
+        async (file) => {
+          const surfaceFile = surfaceByPath.get(file.path);
+          if (!surfaceFile) {
+            // Engine-only delivery files are intentionally absent from the public
+            // Template surface. They still remain release-bound and are checked
+            // against their on-disk digest below.
+            const policy = artifactPolicyForPath(file.path);
+            const templateState = policy?.states["template-copy"];
+            if (
+              !policy ||
+              templateState?.audience !== "engine-only" ||
+              policy.template_disposition !== "remove-engine-only"
+            )
+              throw new Error("release/surface file mismatch");
+          } else if (
+            surfaceFile.binding.kind !== "content" ||
+            surfaceFile.binding.digest !== file.digest
+          ) {
+            throw new Error("release/surface file mismatch");
+          }
+          let bytes: Buffer;
+          try {
+            bytes = await readFile(
+              resolve(root, ...file.path.slice(2).split("/")),
+            );
+          } catch (error) {
+            const policy = artifactPolicyForPath(file.path);
+            const templateState = policy?.states["template-copy"];
+            // Delivery-only files are not part of the adopted Template surface;
+            // a disposable downstream checkout may omit them while retaining the
+            // release/surface identity. Managed source files remain mandatory.
+            if (
+              !surfaceFile &&
+              templateState?.audience === "engine-only" &&
+              policy?.template_disposition === "remove-engine-only" &&
+              (error as NodeJS.ErrnoException).code === "ENOENT"
+            )
+              return;
+            throw error;
+          }
+          if (digest(bytes) !== file.digest)
+            throw new Error("release file drift");
+        },
+      ),
+    );
     return { release, surface };
   } catch {
     throw failure(
@@ -327,6 +362,30 @@ function surfacePath(file: TemplateSurfaceFile): string {
   return file.path.replace(/^\.\//, "");
 }
 
+async function assertNoSymlink(root: string, path: string): Promise<void> {
+  const segments = path.split("/");
+  for (let index = 1; index <= segments.length; index += 1) {
+    const partial = segments.slice(0, index).join("/");
+    try {
+      const status = await lstat(resolve(root, ...partial.split("/")));
+      if (status.isSymbolicLink())
+        throw failure(
+          "candidate-symlink-unsafe",
+          partial,
+          "Template source paths must not contain symbolic links.",
+        );
+    } catch (error) {
+      if (error instanceof ValidationFailure) throw error;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw failure(
+        "template-surface-missing",
+        path,
+        "A bound Template-surface file could not be inspected.",
+      );
+    }
+  }
+}
+
 /**
  * Verify the source checkout is exactly the observed Template surface and
  * return the source files that an instance is allowed to adopt. Generated
@@ -336,53 +395,59 @@ export async function adoptEngineSourceFiles(
   root: string,
   surface: EngineTemplateSurfaceManifest,
 ): Promise<Map<string, Buffer>> {
-  const result = new Map<string, Buffer>();
-  for (const file of surface.files) {
-    if (file.disposition !== "adopt-engine-source") continue;
-    const path = surfacePath(file);
-    let bytes: Buffer;
-    try {
-      bytes = await readFile(resolve(root, ...path.split("/")));
-    } catch {
-      throw failure(
-        "template-surface-missing",
-        path,
-        "A bound Template-surface file is missing.",
-      );
-    }
-    if (
-      file.binding.kind === "content" &&
-      digest(bytes) !== file.binding.digest
-    )
-      throw failure(
-        "template-surface-content-mismatch",
-        path,
-        "Template-surface content changed after observation.",
-      );
-    if (file.binding.kind === "surface-self-copy") {
-      // A self-copy is resolved against the canonical surface bytes, not the
-      // digest-less placeholder used while the surface was generated.
+  const adopted = await Promise.all(
+    surface.files.map(async (file) => {
+      if (file.disposition !== "adopt-engine-source") return;
+      const path = surfacePath(file);
+      await assertNoSymlink(root, path);
+      let bytes: Buffer;
+      try {
+        bytes = await readFile(resolve(root, ...path.split("/")));
+      } catch {
+        throw failure(
+          "template-surface-missing",
+          path,
+          "A bound Template-surface file is missing.",
+        );
+      }
       if (
-        !(TEMPLATE_SURFACE_SELF_COPY_PATHS as readonly string[]).includes(
-          file.path,
-        )
+        file.binding.kind === "content" &&
+        digest(bytes) !== file.binding.digest
       )
         throw failure(
-          "template-surface-binding-invalid",
+          "template-surface-content-mismatch",
           path,
-          "Unsupported self-copy path.",
+          "Template-surface content changed after observation.",
         );
-      const expected = templateSurfaceBytes(surface);
-      if (!bytes.equals(expected))
-        throw failure(
-          "template-surface-self-copy-mismatch",
-          path,
-          "Template surface self-copy bytes changed.",
-        );
-    }
-    result.set(path, bytes);
-  }
-  return result;
+      if (file.binding.kind === "surface-self-copy") {
+        // A self-copy is resolved against the canonical surface bytes, not the
+        // digest-less placeholder used while the surface was generated.
+        if (
+          !(TEMPLATE_SURFACE_SELF_COPY_PATHS as readonly string[]).includes(
+            file.path,
+          )
+        )
+          throw failure(
+            "template-surface-binding-invalid",
+            path,
+            "Unsupported self-copy path.",
+          );
+        const expected = templateSurfaceBytes(surface);
+        if (!bytes.equals(expected))
+          throw failure(
+            "template-surface-self-copy-mismatch",
+            path,
+            "Template surface self-copy bytes changed.",
+          );
+      }
+      return [path, bytes] as const;
+    }),
+  );
+  return new Map(
+    adopted.filter(
+      (entry): entry is readonly [string, Buffer] => entry !== undefined,
+    ),
+  );
 }
 
 export function templateSurfaceBytes(

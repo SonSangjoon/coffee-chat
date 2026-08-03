@@ -254,7 +254,7 @@ describe("Task 4 deterministic delivery projections", () => {
     ) as Record<string, unknown>;
     expect(codexManifest).toMatchObject({
       name: "coffee-chat",
-      version: "1.0.0",
+      version: "1.1.0",
       repository: "https://github.com/SonSangjoon/coffee-chat",
       skills: "./skills/",
       license: "MIT",
@@ -456,7 +456,7 @@ describe("Task 4 deterministic delivery projections", () => {
       "Downstream authors retain ownership of the Notes",
     );
     expect(combined).not.toContain("Sangjoon Son");
-    expect(instanceReadme).toContain(
+    expect(instanceReadme).not.toContain(
       "https://github.com/SonSangjoon/coffee-chat",
     );
     expect(combined).not.toContain("coffee-chat-sangjoon");
