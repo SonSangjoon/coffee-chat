@@ -45,8 +45,9 @@ function parseArgs(args: string[]): {
   snapshot: "worktree" | "staged";
   format: "human" | "json";
 } {
-  const command = args.shift();
-  if (command !== "generate" && command !== "check") usage();
+  const initialCommand = args.shift();
+  if (initialCommand !== "generate" && initialCommand !== "check") usage();
+  let command: EngineCommand = initialCommand;
   let snapshot: "worktree" | "staged" = "worktree";
   let format: "human" | "json" = "human";
   while (args.length) {
@@ -61,7 +62,7 @@ function parseArgs(args: string[]): {
       format = value;
     } else if (option === "--check" && command === "generate") {
       // `generate --check` is an alias for check in the engine delivery CLI.
-      return { command: "check", snapshot, format };
+      command = "check";
     } else usage();
   }
   return { command, snapshot, format };
