@@ -1,4 +1,4 @@
-# Coffee Chat evaluation design
+# Coffee Chat evaluation boundary
 
 **Status:** Approved system baseline
 
@@ -8,6 +8,11 @@ Coffee Chat is an AI system. A design is incomplete until the system can show
 that an input produces the intended result, respects the intended boundary, and
 does not merely produce fluent text. Evaluation therefore precedes the next
 implementation of each Skill.
+
+The canonical evaluation suite lives in the separate
+[`coffee-chat-evals`](./coffee-chat-evals.md) repository. This Engine document
+defines the evaluation principles and the production boundary; cases, judges,
+thresholds, runners, and reports are owned by that repository.
 
 ## 1. Evaluation principles
 
@@ -39,12 +44,13 @@ Taste is contextual and source-grounded. The evaluator keeps a score vector and
 failure reasons instead of reducing the product to one global Taste number.
 An aggregate may be used for release comparison, but never as the only gate.
 
-## 2. Gold case format
+## 2. Gold case boundary
 
-Gold cases are synthetic or explicitly consented examples. They must not copy a
-user's private Coffee Chat repository into the Engine repository.
+Gold and Pressure Cases are synthetic or explicitly consented examples owned by
+`coffee-chat-evals`. They must not copy a user's private Coffee Chat repository
+into the Engine repository.
 
-Each case contains:
+The external Eval repository defines each case with:
 
 ```text
 case_id
@@ -60,9 +66,10 @@ reference_evidence
 judge_configuration
 ```
 
-`allowed_read_set` and `allowed_write_set` are part of the gold answer. This
+`allowed_read_set` and `allowed_write_set` are part of the case contract. This
 makes repository isolation testable rather than an instruction that is only
-checked in a transcript.
+checked in a transcript. The Engine exposes an adapter so the external runner
+can observe these boundaries without importing private Engine modules.
 
 Every gold case should have:
 
@@ -211,9 +218,9 @@ Human confirmation is required at two product moments:
 Human confirmation does not replace automated regression tests. It provides the
 ground truth that the system's representation is recognizable to its owner.
 
-## 10. Initial gold-case suite
+## 10. Required external suite coverage
 
-The first implementation cycle must define at least these cases:
+The external `coffee-chat-evals` suite must define at least these cases:
 
 | Case                           | What it proves                                                                             |
 | ------------------------------ | ------------------------------------------------------------------------------------------ |
@@ -233,10 +240,11 @@ The first implementation cycle must define at least these cases:
 | `update-preserves-green-beans` | An Engine update can change owned structure without changing personal records.             |
 | `update-conflict`              | A user-edited managed file stops the update instead of being overwritten.                  |
 
-## 11. Release gates
+## 11. Engine and Eval release gates
 
 An Engine release that changes Build, Connect, Harvest, Roast, Brew, Coffee
-Chat, Coffee Pairing, or Update must pass:
+Chat, Coffee Pairing, or Update must receive a matching report from
+`coffee-chat-evals` and pass:
 
 1. all deterministic contract gates for affected scenes;
 2. all Green Bean hard conditions and rubric thresholds on the gold suite;
@@ -245,7 +253,9 @@ Chat, Coffee Pairing, or Update must pass:
 4. the first-build human confirmation flow in a synthetic or consented fixture;
 5. privacy review confirming that no personal records entered the Engine or
    evaluation artifacts;
-6. a clean generated artifact and documentation consistency check.
+6. a clean generated artifact and documentation consistency check;
+7. the external Eval report's candidate identity exactly matches the Engine
+   release candidate.
 
 If a change improves fluency but reduces POV recognizability, source grounding,
 or write-boundary safety, it does not pass. The evaluation result should explain

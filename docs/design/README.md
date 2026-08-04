@@ -29,6 +29,8 @@ are not part of this design baseline.
 | [`coffee-chat-architecture.md`](./coffee-chat-architecture.md) | Repository ownership, data lifecycle, source of truth, and security boundaries. |
 | [`coffee-chat-user-scenes.md`](./coffee-chat-user-scenes.md) | Build, Connect, Use, and Update journeys, including completion and stop conditions. |
 | [`coffee-chat-evaluation.md`](./coffee-chat-evaluation.md) | Evaluation-first quality gates and gold cases for every transformation and experience. |
+| [`coffee-chat-evals.md`](./coffee-chat-evals.md) | Separate `coffee-chat-evals` repository contract, adapter, cases, judges, thresholds, and CI gates. |
+| [`coffee-chat-skill-contracts.md`](./coffee-chat-skill-contracts.md) | Per-Skill inputs, outputs, boundaries, adapter observations, and external Eval case IDs. |
 | [`coffee-chat-operation-preview.md`](./coffee-chat-operation-preview.md) | The common approval, scope, revalidation, and Receipt contract for state-changing operations. |
 | [`coffee-chat-skills.md`](./coffee-chat-skills.md) | Canonical Skill names, descriptions, responsibilities, routing, and evaluation rules. |
 | [`../research/2026-08-04-coffee-chat-ux-research.md`](../research/2026-08-04-coffee-chat-ux-research.md) | Product reasoning behind the language and two-step journey. |

@@ -133,9 +133,13 @@ Each Skill needs both metadata and behavior checks:
   trigger, purpose, and boundary;
 - routing test: the correct Skill is selected for its scene;
 - boundary test: the Skill does not perform another Skill's write;
-- quality test: its output satisfies the scene's evaluation rubric;
+- adapter test: the Engine exposes the observations required by
+  `coffee-chat-evals`;
 - Operation Preview test: every state-changing Skill produces a complete,
   target-bound Preview before writing.
+
+Semantic quality tests, Gold/Pressure Cases, judge scoring, thresholds, and
+benchmark reports belong to `coffee-chat-evals`, not this Engine repository.
 
 Updating a description without updating its body, route, and evaluation is an
 incomplete Skill change.
