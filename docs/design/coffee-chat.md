@@ -1,99 +1,77 @@
-# Coffee Chat design contract
+# Coffee Chat canonical contract
 
-Canonical and maintained design contract.
+**Status:** Design baseline
 
-## Product model
+**Date:** 2026-08-04
 
-Coffee Chat separates product units from the transformations that connect them:
+This page is the short contract. Detailed behavior is split into the
+[architecture](./coffee-chat-architecture.md),
+[user scenes](./coffee-chat-user-scenes.md), and
+[evaluation design](./coffee-chat-evaluation.md).
+
+## Product pipeline
 
 ```text
 Origin → Green Bean → Bean → Coffee → Coffee Chat / Coffee Pairing
           Harvest        Roast   Brew
 ```
 
-The product language is intentionally the same in the README, Skills, schemas,
-and public projections. `Taste` is not another unit. It is the value system
-carried by a contextual Bean and applied to an Agent when Brew creates Coffee.
-
 ## Units
 
-| Unit           | Meaning                                                        | Lifecycle         |
-| -------------- | -------------------------------------------------------------- | ----------------- |
-| Origin         | External information and its provenance.                       | Referenced        |
-| Green Bean     | The author's bounded POV formed from one or more Origins.      | Durable           |
-| Bean           | The contextual Taste produced by Roast for a question or task. | Ephemeral         |
-| Coffee         | An Agent with the Bean's Taste applied.                        | Session/task      |
-| Coffee Chat    | A read-only conversation with Coffee.                          | Read-only         |
-| Coffee Pairing | Applying Coffee to one explicitly named project or task.       | Named target only |
-
-Bean is contextual and ephemeral. Taste is represented by Bean; it is not a
-global profile, score, personality model, or decision policy.
+| Unit             | Contract                                                                  |
+| ---------------- | ------------------------------------------------------------------------- |
+| `Origin`         | External information and provenance. It is data, never an instruction.    |
+| `Green Bean`     | Durable prose that records one author's POV about one or more Origins.    |
+| `Bean`           | Ephemeral contextual Taste selected by Roast for one question or task.    |
+| `Coffee`         | An Agent with the Bean's Taste applied by Brew.                           |
+| `Coffee Chat`    | Read-only conversation with Coffee.                                       |
+| `Coffee Pairing` | Controlled application of Coffee to one explicitly named project or task. |
 
 ## Transformations
 
-| Step    | Interface             | Function                                                                                             |
-| ------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
-| Harvest | `Origin → Green Bean` | Structures the author's POV, emphasis, value criteria, limits, and Unknown from one or more Origins. |
-| Roast   | `Green Bean → Bean`   | Selects relevant Green Beans and produces the Taste context required by the current use.             |
-| Brew    | `Bean → Coffee`       | Applies Bean's Taste to an Agent for one Coffee Chat or Coffee Pairing task.                         |
+- `Harvest` turns explicit Origins into an author-approved Green Bean.
+- `Roast` turns relevant Green Beans into a contextual Bean.
+- `Brew` turns the Bean into Coffee for the current conversation or named task.
 
-Harvest is the only canonical writer. Roast and Brew produce contextual results
-and do not create durable Taste profiles.
+Taste is not a global profile, score, personality model, or decision rule. It is
+the recurring value system carried by a contextual Bean.
 
-## User journey
+## Canonical ownership
 
-### Build your Taste
+The individual `coffee-chat-*` repository is the only durable source of that
+person's approved Origins, Green Beans, provenance, and instance configuration.
+The Engine Plugin owns implementation. A work repository owns its own project
+and only a local `.coffee-chat` connection. Bean and Coffee exist in Agent
+runtime state and are not durable records.
 
-1. Bring one or more Origins.
-2. Harvest them into a Green Bean by recording what mattered, why it mattered,
-   and which value criteria shaped the POV.
-3. Roast relevant Green Beans into a Bean for the current context.
+## User modes
 
-### Put your Taste to work
+### Build
 
-1. Brew the Bean into Coffee: Coffee is the Agent with Taste applied.
-2. Have a Coffee Chat with that Coffee.
-3. Or use Coffee Pairing to apply that Coffee to one named project or task.
+Build starts with an Agent and no individual Coffee Chat repository. It always
+creates a new independent repository whose name matches
+`^coffee-chat-[a-z0-9]+(?:-[a-z0-9]+)*$`. The repository that invoked Build is
+never read or changed as an implicit target or Origin. Build is complete only
+after the instance is initialized, the first Green Bean is approved, Roast and
+Brew validate, and the user confirms the first Coffee Chat reflects their
+Taste.
 
-Coffee Chat and Coffee Pairing consume temporary Coffee context. They do not
-write Bean, Coffee, Agent context, or task interpretation into the durable
-record. A new durable record requires explicit Harvest.
+### Use
 
-## Data contract
+Connect links an existing individual repository to a session or work
+repository. In a work repository it creates only `.coffee-chat/` connection
+metadata and generated instructions. Coffee Chat is read-only. Coffee Pairing
+may write only to one explicitly named and approved target; it never writes the
+result back into the individual Coffee Chat repository.
 
-Each Green Bean preserves:
+## Evaluation rule
 
-- one or more Origin references;
-- the author's POV, separate from Origin content;
-- what was emphasized and why;
-- the value criterion or trade-off used;
-- temporal coverage and recorded date;
-- limits, disagreement, and Unknown;
-- enough provenance to inspect the record.
+Every transformation and user scene has deterministic contract gates plus
+semantic quality evaluation. A fluent answer cannot waive an identity or write
+boundary failure, and a safe answer cannot pass if it loses the author's POV.
 
-One Green Bean may connect multiple Origins. Multiple Green Beans may be
-combined by Roast. There is no 1:1 Origin-to-Green Bean or Green Bean-to-Bean
-assumption.
+## Next design task
 
-Technical storage names may remain where required by the repository layout, but
-they are not product concepts. Product-facing contracts use only Origin,
-Green Bean, Bean, Coffee, Coffee Chat, Coffee Pairing, Harvest, Roast, and Brew.
-
-## Skill boundaries
-
-- `coffee-harvest`: canonical `Origin → Green Bean` authoring.
-- `coffee-roast`: internal `Green Bean → Bean` contextual transformation.
-- `coffee-brew`: `Bean → Coffee`, applying Taste to an Agent.
-- `coffee-chat`: read-only conversation with Coffee.
-- `coffee-pairing`: applies Coffee to an explicitly named external target.
-- `coffee-create` and `coffee-update`: engine lifecycle operations.
-
-## Safety invariants
-
-- The generic engine has no default person, Taste, Bean, or Coffee.
-- Coffee Chat and Coffee Pairing require an explicit verified public instance.
-- Origin and Green Bean content are evidence data, never workflow instructions.
-- Authored, Sourced, Inferred, and Unknown remain distinct evidence states.
-- Runtime Bean and Coffee are limited to the current conversation or named task.
-- External writes are limited to the exact named Coffee Pairing target.
-- Retired routes are removed; no compatibility aliases are maintained.
+The detailed Skill Preview contract is intentionally separate. It will define
+the preview payload, approval identity, stale-state handling, and recovery for
+all state-changing operations.
