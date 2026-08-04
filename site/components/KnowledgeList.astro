@@ -25,7 +25,7 @@ const sources = new Map(graph.sources.map((source) => [source.url, source]));
         <p class="eyebrow">Recorded / 기록 {note.recorded_on}</p>
         <h2><a href={noteHref(graph.base_path, note.id)}>{note.title}</a></h2>
         <p class="meta">
-          Perspective time / 관점의 시간: <time>{note.temporal_coverage}</time>
+          Annotation time / annotation 시간: <time>{note.temporal_coverage}</time>
         </p>
         {note.entity_ids.length > 0 && (
           <ul class="tag-list" aria-label="Entities / 엔티티">
@@ -43,7 +43,7 @@ const sources = new Map(graph.sources.map((source) => [source.url, source]));
         )}
         {note.source_urls.length > 0 && (
           <p class="quiet">
-            {note.source_urls.length} Source{note.source_urls.length === 1 ? "" : "s"}
+            {note.source_urls.length} Origin{note.source_urls.length === 1 ? "" : "s"}
             {" / "}
             {note.source_urls.map((url, index) => {
               const source = sources.get(url);

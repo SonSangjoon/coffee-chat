@@ -47,7 +47,7 @@ describe.sequential("Task 6 static site build", () => {
     } satisfies Partial<SiteBuildResult>);
     const home = await expectFile(resolve(releaseSiteRoot, "index.html"));
     expect(home).toContain("Coffee Chat");
-    expect(home).toContain("Create your own");
+    expect(home).toContain("Create yours");
     await expect(
       lstat(resolve(releaseSiteRoot, "timeline")),
     ).rejects.toMatchObject({ code: "ENOENT" });

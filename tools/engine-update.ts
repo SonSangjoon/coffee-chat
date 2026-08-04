@@ -43,6 +43,7 @@ import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
 import { createSnapshot } from "./snapshot.ts";
 import type { TargetFingerprint } from "./candidate.ts";
 import { writeGeneratedProjections } from "./projections.ts";
+import { isCalver } from "./calver.ts";
 
 export type VerifiedEngineUpdateStatus =
   | { status: "current"; current: EngineProvenance }
@@ -451,8 +452,6 @@ function strictJson(bytes: Buffer, path: string): unknown {
 }
 function validRelease(value: unknown): value is EngineReleaseManifest {
   const item = record(value);
-  const semver =
-    /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
   const repository = /^https:\/\/github\.com\/[A-Za-z0-9.-]+\/[A-Za-z0-9._-]+$/;
   const filePath =
     /^\.\/(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*\\)(?:[A-Za-z0-9._\-[\]]+\/)*[A-Za-z0-9._\-[\]]+$/;
@@ -502,11 +501,11 @@ function validRelease(value: unknown): value is EngineReleaseManifest {
       typeof item.repository === "string" &&
       repository.test(item.repository) &&
       typeof item.version === "string" &&
-      semver.test(item.version) &&
+      isCalver(item.version) &&
       typeof item.source_ref === "string" &&
       item.source_ref === `refs/tags/v${item.version}` &&
       typeof item.target_manifest_schema_version === "string" &&
-      semver.test(item.target_manifest_schema_version) &&
+      item.target_manifest_schema_version === "1.1.0" &&
       record(item.migration_registry)?.path ===
         "./engine/migrations/registry.json" &&
       typeof record(item.migration_registry)?.digest === "string" &&

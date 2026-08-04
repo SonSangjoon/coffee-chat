@@ -224,7 +224,13 @@ async function materializeTrackedSnapshot(root: string): Promise<{
         );
       const source = resolve(root, ...path.split("/"));
       const target = resolve(temporary, ...path.split("/"));
-      const sourceStatus = await lstat(source);
+      let sourceStatus: Awaited<ReturnType<typeof lstat>>;
+      try {
+        sourceStatus = await lstat(source);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+        throw error;
+      }
       let bytes: Buffer;
       if (sourceStatus.isSymbolicLink()) {
         bytes = Buffer.from(await readlink(source));

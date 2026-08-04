@@ -25,15 +25,16 @@ const notes = entity.note_ids
 <BaseLayout
   {model}
   title={`${entity.label} — Coffee Chat Entity`}
-  description={`A neutral ${entity.kind} entity in the public knowledge graph.`}
+  description={`A neutral ${entity.kind} entity in the public provenance graph.`}
 >
   <section class="hero">
     <p class="eyebrow">Entity / 엔티티</p>
     <h1>{entity.label}</h1>
     <p class="lede">
       Kind / 유형: <strong>{entity.kind}</strong>. Entities provide neutral identity
-      for mapping Notes; they do not store a derived POV. / 엔티티는 기록을 매핑하기
-      위한 중립적 식별자이며 발현된 관점을 저장하지 않습니다.
+      for mapping Notes; they do not store a Taste profile or interpretation. /
+      Entity는 Note를 매핑하기 위한 중립적 식별자이며 Taste 프로필이나 해석을
+      저장하지 않습니다.
     </p>
   </section>
   {

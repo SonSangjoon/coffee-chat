@@ -16,7 +16,7 @@ scope.
 ## Discovery
 
 On entry, the router may perform one read-only package-consistency check when
-the generic `update-coffee-chat` Skill is installed. It compares the exact
+the generic `coffee-update` Skill is installed. It compares the exact
 instance engine tuple `(repository, version, release_digest)` with the
 generated advisory references and reports only `current`, `review_candidate_available`,
 `unknown`, or `incompatible`. The advisory is not proof of remote authenticity;

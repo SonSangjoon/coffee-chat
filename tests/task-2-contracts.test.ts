@@ -117,7 +117,7 @@ describe("Coffee Chat Task 2 public CLI", () => {
     manifest.provenance = {
       engine: {
         repository: "https://github.com/sonsangjoon/coffee-chat",
-        version: "1.1.0",
+        version: "2026.08.04",
         source_commit: "a".repeat(40),
         release_digest: `sha256:${"b".repeat(64)}`,
       },
@@ -248,14 +248,15 @@ describe("strict authored parsing and repository integrity", () => {
     [
       "JSON NaN",
       "coffee-chat.json",
-      (text: string) => text.replace('"version": "1.0.0"', '"version": NaN'),
+      (text: string) =>
+        text.replace('"version": "2026.08.04"', '"version": NaN'),
       "invalid-json",
     ],
     [
       "JSON Infinity",
       "coffee-chat.json",
       (text: string) =>
-        text.replace('"version": "1.0.0"', '"version": Infinity'),
+        text.replace('"version": "2026.08.04"', '"version": Infinity'),
       "invalid-json",
     ],
     [

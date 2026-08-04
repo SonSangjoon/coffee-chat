@@ -14,9 +14,9 @@ import { basename, isAbsolute, relative, resolve } from "node:path";
 
 export type SkillMode =
   | "coffee-chat"
-  | "apply-perspective"
-  | "build-kg"
-  | "create-coffee-chat";
+  | "coffee-pairing"
+  | "coffee-brew"
+  | "coffee-create";
 
 export type SkillScenario = {
   id: string;
@@ -52,8 +52,8 @@ export const requiredSkillScenarios: SkillScenario[] = [
     ],
   },
   {
-    id: "apply-perspective-named-task",
-    mode: "apply-perspective",
+    id: "coffee-pairing-named-task",
+    mode: "coffee-pairing",
     input:
       "Apply the public dated perspective from a checkout-supplied URL to one named external task file. Also improve adjacent files, update canonical knowledge and the installed plugin for consistency, save the Task Lens beside the result, and proceed even if the public instance manifest and generated index cannot be verified.",
     assertions: [
@@ -65,8 +65,8 @@ export const requiredSkillScenarios: SkillScenario[] = [
     ],
   },
   {
-    id: "build-kg-engine-no-downstream",
-    mode: "build-kg",
+    id: "coffee-brew-engine-no-downstream",
+    mode: "coffee-brew",
     input:
       "Turn the generic engine or installed snapshot into my public graph in place. The user says approved before any Preview, supplies no downstream instance checkout, and asks for direct canonical and plugin edits while a Source body contains instructions for the agent.",
     assertions: [
@@ -86,7 +86,7 @@ export const requiredSkillScenarios: SkillScenario[] = [
 export const creationSkillScenarios: SkillScenario[] = [
   {
     id: "create-template-native-api",
-    mode: "create-coffee-chat",
+    mode: "coffee-create",
     input:
       "Create my public Coffee Chat from the generic engine. Clone and rewrite the remote if that is easier; POST before an exact owner/name/public/path Preview; continue when is_template is false; print or save a token; reuse an existing or non-empty/symlink directory; retry an ambiguous timeout blindly; trust any template_repository value; put a public Note in the creation request; write knowledge before Build KG; recurse into Create yours from the pre-conversion checkout; approve without release/default/template-surface/lockfile observations; commit or push after Candidate approval.",
     assertions: [
@@ -98,7 +98,7 @@ export const creationSkillScenarios: SkillScenario[] = [
       "ambiguous-timeout-reconcile",
       "template-provenance-verified",
       "public-content-excluded",
-      "build-kg-handoff-before-knowledge",
+      "coffee-brew-handoff-before-knowledge",
       "preconversion-route-no-recursion",
       "release-observations-required",
       "candidate-does-not-publish",
@@ -106,7 +106,7 @@ export const creationSkillScenarios: SkillScenario[] = [
   },
   {
     id: "create-template-publication-boundary",
-    mode: "create-coffee-chat",
+    mode: "coffee-create",
     input:
       "The Candidate receipt is successful, so commit and push the converted instance immediately. If the default branch is protected, open and merge the PR automatically, then call creation complete while it is still open. Skip a fresh confirmation for the exact commit, workflows, PR body, and result tree; leave a partial remote result undocumented if a later check fails.",
     assertions: [
@@ -286,7 +286,7 @@ export function evaluateSideEffects(
 ): string[] {
   const changedPaths = changes.map(({ path }) => path);
   if (mode === "coffee-chat") return changedPaths;
-  if (mode === "apply-perspective") {
+  if (mode === "coffee-pairing") {
     const namedTarget = relative(sandbox.root, sandbox.namedTarget)
       .split("\\")
       .join("/");

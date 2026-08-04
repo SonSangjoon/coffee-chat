@@ -9,14 +9,16 @@ import { createSnapshot } from "../tools/snapshot.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 const instanceSkillNames = [
+  "coffee-harvest",
+  "coffee-roast",
+  "coffee-brew",
   "coffee-chat",
-  "apply-perspective",
-  "build-kg",
+  "coffee-pairing",
 ] as const;
 const engineSkillNames = [
   ...instanceSkillNames,
-  "create-coffee-chat",
-  "update-coffee-chat",
+  "coffee-create",
+  "coffee-update",
 ] as const;
 const temporaryRoots: string[] = [];
 
@@ -99,7 +101,7 @@ describe("Task 4 Agent Skill contracts", () => {
         recursive: true,
       });
       const expectedReferences =
-        name === "create-coffee-chat"
+        name === "coffee-create"
           ? [
               "references",
               "references/engine-release.schema.json",
@@ -108,7 +110,7 @@ describe("Task 4 Agent Skill contracts", () => {
               "references/release.json",
               "references/template-surface.json",
             ]
-          : name === "update-coffee-chat"
+          : name === "coffee-update"
             ? [
                 "references",
                 "references/advisory.json",
@@ -126,7 +128,7 @@ describe("Task 4 Agent Skill contracts", () => {
   );
 
   it("keeps the creation Skill instruction-only and binds the complete Preview protocol", async () => {
-    const skill = await readSkill("create-coffee-chat");
+    const skill = await readSkill("coffee-create");
     for (const phrase of [
       "generic engine Skill",
       "gh auth status",
@@ -143,7 +145,7 @@ describe("Task 4 Agent Skill contracts", () => {
       "node_modules/**",
       "TemplateObservation",
       "pre-conversion",
-      "repo-local `build-kg`",
+      "repo-local `coffee-harvest`",
       "publication Preview",
       "awaiting_owner_merge",
       "partial_external_result",
@@ -172,11 +174,9 @@ describe("Task 4 Agent Skill contracts", () => {
     expect(agents).toContain("origin and target-fingerprint rules");
     expect(agents).toContain("maintained engine checkout");
     expect(agents).toContain(
-      "After the user explicitly chooses **Create yours**, route to `skills/create-coffee-chat/SKILL.md`",
+      "After the user explicitly chooses **Create yours**, route to `skills/coffee-create/SKILL.md`",
     );
-    expect(agents).toContain(
-      "Create yours to `skills/create-coffee-chat/SKILL.md`",
-    );
+    expect(agents).toContain("Create yours to `skills/coffee-create/SKILL.md`");
     expect(agents).toContain(
       "`contribute` and `update` require an initialized authoritative instance checkout",
     );
@@ -197,15 +197,15 @@ describe("Task 4 Agent Skill contracts", () => {
     expect(agents).toContain("install instance plugin");
   });
 
-  it("allows Make mine only in a verified downstream engine copy", async () => {
-    const buildKg = await readSkill("build-kg");
+  it("allows Create yours only through the verified engine handoff", async () => {
+    const buildKg = await readSkill("coffee-create");
     const method = await readFile(
       resolve(projectRoot, "method/shared-method.md"),
       "utf8",
     );
 
     for (const guidance of [buildKg.body, method]) {
-      expect(guidance).toContain("Make mine");
+      expect(guidance).toContain("Create yours");
       expect(guidance).toContain("pre-conversion engine checkout");
       expect(guidance).toContain("`repository_role: engine`");
       expect(guidance).toContain(

@@ -8,9 +8,8 @@ import {
 } from "./contracts.ts";
 import type { InstanceManifest } from "./knowledge.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
+import { isCalver } from "./calver.ts";
 
-const SEMVER =
-  /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const COMMIT = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const MANAGED_PATH =
@@ -196,13 +195,13 @@ export function validateEngineProvenance(
     `${pointer}/repository`,
   );
   if (repositoryFailure) diagnostics.push(repositoryFailure);
-  if (typeof item.version !== "string" || !SEMVER.test(item.version))
+  if (typeof item.version !== "string" || !isCalver(item.version))
     diagnostics.push(
       diagnostic(
         "schema-pattern",
         path,
         `${pointer}/version`,
-        "Engine version must be strict SemVer.",
+        "Engine version must be CalVer YYYY.MM.DD.",
       ),
     );
   if (

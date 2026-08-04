@@ -7,7 +7,7 @@ const root = resolve(import.meta.dirname, "..");
 describe("review setup agent boundary", () => {
   it("keeps creation remote-only and approval-first", async () => {
     const skill = await readFile(
-      resolve(root, "skills/create-coffee-chat/SKILL.md"),
+      resolve(root, "skills/coffee-create/SKILL.md"),
       "utf8",
     );
     expect(skill).toContain("Do not create a local-only instance");

@@ -466,11 +466,11 @@ async function createFictionalInstanceMarketplace(
       cp(resolve(projectRoot, path), resolve(root, path)),
     ),
   ]);
-  await rm(resolve(root, "skills/create-coffee-chat"), {
+  await rm(resolve(root, "skills/coffee-create"), {
     recursive: true,
     force: true,
   });
-  await rm(resolve(root, "skills/update-coffee-chat"), {
+  await rm(resolve(root, "skills/coffee-update"), {
     recursive: true,
     force: true,
   });
@@ -621,28 +621,34 @@ async function assertV1SkillOnlySurface(
     ".codex-plugin/plugin.json",
     ".coffee-chat-generated.json",
     "LICENSE",
-    ...["apply-perspective", "build-kg", "coffee-chat"].flatMap((skill) => [
+    ...[
+      "coffee-harvest",
+      "coffee-roast",
+      "coffee-brew",
+      "coffee-chat",
+      "coffee-pairing",
+    ].flatMap((skill) => [
       `skills/${skill}/SKILL.md`,
       `skills/${skill}/references/method.md`,
     ]),
   ];
   if (role === "engine")
     common.push(
-      "skills/create-coffee-chat/SKILL.md",
-      "skills/create-coffee-chat/references/engine-release.schema.json",
-      "skills/create-coffee-chat/references/engine-template-surface.schema.json",
-      "skills/create-coffee-chat/references/method.md",
-      "skills/create-coffee-chat/references/release.json",
-      "skills/create-coffee-chat/references/template-surface.json",
-      "skills/update-coffee-chat/SKILL.md",
-      "skills/update-coffee-chat/references/advisory.json",
-      "skills/update-coffee-chat/references/engine-migration-document.schema.json",
-      "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
-      "skills/update-coffee-chat/references/engine-release.schema.json",
-      "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
-      "skills/update-coffee-chat/references/method.md",
-      "skills/update-coffee-chat/references/migration-registry.json",
-      "skills/update-coffee-chat/references/release.json",
+      "skills/coffee-create/SKILL.md",
+      "skills/coffee-create/references/engine-release.schema.json",
+      "skills/coffee-create/references/engine-template-surface.schema.json",
+      "skills/coffee-create/references/method.md",
+      "skills/coffee-create/references/release.json",
+      "skills/coffee-create/references/template-surface.json",
+      "skills/coffee-update/SKILL.md",
+      "skills/coffee-update/references/advisory.json",
+      "skills/coffee-update/references/engine-migration-document.schema.json",
+      "skills/coffee-update/references/engine-migration-registry.schema.json",
+      "skills/coffee-update/references/engine-release.schema.json",
+      "skills/coffee-update/references/engine-update-advisory.schema.json",
+      "skills/coffee-update/references/method.md",
+      "skills/coffee-update/references/migration-registry.json",
+      "skills/coffee-update/references/release.json",
     );
   const notes = paths.filter((path) =>
     /^knowledge\/notes\/[0-9a-f-]+\.md$/.test(path),

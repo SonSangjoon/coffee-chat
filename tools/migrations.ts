@@ -8,6 +8,7 @@ import {
 import type { EngineReleaseManifest } from "./engine-contracts.ts";
 import type { EngineProvenance } from "./engine-provenance.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
+import { compareCalver, isCalver } from "./calver.ts";
 
 export type EngineReleaseIdentity = {
   repository: string;
@@ -90,8 +91,6 @@ export type AdvisoryUpdateStatus =
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DOCUMENT = /^\.\/engine\/migrations\/[A-Za-z0-9._-]+\.json$/;
-const SEMVER =
-  /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const TEST_POINTERS = new Set<ManifestTestPointer>([
   "/schema_version",
   "/repository_role",
@@ -126,7 +125,7 @@ function identity(value: unknown): value is EngineReleaseIdentity {
       exactKeys(item, ["repository", "version", "release_digest"]) &&
       typeof item.repository === "string" &&
       typeof item.version === "string" &&
-      SEMVER.test(item.version) &&
+      isCalver(item.version) &&
       typeof item.release_digest === "string" &&
       DIGEST.test(item.release_digest),
   );
@@ -139,32 +138,6 @@ function sameIdentity(
   right: EngineReleaseIdentity,
 ): boolean {
   return identityKey(left) === identityKey(right);
-}
-function compareSemver(left: string, right: string): number {
-  const a = SEMVER.exec(left);
-  const b = SEMVER.exec(right);
-  if (!a || !b) return NaN;
-  for (let i = 1; i <= 3; i += 1) {
-    const delta = Number(a[i]) - Number(b[i]);
-    if (delta) return delta;
-  }
-  const ap = a[4],
-    bp = b[4];
-  if (!ap || !bp) return ap === bp ? 0 : ap ? -1 : 1;
-  const aa = ap.split("."),
-    bb = bp.split(".");
-  for (let i = 0; i < Math.max(aa.length, bb.length); i += 1) {
-    if (aa[i] === undefined) return -1;
-    if (bb[i] === undefined) return 1;
-    const an = /^\d+$/.test(aa[i]!);
-    const bn = /^\d+$/.test(bb[i]!);
-    if (an && bn) {
-      const delta = Number(aa[i]) - Number(bb[i]);
-      if (delta) return delta;
-    } else if (an !== bn) return an ? -1 : 1;
-    else if (aa[i]! !== bb[i]!) return aa[i]! < bb[i]! ? -1 : 1;
-  }
-  return 0;
 }
 function diagnostic(
   code: string,
@@ -239,12 +212,12 @@ export function validateMigrationRegistry(
           "Migration edges must bind the release repository.",
         ),
       );
-    if (compareSemver(edge.from.version, edge.to.version) >= 0)
+    if (compareCalver(edge.from.version, edge.to.version) >= 0)
       output.push(
         diagnostic(
           "migration-registry-nonforward",
           p,
-          "Migration edges must strictly increase SemVer.",
+          "Migration edges must strictly increase CalVer.",
         ),
       );
     const id = edge.id as string;
@@ -306,7 +279,7 @@ export function resolveUniqueMigrationPath(
   if (!sameIdentity(current, target)) {
     if (
       current.repository !== target.repository ||
-      compareSemver(current.version, target.version) >= 0
+      compareCalver(current.version, target.version) >= 0
     )
       return undefined;
   } else return [];
@@ -324,8 +297,8 @@ export function resolveUniqueMigrationPath(
         !sameIdentity(edge.from, node) ||
         edge.from.repository !== target.repository ||
         edge.to.repository !== target.repository ||
-        compareSemver(edge.from.version, edge.to.version) >= 0 ||
-        compareSemver(edge.to.version, target.version) > 0
+        compareCalver(edge.from.version, edge.to.version) >= 0 ||
+        compareCalver(edge.to.version, target.version) > 0
       )
         continue;
       const next = [...path, edge];
@@ -399,7 +372,7 @@ function validProvenance(value: EngineProvenance): boolean {
     value &&
       typeof value.repository === "string" &&
       typeof value.version === "string" &&
-      SEMVER.test(value.version) &&
+      isCalver(value.version) &&
       typeof value.release_digest === "string" &&
       DIGEST.test(value.release_digest) &&
       typeof value.source_commit === "string" &&

@@ -123,7 +123,7 @@ describe("Task 6 site model", () => {
     });
     expect(model.graph.engine_provenance).toEqual({
       repository: "https://github.com/sonsangjoon/coffee-chat",
-      version: "1.1.0",
+      version: "2026.08.04",
       source_commit: "a".repeat(40),
       release_digest: `sha256:${"b".repeat(64)}`,
     });

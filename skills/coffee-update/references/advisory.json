@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "https://github.com/SonSangjoon/coffee-chat",
+  "target": {
+    "repository": "https://github.com/SonSangjoon/coffee-chat",
+    "version": "2026.08.04",
+    "release_digest": "sha256:7569ab6dea4a5c5f27fd09ecada869f76cc9ca6f90939b5ef80a246229ce1505"
+  },
+  "registry_digest": "sha256:92d08686a73e43e1c842a739f2f6d0018fca5995c12a6d55f5f597b31c4954c3",
+  "reference_schemas": {
+    "release": {
+      "path": "./references/engine-release.schema.json",
+      "digest": "sha256:d23443d0c52f96a61dd121e063591bf278596381b9884a0c9811bf37b007106d"
+    },
+    "migration_registry": {
+      "path": "./references/engine-migration-registry.schema.json",
+      "digest": "sha256:35fb259613b8f161890af0dbe74587b94a0409b41bb7ecf7251dc194143518ff"
+    },
+    "advisory": {
+      "path": "./references/engine-update-advisory.schema.json",
+      "digest": "sha256:adb3dd0de5b638d29bddda4b5fc11e54eada5df716682f9d483ea7943272d029"
+    },
+    "migration_document": {
+      "path": "./references/engine-migration-document.schema.json",
+      "digest": "sha256:a74716a3d8bd1b0aac8a5fa7ff475208487f575c99b25fd72f3bd20741a26a5a"
+    }
+  },
+  "candidates": []
+}

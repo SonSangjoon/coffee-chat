@@ -52,8 +52,8 @@ export const GENERATED_OWNERSHIP_MARKER = ".coffee-chat-generated.json";
  */
 export const TEMPLATE_SURFACE_SELF_COPY_PATHS = [
   "./engine/template-surface.json",
-  "./skills/create-coffee-chat/references/template-surface.json",
-  "./plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+  "./skills/coffee-create/references/template-surface.json",
+  "./plugins/coffee-chat/skills/coffee-create/references/template-surface.json",
 ] as const;
 
 const MANAGED_PATHS = [
@@ -68,8 +68,9 @@ const MANAGED_PATHS = [
   "LICENSE",
   "astro.config.mjs",
   "docs/assets/readme/coffee-chat-cover.png",
-  "docs/assets/readme/coffee-chat-flow.en.png",
-  "docs/assets/readme/coffee-chat-trust.en.png",
+  "docs/assets/readme/coffee-chat-taste.en.png",
+  "docs/assets/readme/coffee-chat-agent.en.png",
+  "docs/design/coffee-chat.md",
   "method/shared-method.md",
   "package-lock.json",
   "package.json",
@@ -101,12 +102,16 @@ const MANAGED_PATHS = [
   "site/pages/sources/[slug].astro",
   "site/pages/timeline.astro",
   "site/styles/global.css",
-  "skills/apply-perspective/SKILL.md",
-  "skills/apply-perspective/references/method.md",
-  "skills/build-kg/SKILL.md",
-  "skills/build-kg/references/method.md",
+  "skills/coffee-harvest/SKILL.md",
+  "skills/coffee-harvest/references/method.md",
+  "skills/coffee-roast/SKILL.md",
+  "skills/coffee-roast/references/method.md",
+  "skills/coffee-brew/SKILL.md",
+  "skills/coffee-brew/references/method.md",
   "skills/coffee-chat/SKILL.md",
   "skills/coffee-chat/references/method.md",
+  "skills/coffee-pairing/SKILL.md",
+  "skills/coffee-pairing/references/method.md",
   "tests/artifact-boundaries.test.ts",
   "tests/candidate-downstream-identity.test.ts",
   "tests/e2e/site.spec.ts",
@@ -130,6 +135,7 @@ const MANAGED_PATHS = [
   "tests/site-publication-boundary.test.ts",
   "tests/skill-contracts.test.ts",
   "tests/skill-evaluations.test.ts",
+  "tests/taste-vocabulary.test.ts",
   "tests/task-2-contracts.test.ts",
   "tests/task-3-candidate.test.ts",
   "tests/task-3-cli.test.ts",
@@ -140,6 +146,7 @@ const MANAGED_PATHS = [
   "tests/workflow-contracts.test.ts",
   "tools/artifact-inventory.ts",
   "tools/candidate.ts",
+  "tools/calver.ts",
   "tools/cc.ts",
   "tools/contracts.ts",
   "tools/engine-contracts.ts",
@@ -191,11 +198,13 @@ const DELIVERY_PATHS = [
   "tests/engine-generation-cli.test.ts",
   "tests/engine-release.test.ts",
   "tests/release-dependency-closure.test.ts",
+  "tests/release-version.test.ts",
   "tools/engine-cli.ts",
   "tools/engine-release.ts",
   "tools/engine-update.ts",
   "tools/engine-publication.ts",
   "tools/migrations.ts",
+  "tools/release-version.ts",
   "tools/update-advisory.ts",
 ] as const;
 
@@ -207,6 +216,7 @@ const EXCLUDED_PATHS = [
   ".codex-plugin/plugin.json",
   ".github/workflows/codeql.yml",
   ".github/workflows/pages.yml",
+  ".github/workflows/release.yml",
   "AGENTS.md",
   "CLAUDE.md",
   "CONTENT_LICENSE.md",
@@ -218,9 +228,14 @@ const EXCLUDED_PATHS = [
   "docs/superpowers/plans/2026-08-02-coffee-chat-engine-v1.md",
   "docs/superpowers/plans/2026-08-02-coffee-chat-readme.md",
   "docs/superpowers/plans/2026-08-03-coffee-chat-agent-lifecycle.md",
+  "docs/superpowers/plans/2026-08-04-coffee-chat-ux-v2.md",
+  "docs/superpowers/plans/2026-08-04-coffee-chat-calver.md",
+  "docs/superpowers/plans/2026-08-04-coffee-chat-readme-v3.md",
   "docs/superpowers/specs/2026-07-30-coffee-chat-design.md",
   "docs/superpowers/specs/2026-08-02-coffee-chat-readme-design.md",
   "docs/superpowers/specs/2026-08-03-coffee-chat-agent-lifecycle-design.md",
+  "docs/superpowers/specs/2026-08-04-coffee-chat-calver-design.md",
+  "docs/research/2026-08-04-coffee-chat-ux-research.md",
   "docs/testing.md",
   "engine/migrations/registry.json",
   "engine/release-config.json",
@@ -231,43 +246,47 @@ const EXCLUDED_PATHS = [
   "plugins/coffee-chat/.codex-plugin/plugin.json",
   "plugins/coffee-chat/.coffee-chat-generated.json",
   "plugins/coffee-chat/LICENSE",
-  "plugins/coffee-chat/skills/apply-perspective/SKILL.md",
-  "plugins/coffee-chat/skills/apply-perspective/references/method.md",
-  "plugins/coffee-chat/skills/build-kg/SKILL.md",
-  "plugins/coffee-chat/skills/build-kg/references/method.md",
+  "plugins/coffee-chat/skills/coffee-harvest/SKILL.md",
+  "plugins/coffee-chat/skills/coffee-harvest/references/method.md",
+  "plugins/coffee-chat/skills/coffee-roast/SKILL.md",
+  "plugins/coffee-chat/skills/coffee-roast/references/method.md",
+  "plugins/coffee-chat/skills/coffee-brew/SKILL.md",
+  "plugins/coffee-chat/skills/coffee-brew/references/method.md",
   "plugins/coffee-chat/skills/coffee-chat/SKILL.md",
   "plugins/coffee-chat/skills/coffee-chat/references/method.md",
-  "plugins/coffee-chat/skills/create-coffee-chat/SKILL.md",
-  "plugins/coffee-chat/skills/create-coffee-chat/references/engine-release.schema.json",
-  "plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
-  "plugins/coffee-chat/skills/create-coffee-chat/references/method.md",
-  "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
-  "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/SKILL.md",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/method.md",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-release.schema.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-registry.schema.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-update-advisory.schema.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-document.schema.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/release.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/migration-registry.json",
-  "plugins/coffee-chat/skills/update-coffee-chat/references/advisory.json",
-  "skills/create-coffee-chat/SKILL.md",
-  "skills/create-coffee-chat/references/engine-release.schema.json",
-  "skills/create-coffee-chat/references/engine-template-surface.schema.json",
-  "skills/create-coffee-chat/references/method.md",
-  "skills/create-coffee-chat/references/release.json",
-  "skills/create-coffee-chat/references/template-surface.json",
-  "skills/update-coffee-chat/SKILL.md",
-  "skills/update-coffee-chat/references/method.md",
-  "skills/update-coffee-chat/references/release.json",
-  "skills/update-coffee-chat/references/engine-release.schema.json",
-  "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
-  "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
-  "skills/update-coffee-chat/references/engine-migration-document.schema.json",
-  "skills/update-coffee-chat/references/release.json",
-  "skills/update-coffee-chat/references/migration-registry.json",
-  "skills/update-coffee-chat/references/advisory.json",
+  "plugins/coffee-chat/skills/coffee-pairing/SKILL.md",
+  "plugins/coffee-chat/skills/coffee-pairing/references/method.md",
+  "plugins/coffee-chat/skills/coffee-create/SKILL.md",
+  "plugins/coffee-chat/skills/coffee-create/references/engine-release.schema.json",
+  "plugins/coffee-chat/skills/coffee-create/references/engine-template-surface.schema.json",
+  "plugins/coffee-chat/skills/coffee-create/references/method.md",
+  "plugins/coffee-chat/skills/coffee-create/references/release.json",
+  "plugins/coffee-chat/skills/coffee-create/references/template-surface.json",
+  "plugins/coffee-chat/skills/coffee-update/SKILL.md",
+  "plugins/coffee-chat/skills/coffee-update/references/method.md",
+  "plugins/coffee-chat/skills/coffee-update/references/engine-release.schema.json",
+  "plugins/coffee-chat/skills/coffee-update/references/engine-migration-registry.schema.json",
+  "plugins/coffee-chat/skills/coffee-update/references/engine-update-advisory.schema.json",
+  "plugins/coffee-chat/skills/coffee-update/references/engine-migration-document.schema.json",
+  "plugins/coffee-chat/skills/coffee-update/references/release.json",
+  "plugins/coffee-chat/skills/coffee-update/references/migration-registry.json",
+  "plugins/coffee-chat/skills/coffee-update/references/advisory.json",
+  "skills/coffee-create/SKILL.md",
+  "skills/coffee-create/references/engine-release.schema.json",
+  "skills/coffee-create/references/engine-template-surface.schema.json",
+  "skills/coffee-create/references/method.md",
+  "skills/coffee-create/references/release.json",
+  "skills/coffee-create/references/template-surface.json",
+  "skills/coffee-update/SKILL.md",
+  "skills/coffee-update/references/method.md",
+  "skills/coffee-update/references/release.json",
+  "skills/coffee-update/references/engine-release.schema.json",
+  "skills/coffee-update/references/engine-migration-registry.schema.json",
+  "skills/coffee-update/references/engine-update-advisory.schema.json",
+  "skills/coffee-update/references/engine-migration-document.schema.json",
+  "skills/coffee-update/references/release.json",
+  "skills/coffee-update/references/migration-registry.json",
+  "skills/coffee-update/references/advisory.json",
 ] as const;
 
 const FIXTURE_PATH_PREFIX = "tests/fixtures/";
@@ -347,9 +366,10 @@ export function artifactPolicyForPath(
     const engineOnly =
       normalized.startsWith("engine/") ||
       normalized.startsWith("docs/") ||
+      normalized === ".github/workflows/release.yml" ||
       normalized.startsWith("method/engine-") ||
-      normalized.startsWith("skills/create-") ||
-      normalized.startsWith("skills/update-") ||
+      normalized.startsWith("skills/coffee-create/") ||
+      normalized.startsWith("skills/coffee-update/") ||
       normalized.startsWith("plugins/");
     const authored =
       normalized === "coffee-chat.json" || normalized === "CONTENT_LICENSE.md";
@@ -377,6 +397,19 @@ export function artifactPolicyForPath(
       release_class: "excluded",
     };
   }
+  if (
+    normalized.startsWith("engine/migrations/") &&
+    normalized.endsWith(".json")
+  )
+    return {
+      path: normalized,
+      states: {
+        "engine-repository": { audience: "engine-only", ownership: "authored" },
+        "template-copy": { audience: "engine-only", ownership: "authored" },
+      },
+      template_disposition: "remove-engine-only",
+      release_class: "excluded",
+    };
   if (normalized.startsWith(FIXTURE_PATH_PREFIX))
     return {
       path: normalized,
@@ -404,18 +437,16 @@ export function artifactPolicyForPath(
 }
 
 export const INSTANCE_SKILLS = [
+  "coffee-harvest",
+  "coffee-roast",
+  "coffee-brew",
   "coffee-chat",
-  "apply-perspective",
-  "build-kg",
+  "coffee-pairing",
 ] as const;
 
-export const ENGINE_ONLY_SKILLS = [
-  "create-coffee-chat",
-  "update-coffee-chat",
-] as const;
+export const ENGINE_ONLY_SKILLS = ["coffee-create", "coffee-update"] as const;
 
-/** Backwards-compatible name for callers that only need the provisioning subset. */
-export const ENGINE_PROVISIONING_SKILLS = ["create-coffee-chat"] as const;
+export const ENGINE_PROVISIONING_SKILLS = ["coffee-create"] as const;
 
 export const ENGINE_PLUGIN_SKILLS = [
   ...INSTANCE_SKILLS,
@@ -454,28 +485,28 @@ export function roleOwnedProjectionPaths(graph: KnowledgeGraph): string[] {
   if (manifest.repository_role === "engine")
     paths.push(
       ...[
-        "skills/create-coffee-chat/references/engine-release.schema.json",
-        "skills/create-coffee-chat/references/engine-template-surface.schema.json",
-        "skills/create-coffee-chat/references/release.json",
-        "skills/create-coffee-chat/references/template-surface.json",
-        "plugins/coffee-chat/skills/create-coffee-chat/references/engine-release.schema.json",
-        "plugins/coffee-chat/skills/create-coffee-chat/references/engine-template-surface.schema.json",
-        "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
-        "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
-        "skills/update-coffee-chat/references/engine-release.schema.json",
-        "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
-        "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
-        "skills/update-coffee-chat/references/engine-migration-document.schema.json",
-        "skills/update-coffee-chat/references/release.json",
-        "skills/update-coffee-chat/references/migration-registry.json",
-        "skills/update-coffee-chat/references/advisory.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-release.schema.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-registry.schema.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-update-advisory.schema.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/engine-migration-document.schema.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/release.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/migration-registry.json",
-        "plugins/coffee-chat/skills/update-coffee-chat/references/advisory.json",
+        "skills/coffee-create/references/engine-release.schema.json",
+        "skills/coffee-create/references/engine-template-surface.schema.json",
+        "skills/coffee-create/references/release.json",
+        "skills/coffee-create/references/template-surface.json",
+        "plugins/coffee-chat/skills/coffee-create/references/engine-release.schema.json",
+        "plugins/coffee-chat/skills/coffee-create/references/engine-template-surface.schema.json",
+        "plugins/coffee-chat/skills/coffee-create/references/release.json",
+        "plugins/coffee-chat/skills/coffee-create/references/template-surface.json",
+        "skills/coffee-update/references/engine-release.schema.json",
+        "skills/coffee-update/references/engine-migration-registry.schema.json",
+        "skills/coffee-update/references/engine-update-advisory.schema.json",
+        "skills/coffee-update/references/engine-migration-document.schema.json",
+        "skills/coffee-update/references/release.json",
+        "skills/coffee-update/references/migration-registry.json",
+        "skills/coffee-update/references/advisory.json",
+        "plugins/coffee-chat/skills/coffee-update/references/engine-release.schema.json",
+        "plugins/coffee-chat/skills/coffee-update/references/engine-migration-registry.schema.json",
+        "plugins/coffee-chat/skills/coffee-update/references/engine-update-advisory.schema.json",
+        "plugins/coffee-chat/skills/coffee-update/references/engine-migration-document.schema.json",
+        "plugins/coffee-chat/skills/coffee-update/references/release.json",
+        "plugins/coffee-chat/skills/coffee-update/references/migration-registry.json",
+        "plugins/coffee-chat/skills/coffee-update/references/advisory.json",
       ],
     );
   if (isInstanceGraph(graph))

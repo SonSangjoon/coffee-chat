@@ -162,7 +162,7 @@
     },
     "delivery_projection_path": {
       "type": "string",
-      "pattern": "^\\./(?:README(?:\\.ko)?\\.md|AGENTS\\.md|CLAUDE\\.md|CONTENT_LICENSE\\.md|\\.codex-plugin/plugin\\.json|\\.claude-plugin/(?:plugin|marketplace)\\.json|\\.agents/plugins/marketplace\\.json|skills/(?:coffee-chat|apply-perspective|build-kg)/references/method\\.md|plugins/[a-z0-9]+(?:-[a-z0-9]+)*/(?:(?!\\.{1,2}(?:/|$))[A-Za-z0-9._-]+/)*(?!\\.{1,2}$)[A-Za-z0-9._-]+)$"
+      "pattern": "^\\./(?:README(?:\\.ko)?\\.md|AGENTS\\.md|CLAUDE\\.md|CONTENT_LICENSE\\.md|\\.codex-plugin/plugin\\.json|\\.claude-plugin/(?:plugin|marketplace)\\.json|\\.agents/plugins/marketplace\\.json|skills/(?:coffee-harvest|coffee-roast|coffee-brew|coffee-chat|coffee-pairing)/references/method\\.md|plugins/[a-z0-9]+(?:-[a-z0-9]+)*/(?:(?!\\.{1,2}(?:/|$))[A-Za-z0-9._-]+/)*(?!\\.{1,2}$)[A-Za-z0-9._-]+)$"
     },
     "canonical_path": {
       "anyOf": [
@@ -184,7 +184,7 @@
     },
     "support_path": {
       "type": "string",
-      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|docs/(?:testing\\.md|assets/readme/coffee-chat-(?:cover|(?:flow|trust)\\.en)\\.png)|LICENSE|skills/(?:coffee-chat|apply-perspective|build-kg)/SKILL\\.md)$"
+      "pattern": "^\\./(?!\\.{1,2}(?:/|$))(?!.*(?:/)\\.{1,2}(?:/|$))(?:schemas/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\\.json|docs/(?:testing\\.md|assets/readme/coffee-chat-(?:cover|(?:taste|agent)\\.en)\\.png)|LICENSE|skills/(?:coffee-harvest|coffee-roast|coffee-brew|coffee-chat|coffee-pairing)/SKILL\\.md)$"
     },
     "implementation_path": {
       "anyOf": [
@@ -312,7 +312,7 @@
       "required": ["repository", "version", "source_commit", "release_digest"],
       "properties": {
         "repository": { "$ref": "#/$defs/github_repository" },
-        "version": { "$ref": "#/$defs/semver" },
+        "version": { "$ref": "#/$defs/calver" },
         "source_commit": {
           "type": "string",
           "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
@@ -320,9 +320,9 @@
         "release_digest": { "$ref": "#/$defs/digest" }
       }
     },
-    "semver": {
+    "calver": {
       "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^[0-9]{4}\\.(?:0[1-9]|1[0-2])\\.(?:0[1-9]|[12][0-9]|3[01])$"
     },
     "github_repository": {
       "type": "string",

@@ -49,8 +49,8 @@ function provenance(value: EngineReleaseManifest): EngineProvenance {
 
 describe("engine update advisory", () => {
   it("marks the exact target identity current and exposes a matching advisory edge", () => {
-    const old = release("1.1.0");
-    const target = release("1.1.1");
+    const old = release("2026.08.01");
+    const target = release("2026.08.02");
     const registry: MigrationRegistry = {
       schema_version: "1.0.0",
       edges: [
@@ -98,9 +98,9 @@ describe("engine update advisory", () => {
 
 describe("migration registry", () => {
   it("resolves exactly one forward path and refuses ambiguous paths", () => {
-    const old = release("1.1.0");
-    const middle = release("1.1.1");
-    const target = release("1.1.2");
+    const old = release("2026.08.01");
+    const middle = release("2026.08.02");
+    const target = release("2026.08.03");
     const edge = (
       id: string,
       from: EngineReleaseManifest,
@@ -150,7 +150,7 @@ describe("migration registry", () => {
 
 describe("manifest document", () => {
   it("evaluates only closed manifest patches in memory", () => {
-    const old = release("1.1.0");
+    const old = release("2026.08.01");
     const edge = {
       id: "schema",
       from: {
@@ -160,7 +160,7 @@ describe("manifest document", () => {
       },
       to: {
         repository: old.repository,
-        version: "1.1.1",
+        version: "2026.08.02",
         release_digest: digest("next"),
       },
       document: "./engine/migrations/schema.json" as const,
@@ -206,8 +206,8 @@ describe("manifest document", () => {
 
 describe("verified update inspection", () => {
   it("returns a verified forward update without mutating either checkout", async () => {
-    const old = release("1.1.0");
-    const target = release("1.1.1");
+    const old = release("2026.08.01");
+    const target = release("2026.08.02");
     const sourceRelease = {
       ...target,
       migration_registry: {
@@ -309,7 +309,7 @@ describe("verified update inspection", () => {
       status: "update_available",
       migration_path: [expect.objectContaining({ id: edge.id })],
     });
-    expect(calls).toEqual(["rev-parse refs/tags/v1.1.1"]);
+    expect(calls).toEqual(["rev-parse refs/tags/v2026.08.02"]);
     expect(
       JSON.parse(files.get("/target/coffee-chat.json")!.toString("utf8")),
     ).toEqual(manifest);

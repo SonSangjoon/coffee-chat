@@ -7,6 +7,7 @@ import { TEMPLATE_SURFACE_SELF_COPY_PATHS } from "./artifact-inventory.ts";
 import { normalizeGitHubRepositoryUrl } from "./engine-provenance.ts";
 import { compareCodePoints } from "./generate.ts";
 import { decodeCanonicalText, parseStrictJson } from "./strict-input.ts";
+import { isCalver } from "./calver.ts";
 
 export const GENERATED_OWNERSHIP_SCHEMA_VERSION = "1.1.0" as const;
 export const REPOSITORY_GENERATED_OWNERSHIP_MARKER =
@@ -15,8 +16,6 @@ export const PACKAGE_GENERATED_OWNERSHIP_MARKER =
   ".coffee-chat-generated.json" as const;
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
-const SEMVER =
-  /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const SAFE_PATH =
   /^\.\/(?!\.{1,2}(?:\/|$))(?!.*(?:\/)\.{1,2}(?:\/|$))(?!.*\\)(?:[A-Za-z0-9._-]+\/)*[A-Za-z0-9._-]+$/;
 
@@ -204,11 +203,11 @@ function normalizeAdoptedEngine(value: unknown): AdoptedEngineIdentity {
       REPOSITORY_GENERATED_OWNERSHIP_MARKER,
       "adopted_engine.repository must be a canonical GitHub URL.",
     );
-  if (typeof item.version !== "string" || !SEMVER.test(item.version))
+  if (typeof item.version !== "string" || !isCalver(item.version))
     throw failure(
       "generated-ownership-invalid",
       REPOSITORY_GENERATED_OWNERSHIP_MARKER,
-      "adopted_engine.version must be strict SemVer.",
+      "adopted_engine.version must be CalVer YYYY.MM.DD.",
     );
   if (
     typeof item.release_digest !== "string" ||

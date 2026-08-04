@@ -16,21 +16,21 @@ const { sourceSlug } = Astro.props;
 const model = siteModel;
 const graph = instanceGraph(model);
 const source = graph.sources.find((value) => value.slug === sourceSlug);
-if (!source) throw new Error(`Unknown generated Source route: ${sourceSlug}`);
+if (!source) throw new Error(`Unknown generated Origin route: ${sourceSlug}`);
 const title = source.url;
 ---
 
 <BaseLayout
   {model}
-  title={`${title} — Coffee Chat Source`}
-  description="An exact public Source URL and its dated Citation observations."
+  title={`${title} — Coffee Chat Origin`}
+  description="An exact public Origin URL and its dated Citation observations."
 >
   <section class="hero">
-    <p class="eyebrow">Source / 출처</p>
+    <p class="eyebrow">Origin / 출처</p>
     <h1>{title}</h1>
     <p class="lede">
-      The exact URL is the Source identity. Coffee Chat stores Citation metadata
-      and author Notes, not a fetched copy of the Source body. / 정확한 URL이 출처의
+      The exact URL is the Origin identity. Coffee Chat stores Citation metadata
+      and authored Green Beans, not a fetched copy of the Origin body. / 정확한 URL이 출처의
       식별자입니다. Coffee Chat은 출처 본문 사본이 아니라 인용 메타데이터와
       작성자 기록을 저장합니다.
     </p>
@@ -42,7 +42,7 @@ const title = source.url;
   </section>
   <section class="section">
     <p class="eyebrow">Citation observations / 인용 관찰값</p>
-    <h2>Observed in each Note / 기록별 관찰</h2>
+    <h2>Observed in each Green Bean / 기록별 관찰</h2>
     <ol class="knowledge-list">
       {
         source.observations.map((observation) => {

@@ -8,7 +8,7 @@ const root = resolve(import.meta.dirname, "..");
 describe("remote engine update Skill", () => {
   it("keeps discovery advisory-only and publication merge-free", async () => {
     const skill = await readFile(
-      resolve(root, "skills/update-coffee-chat/SKILL.md"),
+      resolve(root, "skills/coffee-update/SKILL.md"),
       "utf8",
     );
     for (const phrase of [
@@ -27,8 +27,8 @@ describe("remote engine update Skill", () => {
 
   it("ships the bound advisory and discovery schemas in both engine packages", async () => {
     for (const prefix of [
-      "skills/update-coffee-chat/references",
-      "plugins/coffee-chat/skills/update-coffee-chat/references",
+      "skills/coffee-update/references",
+      "plugins/coffee-chat/skills/coffee-update/references",
     ]) {
       const advisory = parseStrictJson(
         await readFile(resolve(root, prefix, "advisory.json"), "utf8"),

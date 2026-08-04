@@ -32,7 +32,7 @@
           "required": ["name", "version", "description"],
           "properties": {
             "name": { "const": "coffee-chat" },
-            "version": { "$ref": "#/$defs/semver" },
+            "version": { "$ref": "#/$defs/calver" },
             "description": { "type": "string" }
           }
         },
@@ -90,7 +90,7 @@
               "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
               "not": { "const": "coffee-chat" }
             },
-            "version": { "$ref": "#/$defs/semver" },
+            "version": { "$ref": "#/$defs/calver" },
             "description": { "type": "string" }
           }
         },
@@ -143,7 +143,7 @@
       "required": ["repository", "version", "source_commit", "release_digest"],
       "properties": {
         "repository": { "$ref": "#/$defs/github_repository" },
-        "version": { "$ref": "#/$defs/semver" },
+        "version": { "$ref": "#/$defs/calver" },
         "source_commit": {
           "type": "string",
           "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
@@ -170,6 +170,10 @@
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "calver": {
+      "type": "string",
+      "pattern": "^[0-9]{4}\\.(?:0[1-9]|1[0-2])\\.(?:0[1-9]|[12][0-9]|3[01])$"
     },
     "uuid_v4": {
       "type": "string",

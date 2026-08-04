@@ -70,14 +70,14 @@ function request(): Record<string, unknown> {
       pages_url: "https://example.github.io/downstream/",
       plugin: {
         name: "coffee-chat-downstream",
-        version: "1.0.0",
+        version: "2026.08.04",
         description: "A downstream Coffee Chat instance.",
       },
       content_notice: CONTENT_NOTICE,
       provenance: {
         engine: {
           repository: "https://github.com/sonsangjoon/coffee-chat",
-          version: "1.1.0",
+          version: "2026.08.04",
           source_commit: "a".repeat(40),
           release_digest: `sha256:${"b".repeat(64)}`,
         },
@@ -94,7 +94,7 @@ function request(): Record<string, unknown> {
         source_default_branch: "main",
         source_default_commit: "a".repeat(40),
         source_default_tree: "c".repeat(40),
-        source_release_ref: "refs/tags/v1.1.0",
+        source_release_ref: "refs/tags/v2026.08.04",
         source_release_commit: "a".repeat(40),
         source_release_tree: "c".repeat(40),
         release_digest: `sha256:${"b".repeat(64)}`,
