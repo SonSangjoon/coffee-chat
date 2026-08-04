@@ -29,6 +29,7 @@ are not part of this design baseline.
 | [`coffee-chat-architecture.md`](./coffee-chat-architecture.md) | Repository ownership, data lifecycle, source of truth, and security boundaries. |
 | [`coffee-chat-user-scenes.md`](./coffee-chat-user-scenes.md) | Build, Connect, Use, and Update journeys, including completion and stop conditions. |
 | [`coffee-chat-evaluation.md`](./coffee-chat-evaluation.md) | Evaluation-first quality gates and gold cases for every transformation and experience. |
+| [`coffee-chat-operation-preview.md`](./coffee-chat-operation-preview.md) | The common approval, scope, revalidation, and Receipt contract for state-changing operations. |
 | [`../research/2026-08-04-coffee-chat-ux-research.md`](../research/2026-08-04-coffee-chat-ux-research.md) | Product reasoning behind the language and two-step journey. |
 
 ## Fixed decisions
@@ -46,9 +47,8 @@ are not part of this design baseline.
 7. Coffee Chat is read-only. Coffee Pairing can write only to one explicitly
    named work target.
 8. Bean and Coffee exist only for the current conversation or named task.
-9. Skill Preview is a cross-cutting approval boundary, but its detailed
-   interaction design is the next design task and is intentionally not fixed by
-   this document set.
+9. Operation Preview is the common approval boundary for every state-changing
+   operation. Its user-facing action is `Review changes`.
 
 ## Design status
 

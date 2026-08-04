@@ -7,7 +7,9 @@
 This page is the short contract. Detailed behavior is split into the
 [architecture](./coffee-chat-architecture.md),
 [user scenes](./coffee-chat-user-scenes.md), and
-[evaluation design](./coffee-chat-evaluation.md).
+[evaluation design](./coffee-chat-evaluation.md). The common state-changing
+[Operation Preview](./coffee-chat-operation-preview.md) contract is documented
+separately.
 
 ## Product pipeline
 
@@ -70,8 +72,9 @@ Every transformation and user scene has deterministic contract gates plus
 semantic quality evaluation. A fluent answer cannot waive an identity or write
 boundary failure, and a safe answer cannot pass if it loses the author's POV.
 
-## Next design task
+## Operation Preview
 
-The detailed Skill Preview contract is intentionally separate. It will define
-the preview payload, approval identity, stale-state handling, and recovery for
-all state-changing operations.
+State-changing operations use the [Operation Preview](./coffee-chat-operation-preview.md)
+contract. The user reviews `Review changes` before Build, Harvest, Connect,
+Coffee Pairing, or Update executes. Roast, Brew, and Coffee Chat are read-only
+and do not require approval.

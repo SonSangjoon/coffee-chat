@@ -73,16 +73,16 @@ Every gold case should have:
 
 ## 3. Contract gates by scene
 
-| Scene          | Hard gates                                                                                                                                                                                         |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Build          | New target is independent; name matches `coffee-chat-*`; invoking repository is not read or changed; baseline files are complete; instance identity and index agree; partial state is recoverable. |
-| Connect        | Instance URL is explicit and verified; repository role and index match; only `.coffee-chat` integration files are written; no personal record is copied.                                           |
-| Harvest        | Only explicit Origins enter; each Green Bean has a valid integrity envelope; Origin and POV remain distinguishable; the write is explicit and inspectable.                                         |
-| Roast          | Selected Green Beans are traceable; output is contextual; no durable Bean/Taste profile is created; irrelevant records are not silently used.                                                      |
-| Brew           | Coffee references the current Bean and Agent context; provenance survives; no personal record or work file is written.                                                                             |
-| Coffee Chat    | No external write occurs; unconnected data is not read; Unknown remains Unknown; the answer cites or identifies relevant Green Beans when needed.                                                  |
-| Coffee Pairing | One target is explicitly named; read/write scope is exact; only approved target changes; the individual repository is unchanged.                                                                   |
-| Update         | Ownership preimages are verified; user-authored records remain byte-equivalent; only the selected repository changes; conflicts stop the operation.                                                |
+| Scene          | Hard gates                                                                                                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build          | Operation Preview is explicit; new target is independent; name matches `coffee-chat-*`; invoking repository is not read or changed; baseline files are complete; instance identity and index agree; partial state is recoverable. |
+| Connect        | Operation Preview is explicit; instance URL is explicit and verified; repository role and index match; only `.coffee-chat` integration files are written; no personal record is copied.                                           |
+| Harvest        | Operation Preview is explicit; only explicit Origins enter; each Green Bean has a valid integrity envelope; Origin and POV remain distinguishable; the write is explicit and inspectable.                                         |
+| Roast          | Selected Green Beans are traceable; output is contextual; no durable Bean/Taste profile is created; irrelevant records are not silently used.                                                                                     |
+| Brew           | Coffee references the current Bean and Agent context; provenance survives; no personal record or work file is written.                                                                                                            |
+| Coffee Chat    | No external write occurs; unconnected data is not read; Unknown remains Unknown; the answer cites or identifies relevant Green Beans when needed.                                                                                 |
+| Coffee Pairing | Operation Preview is explicit; one target is explicitly named; read/write scope is exact; only approved target changes; the individual repository is unchanged.                                                                   |
+| Update         | Operation Preview is explicit; ownership preimages are verified; user-authored records remain byte-equivalent; only the selected repository changes; conflicts stop the operation.                                                |
 
 ## 4. Green Bean quality rubric
 
@@ -251,10 +251,9 @@ If a change improves fluency but reduces POV recognizability, source grounding,
 or write-boundary safety, it does not pass. The evaluation result should explain
 which criterion failed rather than hide the trade-off in a single score.
 
-## 12. Next design scope
+## 12. Operation Preview evaluation
 
-This document defines when a Preview is required but not how the Preview should
-look or feel. The next design task is a dedicated Skill Preview contract that
-defines the preview payload, diff/read/write presentation, approval identity,
-stale-preview detection, cancellation, and recovery for Build, Harvest,
-Connect, Coffee Pairing, and Update.
+The [Operation Preview](./coffee-chat-operation-preview.md) document defines the
+common preview payload, change presentation, approval identity, stale-preview
+detection, cancellation, and recovery. Its hard gates are part of every affected
+scene's evaluation.

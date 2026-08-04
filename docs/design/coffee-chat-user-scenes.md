@@ -234,7 +234,7 @@ task as the pairing target.
 2. Read the target only within the approved scope.
 3. Roast and Brew if a current Bean/Coffee does not already exist.
 4. Prepare the intended change with provenance and a clear target boundary.
-5. Obtain the operation's Preview approval.
+5. Review changes and approve the Operation Preview.
 6. Write only the approved target.
 7. Re-read the result and report the changed paths/fields.
 

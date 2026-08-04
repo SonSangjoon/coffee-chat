@@ -55,7 +55,7 @@ treated as interchangeable.
 | Engine repository or installed Engine Plugin | Skills, runtime, schemas, generators, evaluators, release metadata.                                                                | A person's Origins, Green Beans, Bean, Coffee, or personal defaults.              |
 | Individual `coffee-chat-*` repository        | The person's approved Origins, Green Beans, provenance, instance manifest, instance instructions, and generated instance surfaces. | Work-repository code, task results, or a second copy of the same personal record. |
 | Work repository                              | Project code, project tasks, and a project-local Coffee Chat connection.                                                           | Canonical Origins, Green Beans, or the Engine Plugin source.                      |
-| Agent session/runtime                        | Current Bean, Coffee, task context, previews, and temporary traces.                                                                | Durable personal records unless the user explicitly completes Harvest.            |
+| Agent session/runtime                        | Current Bean, Coffee, task context, Operation Preview records, and temporary traces.                                               | Durable personal records unless the user explicitly completes Harvest.            |
 
 The remote individual Coffee Chat repository is the shareable source of truth.
 A local checkout is only a working copy of that repository. Uncommitted local
@@ -100,7 +100,7 @@ The slug is one or more lowercase ASCII segments separated by single hyphens:
 
 Uppercase characters, underscores, spaces, consecutive hyphens, a trailing
 hyphen, and a missing suffix are invalid. The exact owner and name are fixed in
-the Build Preview before repository creation. The same name is used for the
+the Build Operation Preview before repository creation. The same name is used for the
 default local checkout directory unless the user explicitly approves another
 empty directory.
 
@@ -265,7 +265,7 @@ never saves a conversation as a Green Bean automatically.
 ### Coffee Pairing
 
 Coffee Pairing is available only after Coffee exists and the user names one
-target project or task. It may read the named target, produce a Preview, and
+target project or task. It may read the named target, produce an Operation Preview, and
 write only the approved target files or task fields. It must show the target,
 intended changes, and provenance before writing.
 
@@ -310,9 +310,15 @@ The following are hard invariants, independent of the host Agent:
 - A missing or ambiguous identity is a stop condition, not an invitation to
   guess.
 
-## 9. Non-goals
+## 9. Operation Preview
+
+All state-changing operations follow the [Operation Preview](./coffee-chat-operation-preview.md)
+contract: inspect, review changes, explicitly approve, re-validate, execute,
+and verify. The Operation Preview binds the exact target, read set, write set, protected
+set, and target fingerprint. A changed target invalidates the approval.
+
+## 10. Non-goals
 
 This design does not create a background memory daemon, a central identity
 registry, a global Taste score, a general-purpose project memory system, or a
-separate Coffee Pairing repository. It also does not define the detailed Skill
-Preview screen/receipt interaction; that is the next design document.
+separate Coffee Pairing repository.
