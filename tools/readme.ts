@@ -21,14 +21,14 @@ function pagesRoute(base: string, route: string): string {
 type ReadmeContext = {
   name: string;
   profileName: string;
-  instanceUrl: string;
-  taskUrl: string;
+  instanceUrl?: string;
   buildUrl: string;
   pluginSelector: string;
   marketplace: string;
   isEngine: boolean;
   pagesUrl?: string;
   engineRepositoryUrl?: string;
+  engineDefaultBranch?: string;
   engineVersion?: string;
 };
 
@@ -42,10 +42,7 @@ function context(manifest: Manifest): ReadmeContext {
       ? "Coffee Chat"
       : `Coffee Chat — ${manifest.profile.display_name}`,
     profileName: isEngine ? "Coffee Chat" : manifest.profile.display_name,
-    instanceUrl: isEngine
-      ? "<COFFEE_CHAT_INSTANCE_URL>"
-      : manifest.repository.url,
-    taskUrl: isEngine ? "<YOUR_COFFEE_CHAT_URL>" : manifest.repository.url,
+    instanceUrl: isEngine ? undefined : manifest.repository.url,
     buildUrl: isEngine
       ? "#build-your-coffee-chat"
       : (engineRepositoryUrl ?? "#build-your-coffee-chat"),
@@ -54,34 +51,45 @@ function context(manifest: Manifest): ReadmeContext {
     isEngine,
     pagesUrl: isEngine ? undefined : manifest.pages_url,
     engineRepositoryUrl,
+    engineDefaultBranch: isEngine
+      ? manifest.repository.default_branch
+      : undefined,
     engineVersion: isEngine ? undefined : manifest.provenance?.engine.version,
   };
 }
 
-function zeroInstallPrompt(url: string): string[] {
+function repositoryFileUrl(
+  repository: string,
+  branch: string,
+  path: string,
+): string {
+  const base = repository.endsWith("/") ? repository : `${repository}/`;
+  return new URL(`blob/${branch}/${path}`, base).toString();
+}
+
+function coffeeChatPrompt(url: string): string[] {
   return [
     "```text",
     `Open ${url}.`,
     "Read coffee-chat.json, then AGENTS.md.",
-    "Start a one-time Coffee Chat. Do not install anything.",
+    "Start Coffee Roast and Coffee Brew for this session, then have a one-time Coffee Chat. Do not install anything.",
     "",
-    "Help me understand how this person approaches <ROLE_OR_PROJECT>.",
-    "Show documented alignment, tension, and Unknown.",
-    "Distinguish Authored, Sourced, Inferred, and Unknown.",
-    "Do not score the person or make a hiring decision.",
+    "What did this person notice in <ORIGIN>?",
+    "What did they treat as important, and why?",
+    "Show the supporting Green Beans, Origins, dates, and Unknown.",
+    "Do not invent a view that the public record cannot support.",
     "```",
   ];
 }
 
-function taskPrompt(url: string): string[] {
+function pairingPrompt(url: string): string[] {
   return [
     "```text",
-    `Use ${url} as the perspective source for <TASK>.`,
-    "Retrieve only the public, dated records relevant to the task.",
-    "Derive a temporary POV, Mental Model, and Task Lens.",
-    "Explain which judgment criteria affect the work and cite the supporting Notes.",
-    "Work only on <TARGET>.",
-    "Do not write the synthesis back to Coffee Chat.",
+    `Use ${url} for <TASK> after Coffee Roast and Coffee Brew.`,
+    "Coffee Pairing uses only the public, dated Green Beans relevant to the task.",
+    "Explain which Green Beans and Origins support the result and separate Unknown.",
+    "Work only on the explicitly named <TARGET>.",
+    "Do not write the task result back to Coffee Chat.",
     "```",
   ];
 }
@@ -96,11 +104,13 @@ function installCommands(
     locale === "en"
       ? "Claude Code install and remove"
       : "Claude Code 설치와 제거";
+  const source = context.engineRepositoryUrl ?? context.instanceUrl;
+  if (!source) return [];
   return [
     `<details><summary>${install}</summary>`,
     "",
     "```sh",
-    `codex plugin marketplace add ${context.engineRepositoryUrl ?? context.instanceUrl}`,
+    `codex plugin marketplace add ${source}`,
     `codex plugin add ${context.pluginSelector}`,
     "",
     `codex plugin remove ${context.pluginSelector}`,
@@ -112,7 +122,7 @@ function installCommands(
     `<details><summary>${claude}</summary>`,
     "",
     "```sh",
-    `claude plugin marketplace add ${context.engineRepositoryUrl ?? context.instanceUrl} --scope local`,
+    `claude plugin marketplace add ${source} --scope local`,
     `claude plugin install ${context.pluginSelector} --scope local`,
     "",
     `claude plugin uninstall ${context.pluginSelector} --scope local`,
@@ -159,35 +169,145 @@ function lifecycleGuidance(
       "",
       "Claude Code `local` scope is the narrowest temporary choice. Its update command refreshes this namespaced plugin; the two list commands are the same presence-or-absence receipt. Host-managed caches, conversation history, logs, and retention may remain after removal.",
       "",
-      "Derived POVs, Mental Models, Task Lenses, and new personal knowledge are never appended to the installed snapshot at runtime.",
+      "Only approved Green Beans are durable. A Bean or Coffee Pairing result is temporary and is not appended to the installed snapshot at runtime.",
       "",
       "</details>",
     ];
   return [
-    "<details><summary>Hook, 수명주기, 업데이트, 캐시, 삭제 receipt</summary>",
+    "<details><summary>Hook, 수명주기, 업데이트, 캐시, 삭제 확인</summary>",
     "",
     "설치 전에 실제 저장소 hook 경로와 상태를 확인하세요. 안전한 inspection 뒤에만 설치하며, uninstall은 Coffee Chat이 관리하는 hook과 저장소 로컬 runtime만 제거합니다. 관리되지 않는 hook을 우회·자동 연결·덮어쓰지 않습니다.",
     "",
     ...commands,
     "",
-    "Codex의 `plugin add`에는 scope 선택자가 없고 별도 plugin update 명령도 없습니다. 확인되지 않은 scope와 호스트 관리 경로는 Unknown으로 둡니다. Marketplace upgrade는 source snapshot을 갱신하며, 두 개의 읽기 전용 list 명령이 정확한 플러그인과 marketplace의 삭제 receipt입니다.",
+    "Codex의 `plugin add`에는 scope 선택자가 없고 별도 plugin update 명령도 없습니다. 확인되지 않은 scope와 호스트 관리 경로는 Unknown으로 둡니다. Marketplace upgrade는 플러그인 원본을 갱신하며, 두 개의 읽기 전용 list 명령은 정확한 플러그인과 marketplace의 설치 상태를 확인하는 기록입니다.",
     "",
-    "Claude Code에서는 `local` scope가 가장 좁은 임시 선택입니다. update 명령은 namespaced plugin을 갱신하며, 두 list 명령은 같은 presence-or-absence receipt입니다. 호스트 관리 캐시·대화 기록·로그·보존 데이터는 삭제 후에도 남을 수 있습니다.",
+    "Claude Code에서는 `local` scope가 가장 좁은 임시 선택입니다. update 명령은 이 인스턴스 전용 plugin을 갱신하며, 두 list 명령은 같은 설치 상태 확인 기록입니다. 호스트 관리 캐시·대화 기록·로그·보존 데이터는 삭제 후에도 남을 수 있습니다.",
     "",
-    "도출된 POV·Mental Model·Task Lens와 새 개인 지식은 runtime에 설치된 snapshot에 덧붙이지 않습니다.",
+    "승인된 Green Bean만 지속 저장됩니다. Bean과 Coffee Pairing 결과는 일시적이며 runtime에 설치된 snapshot에 덧붙이지 않습니다.",
     "",
     "</details>",
   ];
 }
 
+function engineActions(locale: "en" | "ko"): string[] {
+  if (locale === "en")
+    return [
+      "## Choose your next action",
+      "",
+      "- **Create yours** — create a separate public instance from the GitHub Template, then Harvest its first Origin into a Green Bean.",
+      "- **Install engine plugin** — add the neutral engine Skills to your agent for authoring and maintenance.",
+      "- **Contribute to engine** — improve schemas, validation, Skills, and the public presentation.",
+      "",
+      "This engine has no default person or Taste. It contains no personal Origin, Green Bean, Bean, or Coffee to chat with.",
+      "",
+      "Do not treat this engine URL as a personal Coffee Chat. Create or open an explicit initialized instance URL first.",
+    ];
+  return [
+    "## 다음 행동 선택하기",
+    "",
+    "- **Create yours** — GitHub Template으로 별도 공개 인스턴스를 만들고 첫 Origin을 Green Bean으로 Harvest합니다.",
+    "- **Install engine plugin** — 작성과 유지보수를 위한 중립 엔진 Skill을 Agent에 추가합니다.",
+    "- **Contribute to engine** — 스키마·검증·Skill·공개 화면을 개선합니다.",
+    "",
+    "이 엔진에는 기본 인물이나 Taste가 없습니다. 대화할 개인 Origin·Green Bean·Bean·Coffee를 담고 있지 않습니다.",
+    "",
+    "이 엔진 URL을 개인 Coffee Chat으로 취급하지 마세요. 먼저 명시적으로 초기화된 인스턴스 URL을 만들거나 열어야 합니다.",
+  ];
+}
+
+function tasteVisual(locale: "en" | "ko"): string {
+  return locale === "en"
+    ? "![Origin becomes Green Bean through Harvest, then Bean through Roast](./docs/assets/readme/coffee-chat-taste.en.png)"
+    : "![Harvest로 Origin을 Green Bean으로, Roast로 Bean으로 바꾸는 흐름](./docs/assets/readme/coffee-chat-taste.en.png)";
+}
+
+function agentVisual(locale: "en" | "ko"): string {
+  return locale === "en"
+    ? "![Bean becomes Coffee through Brew, then branches to Coffee Chat and Coffee Pairing](./docs/assets/readme/coffee-chat-agent.en.png)"
+    : "![Brew로 Bean을 Coffee로 만들고 Coffee Chat과 Coffee Pairing으로 나누는 흐름](./docs/assets/readme/coffee-chat-agent.en.png)";
+}
+
 function renderEnglish(manifest: Manifest): string {
   const c = context(manifest);
   const roleCopy = c.isEngine
-    ? "This is the neutral engine: it has no person to chat with. Use an initialized public instance URL for a conversation."
-    : `This is ${c.profileName}'s approved public record. It is an interface to documented evidence, not a claim that a model is the person.`;
+    ? "This is the neutral engine. It has no default person or Taste, and no personal record to answer for."
+    : `This is ${c.profileName}'s approved public record. It is an interface to documented evidence, not a claim that an agent is the person. `;
   const timelineLinks = c.pagesUrl
-    ? ` Explore the public [Timeline](${pagesRoute(c.pagesUrl, "timeline/")}) and [Graph](${pagesRoute(c.pagesUrl, "graph/")}).`
+    ? ` Browse the public [Timeline](${pagesRoute(c.pagesUrl, "timeline/")}) and [Graph](${pagesRoute(c.pagesUrl, "graph/")}).`
     : "";
+  const instanceSection = c.instanceUrl
+    ? [
+        "## Try a Coffee Chat",
+        "",
+        "A public instance URL is enough for a one-time, read-only conversation. No install, signup, or email is required.",
+        "",
+        ...coffeeChatPrompt(c.instanceUrl),
+        "",
+        "Useful follow-ups:",
+        "",
+        "- What did this person treat as important in this Origin?",
+        "- Which Green Bean and Origin support that reading?",
+        "- What changed over time?",
+        "- What does the public record leave Unknown?",
+        "- What should I ask the person directly?",
+        "",
+        "For a named external task, use Coffee Pairing:",
+        "",
+        ...pairingPrompt(c.instanceUrl),
+      ]
+    : [
+        "## Try a Coffee Chat",
+        "",
+        "This repository is the neutral engine, not a ready-made personal instance. There is no default person or Taste here.",
+        "",
+        "Create a public instance first, then give that explicit URL to an agent. Coffee Roast and Coffee Brew should begin from the instance's `coffee-chat.json` and `AGENTS.md` before the first Coffee Chat.",
+        "",
+        "> **My personal Coffee Chat** — coming soon.",
+        "> This space is reserved for my public Coffee Chat.",
+        "<!-- PERSONAL_COFFEE_CHAT_URL: replace this marker with your public Coffee Chat link -->",
+      ];
+  const buildSection = c.isEngine
+    ? [
+        "## Build your Coffee Chat",
+        "",
+        "Start with one or more public Origins and prepare how you interpreted them, what you considered important, and which values guided that judgment.",
+        "",
+        "Harvest public Origins into Green Beans, Roast them into contextual Beans that carry Taste, and Brew a Bean into Coffee—the Agent with your Taste—for Coffee Chat or Coffee Pairing.",
+        "",
+        ...engineActions("en"),
+      ]
+    : [
+        "## Build your own record",
+        "",
+        `This instance belongs to ${c.profileName}. Build a separate public instance from the [neutral engine](${c.buildUrl}) if you want to Harvest your own Green Beans.`,
+        "",
+        "Personal Green Beans belong only in the instance controlled by their author.",
+      ];
+  const installSection = [
+    "## Install, maintain, and contribute",
+    "",
+    c.isEngine
+      ? "Install the engine plugin for reusable authoring and maintenance. Install an instance plugin only when you need repeated access to a particular public record."
+      : "Use the URL for a one-time conversation. Install this instance plugin only when you need repeated access to this public record.",
+    "",
+    ...installCommands(c, "en"),
+    "",
+    ...lifecycleGuidance(c, "en"),
+    "",
+    c.isEngine && c.engineRepositoryUrl && c.engineDefaultBranch
+      ? `Read the [maintained design contract](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/design/coffee-chat.md")}), [UX research](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/research/2026-08-04-coffee-chat-ux-research.md")}), and [testing and acceptance guide](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/testing.md")}) before changing the engine.`
+      : "This instance follows the engine's maintained design contract; keep personal content in the instance and reusable behavior in the engine.",
+    "",
+    c.isEngine
+      ? "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md)."
+      : "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md).",
+  ];
+  if (!c.isEngine && c.engineRepositoryUrl && c.engineVersion)
+    installSection.push(
+      "",
+      `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
+    );
   return markdown([
     "![Coffee Chat cover showing a coffee cup, orbit lines, and four colored nodes](./docs/assets/readme/coffee-chat-cover.png)",
     "",
@@ -195,140 +315,71 @@ function renderEnglish(manifest: Manifest): string {
     "",
     `# ${c.name}`,
     "",
-    "## AI makes execution abundant. Taste decides what is worth making.",
+    "## Same Origin. Different Taste.",
     "",
-    "Taste here means trained judgment under uncertainty: what you notice, value, choose, refine, reject, and stop. Coffee Chat turns public Sources and dated, author-approved thinking into a temporal perspective graph that people and agents can question and use.",
+    "AI made information cheap. It did not make judgment personal.",
     "",
-    "It does not clone a person or store a fixed Mental Model. It derives only the perspective relevant to the current question or task, shows what supports it, and makes the boundary of the public record visible.",
+    "Your Agent may already know a lot. It still does not know what matters to you.",
     "",
-    "[**Have a Coffee Chat — no install**](#have-a-coffee-chat-without-installing) · [**Build your Coffee Chat**](" +
-      c.buildUrl +
-      ")",
+    "## When information is not enough",
     "",
-    "## Why Coffee Chat",
+    "The same information can lead to different judgments. People notice different things, assign importance differently, and make different value judgments.",
     "",
-    "A coffee chat helps you understand how someone sees and decides through your own questions. Coffee Chat gives people and agents that same entry point into a documented point of view—with Sources, dates, and visible limits.",
+    "Taste is the recurring value system behind how a person interprets information and assigns importance. It is not a score, a personality profile, or a decision rule. Its criteria remain recognizable across different Origins and situations, even when conclusions change.",
     "",
-    "- **Your agent has a Coffee Chat with you:** it reads the relevant record before a task and derives a temporary POV, Mental Model, or Task Lens.",
-    "- **Someone else has a Coffee Chat with you:** they or their agent ask their own questions to understand, compare, or carefully apply the recorded perspective.",
+    "That recurring consistency is why Taste matters. It makes a person's way of seeing information recognizable to other people and useful to an Agent.",
+    "",
+    "## Your Agent needs more than knowledge",
+    "",
+    "- People who use Agents for real work and keep explaining what matters to them.",
+    "",
+    "- People who share information but want to show their point of view, not only a summary.",
+    "",
+    "- People who want to understand each other's criteria before collaborating.",
+    "",
+    "> Your Agent already knows a lot. Coffee Chat helps it understand what matters to you.",
+    "",
+    "## From Origin to Taste",
+    "",
+    "Coffee Chat is an open-source workflow for turning Origin-based points of view into contextual Taste, putting that Taste on an Agent, and using it in conversation or work.",
+    "",
+    "```text",
+    "Origin → Green Bean → Bean → Coffee → Coffee Chat / Coffee Pairing",
+    "          Harvest        Roast   Brew",
+    "```",
+    "",
+    "### Build your Taste",
+    "",
+    tasteVisual("en"),
+    "",
+    "Harvest one or more Origins into Green Beans. Roast the relevant Green Beans into a contextual Bean that carries Taste for the current question or task.",
+    "",
+    "## Put your Taste to work",
+    "",
+    agentVisual("en"),
+    "",
+    "Brew that Bean into Coffee—the Agent with your Taste—for the current Coffee Chat or task. The Taste context is dynamic and is not shown as a fixed profile.",
+    "",
+    "Have a Coffee Chat with that Coffee, or use Coffee Pairing to apply it to a named project or task.",
+    "",
+    "## What makes it different",
+    "",
+    "Coffee Chat does not store everything you know or every decision you make. It keeps how you interpreted an Origin and what you considered important.",
+    "",
+    "- Origin: the information and its provenance",
+    "- Green Bean: your authored point of view",
+    "- Bean: the Taste needed for the current context",
+    "- Coffee: an Agent with that Taste applied",
+    "",
+    "A Green Bean may connect one or more Origins. Taste is not a global profile or an executable rule; Roast builds the Bean needed for the current context.",
     "",
     roleCopy + timelineLinks,
     "",
-    "## Two needs, one graph",
+    ...instanceSection,
     "",
-    "| Build and use your Taste | Understand and use another perspective |",
-    "| --- | --- |",
-    "| Add one public Source and your dated thought through an agent interview. | Open an instance URL and ask a question without installing. |",
-    "| Let your own Agent retrieve the relevant record before a named task. | Trace the response to dated Notes and public Sources. |",
-    "| Derive a temporary POV, Mental Model, or Task Lens without storing it. | Surface alignment, tension, and Unknown without impersonation or scores. |",
+    ...buildSection,
     "",
-    "## Have a Coffee Chat without installing",
-    "",
-    c.isEngine
-      ? "Start with an initialized public instance URL. A one-time Coffee Chat installs nothing."
-      : "Give this public instance URL to Codex, Claude, or another web-capable agent. A one-time Coffee Chat installs nothing.",
-    "",
-    ...zeroInstallPrompt(c.instanceUrl),
-    "",
-    "Try asking:",
-    "",
-    "- What does this person optimize for when making this kind of decision?",
-    "- What public evidence shaped that judgment?",
-    "- How has the view changed over time, and why?",
-    "- Where might this role or project align with or challenge the documented view?",
-    "- What should I ask the person directly because the public record cannot answer it?",
-    "",
-    "Role or hiring comparison is one optional question pattern, not the product identity.",
-    "",
-    "## One record, two directions",
-    "",
-    "![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.png)",
-    "",
-    "Derived Perspective and Task Lens are used for the current question or task and are not written back.",
-    "",
-    "- **Build:** begin with one public Source and one dated thought.",
-    "- **Use:** recover relevant judgment before a named task.",
-    "- **Talk:** explore a documented point of view without installation.",
-    "- **Apply:** inform a relevant task with attribution and limits.",
-    "",
-    "## Why this is not another knowledge base",
-    "",
-    "Other systems make information retrievable or teach an AI to remember or represent a user. Coffee Chat makes documented judgment usable by its owner and their agents, inspectable by other people, and selectively applicable by their agents.",
-    "",
-    "| Category | Primary question | Coffee Chat boundary |",
-    "| --- | --- | --- |",
-    "| Personal knowledge base | What has the owner saved or learned? | What does the approved public record show about how this issue was judged? |",
-    "| RAG or GraphRAG | What does this corpus say? | What is Authored, Sourced, Inferred, or Unknown? |",
-    "| Agent memory | What should the agent remember? | Only approved public records persist; task synthesis does not. |",
-    "",
-    "A knowledge base retrieves what someone knows. Coffee Chat lets people and agents work with how that person's documented judgment has evolved.",
-    "",
-    "## How it earns trust",
-    "",
-    "![Four separate trust layers: Authored, Sourced, Inferred, and Unknown](./docs/assets/readme/coffee-chat-trust.en.png)",
-    "",
-    "- A public Source anchors each record.",
-    "- The author approves each dated Note.",
-    "- Change over time remains visible.",
-    "- Answers distinguish Authored, Sourced, Inferred, and Unknown.",
-    "- No personality or fixed Mental Model is stored.",
-    "- Derived perspectives are not persisted.",
-    "",
-    "Use it to make work more consistent and conversations more informed—not to freeze or replace a person.",
-    "",
-    "## Put Taste to work",
-    "",
-    "Name an exact external task and target. The agent retrieves only relevant dated records, discloses the Notes that support an advisory Task Lens, changes only the named target, and leaves Coffee Chat knowledge and installed plugin data untouched.",
-    "",
-    ...taskPrompt(c.taskUrl),
-    "",
-    "## Build your Coffee Chat",
-    "",
-    "```text",
-    "one public reference + your dated thought",
-    "→ agent interview",
-    "→ public Preview and approval",
-    "→ first Note and temporal graph",
-    "→ Coffee Chat and task use",
-    "```",
-    "",
-    c.isEngine
-      ? "Choose **Create yours** through the generic `coffee-chat` plugin. It uses the official GitHub Template flow, then hands the new public checkout to `skills/create-coffee-chat/SKILL.md` and Build KG. Authors do not fill in a personality profile or a fixed Mental Model; the first useful result is one approved Note that can support a question or task immediately."
-      : c.engineRepositoryUrl
-        ? `This record belongs to ${c.profileName}. Build your own separate Coffee Chat from the [neutral engine](${c.engineRepositoryUrl}); authors do not fill in a personality profile or a fixed Mental Model.`
-        : `This record belongs to ${c.profileName}. Its original engine is not recorded in this legacy manifest; authors do not fill in a personality profile or a fixed Mental Model.`,
-    "",
-    "The owner using the graph with their own agents is the primary loop. Public conversation and careful reuse by others grow from that same record.",
-    "",
-    "## Install, remove, contribute, and license",
-    "",
-    c.isEngine
-      ? "Install the engine plugin to build and operate an instance. For repeated conversation or task work, install the relevant person's instance plugin instead."
-      : "Install this instance plugin only for repeated Coffee Chats or task work. The one-time URL path remains available without installation.",
-    "",
-    ...installCommands(c, "en"),
-    "",
-    ...lifecycleGuidance(c, "en"),
-    "",
-    c.engineRepositoryUrl
-      ? "Contribute reusable schemas, methods, Skills, and safety guardrails to the [engine](" +
-        c.engineRepositoryUrl +
-        "). Personal Notes belong only in an instance controlled by their author."
-      : "Personal Notes belong only in an instance controlled by their author; this legacy manifest does not record the originating engine.",
-    "",
-    ...(c.isEngine
-      ? [
-          "See [testing and acceptance](./docs/testing.md). Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).",
-        ]
-      : [
-          "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).",
-        ]),
-    ...(c.engineRepositoryUrl && c.engineVersion
-      ? [
-          "",
-          `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
-        ]
-      : []),
+    ...installSection,
   ]);
 }
 
@@ -336,11 +387,81 @@ function renderKorean(manifest: Manifest): string {
   const c = context(manifest);
   const buildUrl = c.isEngine ? "#나만의-coffee-chat-만들기" : c.buildUrl;
   const roleCopy = c.isEngine
-    ? "이곳은 특정 인물을 담지 않은 중립 엔진입니다. 대화하려면 초기화된 공개 인스턴스 URL을 사용하세요."
-    : `이곳은 ${c.profileName}의 승인된 공개 기록입니다. 모델이 그 사람이라고 주장하는 것이 아니라, 문서화된 근거에 접근하는 인터페이스입니다.`;
+    ? "이곳은 중립 엔진입니다. 기본 인물이나 Taste, 개인 기록이 없으므로 특정 사람을 대신해 답하지 않습니다."
+    : `이곳은 ${c.profileName}의 승인된 공개 기록입니다. Agent가 그 사람이라고 주장하는 것이 아니라 문서화된 근거에 접근하는 인터페이스입니다. `;
   const timelineLinks = c.pagesUrl
     ? ` 공개 [Timeline](${pagesRoute(c.pagesUrl, "timeline/")})과 [Graph](${pagesRoute(c.pagesUrl, "graph/")})도 볼 수 있습니다.`
     : "";
+  const instanceSection = c.instanceUrl
+    ? [
+        "## Coffee Chat 해보기",
+        "",
+        "공개 인스턴스 URL만 있으면 일회성 읽기 전용 대화를 시작할 수 있습니다. 설치·가입·이메일은 필요하지 않습니다.",
+        "",
+        ...coffeeChatPrompt(c.instanceUrl),
+        "",
+        "이어서 이렇게 물어볼 수 있습니다:",
+        "",
+        "- 이 사람은 이 Origin에서 무엇을 중요하게 보았나요?",
+        "- 그 해석을 뒷받침하는 Green Bean과 Origin은 무엇인가요?",
+        "- 시간에 따라 무엇이 바뀌었나요?",
+        "- 공개 기록이 말해주지 못하는 Unknown은 무엇인가요?",
+        "- 당사자에게 직접 물어봐야 할 것은 무엇인가요?",
+        "",
+        "특정 외부 작업에 활용할 때는 Coffee Pairing을 사용합니다:",
+        "",
+        ...pairingPrompt(c.instanceUrl),
+      ]
+    : [
+        "## Coffee Chat 해보기",
+        "",
+        "이 저장소는 준비된 개인 인스턴스가 아니라 중립 엔진입니다. 기본 인물이나 Taste가 없습니다.",
+        "",
+        "먼저 공개 인스턴스를 만든 뒤 그 명시적 URL을 Agent에 전달하세요. 일회성 Coffee Chat은 인스턴스의 `coffee-chat.json`과 `AGENTS.md`에서 시작해야 합니다.",
+        "",
+        "> **나의 Coffee Chat** — 준비 중입니다.",
+        "> 나의 공개 Coffee Chat 링크가 준비되면 이 자리에 연결합니다.",
+        "<!-- PERSONAL_COFFEE_CHAT_URL: 공개 Coffee Chat 링크로 이 표시를 교체하세요 -->",
+      ];
+  const buildSection = c.isEngine
+    ? [
+        "## 나만의 Coffee Chat 만들기",
+        "",
+        "공개 Origins를 엮어 어떻게 해석했고, 무엇을 중요하게 판단했으며, 어떤 가치판단 기준이 작동했는지 Green Bean으로 남기는 것에서 시작합니다.",
+        "",
+        "Origin을 Harvest해 Green Bean을 만들고, 이를 Roast해 현재 맥락의 Taste를 담은 Bean을 구성합니다. 그 Bean을 Brew해 Coffee를 만들면 나의 Taste가 입혀진 Agent로 Coffee Chat이나 Coffee Pairing을 사용할 수 있습니다.",
+        "",
+        ...engineActions("ko"),
+      ]
+    : [
+        "## 나의 기록 만들기",
+        "",
+        `${c.profileName}의 인스턴스와 별개로 [중립 엔진](${buildUrl})에서 나만의 공개 Origin을 Green Bean으로 Harvest할 수 있습니다.`,
+        "",
+        "개인 Green Bean은 작성자가 관리하는 인스턴스에만 둡니다.",
+      ];
+  const installSection = [
+    "## 설치, 유지보수, 기여",
+    "",
+    c.isEngine
+      ? "반복적인 작성과 유지보수를 위해 엔진 플러그인을 설치하세요. 특정 공개 기록을 계속 사용할 때만 인스턴스 플러그인을 설치합니다."
+      : "일회성 대화에는 URL을 사용하세요. 이 공개 기록을 계속 사용할 때만 인스턴스 플러그인을 설치합니다.",
+    "",
+    ...installCommands(c, "ko"),
+    "",
+    ...lifecycleGuidance(c, "ko"),
+    "",
+    c.isEngine && c.engineRepositoryUrl && c.engineDefaultBranch
+      ? `변경 전 [유지되는 설계 계약](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/design/coffee-chat.md")}), [UX 리서치](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/research/2026-08-04-coffee-chat-ux-research.md")}), [테스트·수용 기준](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/testing.md")})을 읽으세요.`
+      : "이 인스턴스는 엔진의 유지되는 설계 계약을 따릅니다. 개인 콘텐츠는 인스턴스에, 재사용 가능한 동작은 엔진에 둡니다.",
+    "",
+    "코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를 따르고, 원본 Green Bean과 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
+  ];
+  if (!c.isEngine && c.engineRepositoryUrl && c.engineVersion)
+    installSection.push(
+      "",
+      `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
+    );
   return markdown([
     "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)",
     "",
@@ -348,140 +469,71 @@ function renderKorean(manifest: Manifest): string {
     "",
     `# ${c.name}`,
     "",
-    "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
+    "## 같은 Origin. 다른 Taste.",
     "",
-    "여기서 Taste는 미적 취향이나 성격이 아니라, 불확실성 속에서 훈련된 판단입니다. 무엇을 보고·선택하고·다듬고·버리며·멈출지를 정합니다. Coffee Chat은 공개 Source와 날짜가 있는 작성자 승인 기록을, 사람과 Agent가 질문하고 활용할 수 있는 시계열 관점 그래프로 만듭니다.",
+    "AI는 정보를 값싸고 빠르게 만들었습니다. 하지만 판단까지 개인적으로 만들지는 못합니다.",
     "",
-    "Coffee Chat은 사람을 복제하거나 고정된 Mental Model을 저장하지 않습니다. 현재 질문이나 작업에 필요한 관점만 도출하고, 무엇이 그 관점을 뒷받침하는지와 공개 기록의 경계를 함께 보여줍니다.",
+    "당신의 Agent는 이미 많은 것을 알고 있을 수 있습니다. 하지만 당신에게 무엇이 중요한지는 아직 모릅니다.",
     "",
-    "[**설치 없이 Coffee Chat 하기**](#설치-없이-coffee-chat-하기) · [**나만의 Coffee Chat 만들기**](" +
-      buildUrl +
-      ")",
+    "## 정보만으로는 충분하지 않을 때",
     "",
-    "## 왜 Coffee Chat인가",
+    "같은 정보를 보더라도 판단은 달라집니다. 사람마다 주목하는 부분이 다르고, 중요도를 부여하는 방식이 다르며, 작동하는 가치판단 기준도 다릅니다.",
     "",
-    "커피챗은 내가 던지는 질문을 통해 누군가가 어떻게 보고 판단하는지 이해하는 자리입니다. Coffee Chat은 사람과 Agent가 Source·날짜·보이는 한계를 갖춘 문서화된 관점에 같은 방식으로 접근하게 합니다.",
+    "Taste는 정보를 해석하고 중요도를 부여하는 과정에서 반복적으로 작동하는 가치체계입니다. 점수나 성격 프로필, Agent가 따라야 하는 의사결정 규칙이 아닙니다. 결론이 항상 같다는 뜻이 아니라, Origin과 상황이 달라도 판단 기준이 식별되는 항상성을 의미합니다.",
     "",
-    "- **나의 Agent가 나와 Coffee Chat을 합니다:** 작업 전 관련 기록을 읽고 임시 POV·Mental Model·Task Lens를 도출합니다.",
-    "- **다른 사람이 나와 Coffee Chat을 합니다:** 그 사람 또는 그 Agent가 자기 질문으로 기록된 관점을 이해·비교·신중하게 활용합니다.",
+    "이런 반복되는 기준이 Taste가 중요한 이유입니다. Taste는 한 사람이 정보를 바라보는 방식을 다른 사람이 이해하게 하고, Agent가 그 기준을 활용하게 합니다.",
+    "",
+    "## Agent가 알아야 할 것은 지식만이 아닙니다",
+    "",
+    "- Agent를 실제 업무에 사용하면서 무엇이 중요한지 매번 다시 설명하는 사람",
+    "",
+    "- 정보를 공유할 때 단순한 요약이 아니라 자신의 관점을 보여주고 싶은 사람",
+    "",
+    "- 함께 일하기 전에 서로의 판단 기준을 이해하고 싶은 사람",
+    "",
+    "> 당신의 Agent는 이미 많은 것을 알고 있습니다. Coffee Chat은 그 Agent가 당신에게 무엇이 중요한지 이해하도록 돕습니다.",
+    "",
+    "## Origin에서 Taste까지",
+    "",
+    "Coffee Chat은 외부 정보를 보고 남긴 나의 관점을 현재 맥락의 Taste로 만들고, 그 Taste를 Agent에 입혀 대화와 작업에 사용하는 오픈소스 워크플로우입니다.",
+    "",
+    "```text",
+    "Origin → Green Bean → Bean → Coffee → Coffee Chat / Coffee Pairing",
+    "          Harvest        Roast   Brew",
+    "```",
+    "",
+    "### Taste 만들기",
+    "",
+    tasteVisual("ko"),
+    "",
+    "하나 이상의 Origin을 Harvest해 Green Bean을 만듭니다. 무엇을 중요하게 판단했고, 어떻게 해석했으며, 왜 그런지 Green Bean에 기록합니다. Green Bean을 Roast하면 현재 맥락의 Taste를 담은 Bean이 구성됩니다.",
+    "",
+    "## Taste를 실제로 사용하기",
+    "",
+    agentVisual("ko"),
+    "",
+    "그 Bean을 Brew해 Coffee를 만들면 나의 Taste가 입혀진 Agent로 현재 Coffee Chat이나 작업에서 기준을 활용할 수 있습니다. Taste는 고정 프로필로 보이지 않습니다.",
+    "",
+    "그 Coffee와 대화하거나, Coffee Pairing을 통해 특정 프로젝트와 작업에 같은 기준을 적용합니다.",
+    "",
+    "## Coffee Chat이 다른 이유",
+    "",
+    "Coffee Chat은 내가 무엇을 알고 있는지나 어떤 결정을 내렸는지를 저장하지 않습니다. 외부 정보를 어떻게 해석했고, 무엇을 중요하게 보았는지를 남깁니다.",
+    "",
+    "- Origin: 정보와 그 출처",
+    "- Green Bean: 작성자의 관점",
+    "- Bean: 현재 맥락에 필요한 Taste",
+    "- Coffee: 그 Taste가 입혀진 Agent",
+    "",
+    "하나의 Green Bean은 여러 Origin을 엮을 수 있습니다. Taste는 전역 프로필이나 실행 규칙으로 저장되지 않고, Roast가 현재 맥락에 필요한 Bean으로 구성합니다.",
     "",
     roleCopy + timelineLinks,
     "",
-    "## 두 가지 필요, 하나의 그래프",
+    ...instanceSection,
     "",
-    "| 나의 Taste를 쌓고 활용하기 | 다른 사람의 관점을 이해하고 활용하기 |",
-    "| --- | --- |",
-    "| 공개 Source 하나와 날짜가 있는 생각을 Agent 인터뷰로 더합니다. | 인스턴스 URL을 열고 설치 없이 질문합니다. |",
-    "| 나의 Agent가 작업 전 관련 기록을 찾게 합니다. | 날짜가 있는 Note와 공개 Source까지 답변을 추적합니다. |",
-    "| 저장하지 않는 임시 POV·Mental Model·Task Lens를 도출합니다. | 가장·점수 없이 alignment·tension·Unknown을 드러냅니다. |",
+    ...buildSection,
     "",
-    "## 설치 없이 Coffee Chat 하기",
-    "",
-    c.isEngine
-      ? "초기화된 공개 인스턴스 URL에서 시작하세요. 일회성 Coffee Chat은 아무것도 설치하지 않습니다."
-      : "이 공개 인스턴스 URL을 Codex·Claude 또는 웹을 볼 수 있는 Agent에 전달하세요. 일회성 Coffee Chat은 아무것도 설치하지 않습니다.",
-    "",
-    ...zeroInstallPrompt(c.instanceUrl),
-    "",
-    "이렇게 물어볼 수 있습니다:",
-    "",
-    "- 이 사람은 이런 결정을 할 때 무엇을 가장 중요하게 보나요?",
-    "- 그 판단을 만든 공개 근거는 무엇인가요?",
-    "- 관점은 시간에 따라 어떻게, 왜 바뀌었나요?",
-    "- 이 역할이나 프로젝트와 맞닿거나 긴장되는 지점은 어디인가요?",
-    "- 공개 기록만으로 답할 수 없어 이 사람에게 직접 물어봐야 할 것은 무엇인가요?",
-    "",
-    "역할·채용 비교는 선택 가능한 질문 패턴 중 하나일 뿐, 제품의 정체성이 아닙니다.",
-    "",
-    "## 하나의 기록, 두 방향",
-    "",
-    "![하나의 공개 기록이 주인의 Task Lens와 다른 사람의 근거 기반 Coffee Chat으로 이어지는 흐름](./docs/assets/readme/coffee-chat-flow.en.png)",
-    "",
-    "도출된 Perspective와 Task Lens는 현재 질문이나 작업에만 쓰며 다시 저장하지 않습니다.",
-    "",
-    "- **Build:** 공개 Source 하나와 날짜가 있는 생각에서 시작합니다.",
-    "- **Use:** 명시된 작업 전에 관련 판단을 되찾습니다.",
-    "- **Talk:** 설치 없이 문서화된 관점을 탐색합니다.",
-    "- **Apply:** 출처와 한계를 밝히며 관련 작업에 참고합니다.",
-    "",
-    "## 또 하나의 지식 베이스가 아닌 이유",
-    "",
-    "다른 시스템은 정보를 찾게 하거나 AI가 사용자를 기억·재현하게 합니다. Coffee Chat은 문서화된 판단을 주인과 그 Agent가 활용하고, 다른 사람이 살펴보고, 다른 Agent가 필요한 범위에서 선택적으로 적용하게 합니다.",
-    "",
-    "| 범주 | 핵심 질문 | Coffee Chat의 경계 |",
-    "| --- | --- | --- |",
-    "| 개인 지식 베이스 | 주인이 무엇을 저장하거나 배웠나? | 승인된 공개 기록이 이 사안을 어떻게 판단했는가? |",
-    "| RAG 또는 GraphRAG | 이 코퍼스는 무엇을 말하나? | 무엇이 Authored·Sourced·Inferred·Unknown인가? |",
-    "| Agent memory | Agent가 무엇을 기억해야 하나? | 승인된 공개 기록만 남고 작업 합성은 남지 않습니다. |",
-    "",
-    "지식 베이스는 누군가가 아는 것을 찾습니다. Coffee Chat은 그 사람의 문서화된 판단이 어떻게 변화했는지를 사람과 Agent가 활용하게 합니다.",
-    "",
-    "## 신뢰를 얻는 방식",
-    "",
-    "![작성자 기록, 출처 내용, 제한된 추론, 기록으로 알 수 없음의 분리된 네 가지 신뢰 층](./docs/assets/readme/coffee-chat-trust.en.png)",
-    "",
-    "- 모든 기록은 공개 Source에 닿아 있습니다.",
-    "- 작성자가 날짜가 있는 Note를 승인합니다.",
-    "- 시간에 따른 변화가 보입니다.",
-    "- 답변은 Authored·Sourced·Inferred·Unknown을 구분합니다.",
-    "- 성격이나 고정 Mental Model을 저장하지 않습니다.",
-    "- 도출된 관점은 지속 저장하지 않습니다.",
-    "",
-    "업무는 더 일관되게, 대화는 더 충분한 정보 위에서 하되 사람을 고정하거나 대체하지 마세요.",
-    "",
-    "## Taste를 업무에 적용하기",
-    "",
-    "정확한 외부 작업과 대상을 이름 붙이세요. Agent는 관련된 날짜별 기록만 찾고, 조언 성격의 Task Lens를 뒷받침하는 Note를 밝히며, 이름 붙인 대상만 바꾸고 Coffee Chat 지식과 설치된 플러그인 데이터는 건드리지 않습니다.",
-    "",
-    ...taskPrompt(c.taskUrl),
-    "",
-    "## 나만의 Coffee Chat 만들기",
-    "",
-    "```text",
-    "공개 레퍼런스 하나 + 날짜가 있는 나의 생각",
-    "→ Agent 인터뷰",
-    "→ 공개 Preview와 승인",
-    "→ 첫 Note와 시계열 그래프",
-    "→ Coffee Chat과 작업 활용",
-    "```",
-    "",
-    c.isEngine
-      ? "범용 `coffee-chat` 플러그인에서 **Create yours**를 선택하세요. 공식 GitHub Template 흐름으로 공개 체크아웃을 만들고 `skills/create-coffee-chat/SKILL.md`와 Build KG로 넘깁니다. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않으며, 첫 승인 Note 하나만으로도 질문이나 관련 작업을 바로 지원할 수 있습니다."
-      : c.engineRepositoryUrl
-        ? `${c.profileName}의 기록과는 별개로, [중립 엔진](${c.engineRepositoryUrl})에서 나만의 Coffee Chat을 만드세요. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않습니다.`
-        : `${c.profileName}의 기록과는 별개로, 원본 엔진이 기록되지 않은 레거시 매니페스트입니다. 작성자는 성격 프로필이나 고정 Mental Model을 채우지 않습니다.`,
-    "",
-    "주인이 자신의 Agent와 그래프를 쓰는 것이 핵심 반복입니다. 공개 대화와 다른 사람의 신중한 활용은 같은 기록에서 생기는 배포·협업의 반복입니다.",
-    "",
-    "## 설치, 제거, 기여, 라이선스",
-    "",
-    c.isEngine
-      ? "인스턴스를 만들고 운영하려면 엔진 플러그인을 설치하세요. 반복적인 대화나 작업에는 해당 인물의 인스턴스 플러그인을 설치하세요."
-      : "반복적인 Coffee Chat이나 작업에만 이 인스턴스 플러그인을 설치하세요. 설치 없이 URL로 사용하는 경로도 그대로 열려 있습니다.",
-    "",
-    ...installCommands(c, "ko"),
-    "",
-    ...lifecycleGuidance(c, "ko"),
-    "",
-    c.engineRepositoryUrl
-      ? "재사용 가능한 스키마·방법론·Skill·안전 가드레일은 [엔진](" +
-        c.engineRepositoryUrl +
-        ")에 기여하세요. 개인 Note는 작성자가 관리하는 인스턴스에만 둡니다."
-      : "개인 Note는 작성자가 관리하는 인스턴스에만 둡니다. 이 레거시 매니페스트에는 원본 엔진이 기록되어 있지 않습니다.",
-    "",
-    ...(c.isEngine
-      ? [
-          "[testing and acceptance](./docs/testing.md)를 확인하세요. 코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를, Note와 독창적 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
-        ]
-      : [
-          "코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를, Note와 독창적 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
-        ]),
-    ...(c.engineRepositoryUrl && c.engineVersion
-      ? [
-          "",
-          `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
-        ]
-      : []),
+    ...installSection,
   ]);
 }
 

@@ -94,19 +94,23 @@ describe("Task 4 deterministic delivery projections", () => {
       .map((entry) => entry.name)
       .sort();
     expect(skillNames).toEqual([
-      "apply-perspective",
-      "build-kg",
+      "coffee-brew",
       "coffee-chat",
-      "create-coffee-chat",
-      "update-coffee-chat",
+      "coffee-create",
+      "coffee-harvest",
+      "coffee-pairing",
+      "coffee-roast",
+      "coffee-update",
     ]);
 
     for (const name of [
       "coffee-chat",
-      "apply-perspective",
-      "build-kg",
-      "create-coffee-chat",
-      "update-coffee-chat",
+      "coffee-pairing",
+      "coffee-brew",
+      "coffee-harvest",
+      "coffee-roast",
+      "coffee-create",
+      "coffee-update",
     ]) {
       const skill = await readFile(
         resolve(projectRoot, "skills", name, "SKILL.md"),
@@ -137,12 +141,12 @@ describe("Task 4 deterministic delivery projections", () => {
     }
     expect(
       generated.has(
-        "plugins/coffee-chat/skills/create-coffee-chat/references/release.json",
+        "plugins/coffee-chat/skills/coffee-create/references/release.json",
       ),
     ).toBe(true);
     expect(
       generated.has(
-        "plugins/coffee-chat/skills/create-coffee-chat/references/template-surface.json",
+        "plugins/coffee-chat/skills/coffee-create/references/template-surface.json",
       ),
     ).toBe(true);
     for (const name of [
@@ -156,7 +160,7 @@ describe("Task 4 deterministic delivery projections", () => {
     ])
       expect(
         generated.has(
-          `plugins/coffee-chat/skills/update-coffee-chat/references/${name}`,
+          `plugins/coffee-chat/skills/coffee-update/references/${name}`,
         ),
       ).toBe(true);
     expect(
@@ -198,9 +202,7 @@ describe("Task 4 deterministic delivery projections", () => {
     const { snapshot, graph } = await projectGraph(root);
     const generated = await generatedProjectionBytes(snapshot, graph);
     expect(
-      [...generated.keys()].filter((path) =>
-        path.includes("create-coffee-chat"),
-      ),
+      [...generated.keys()].filter((path) => path.includes("coffee-create")),
     ).toEqual([]);
     const packageRoot = `plugins/${graph.manifest.plugin.name}`;
     expect(
@@ -208,7 +210,13 @@ describe("Task 4 deterministic delivery projections", () => {
         .filter((path) => path.startsWith(`${packageRoot}/skills/`))
         .sort(),
     ).toEqual(
-      ["apply-perspective", "build-kg", "coffee-chat"]
+      [
+        "coffee-pairing",
+        "coffee-brew",
+        "coffee-chat",
+        "coffee-harvest",
+        "coffee-roast",
+      ]
         .flatMap((name) => [
           `${packageRoot}/skills/${name}/SKILL.md`,
           `${packageRoot}/skills/${name}/references/method.md`,
@@ -254,7 +262,7 @@ describe("Task 4 deterministic delivery projections", () => {
     ) as Record<string, unknown>;
     expect(codexManifest).toMatchObject({
       name: "coffee-chat",
-      version: "1.1.0",
+      version: "2026.08.04",
       repository: "https://github.com/SonSangjoon/coffee-chat",
       skills: "./skills/",
       license: "MIT",
@@ -288,16 +296,16 @@ describe("Task 4 deterministic delivery projections", () => {
     const readme = first.get("README.md")!.toString("utf8");
     const koreanReadme = first.get("README.ko.md")!.toString("utf8");
     const orderedHeadings = [
-      "## AI makes execution abundant. Taste decides what is worth making.",
-      "## Why Coffee Chat",
-      "## Two needs, one graph",
-      "## Have a Coffee Chat without installing",
-      "## One record, two directions",
-      "## Why this is not another knowledge base",
-      "## How it earns trust",
-      "## Put Taste to work",
+      "## Same Origin. Different Taste.",
+      "## When information is not enough",
+      "## Your Agent needs more than knowledge",
+      "## From Origin to Taste",
+      "## Put your Taste to work",
+      "## What makes it different",
+      "## Try a Coffee Chat",
       "## Build your Coffee Chat",
-      "## Install, remove, contribute, and license",
+      "## Choose your next action",
+      "## Install, maintain, and contribute",
     ];
     let offset = -1;
     for (const heading of orderedHeadings) {
@@ -315,23 +323,16 @@ describe("Task 4 deterministic delivery projections", () => {
         "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)",
       ),
     ).toBe(true);
-    expect(readme).toContain("./docs/assets/readme/coffee-chat-flow.en.png");
-    expect(koreanReadme).toContain(
-      "./docs/assets/readme/coffee-chat-flow.en.png",
-    );
-    expect(readme).toContain(
-      "Taste here means trained judgment under uncertainty",
-    );
-    expect(readme).toContain(
-      "This is the neutral engine: it has no person to chat with.",
-    );
+    expect(readme).toContain("Taste is the recurring value system");
+    expect(readme).toContain("## Put your Taste to work");
+    expect(readme).toContain("coffee-chat-taste.en.png");
+    expect(readme).toContain("coffee-chat-agent.en.png");
+    expect(readme).toContain("This engine has no default person or Taste");
+    expect(readme).toContain("Harvest one or more Origins into Green Beans");
     expect(readme).not.toMatch(/\bblog\b|social account|social post/i);
-    expect(readme).toContain("Open <COFFEE_CHAT_INSTANCE_URL>.");
-    expect(readme).toContain("Start a one-time Coffee Chat");
-    expect(readme).toContain(
-      "Use <YOUR_COFFEE_CHAT_URL> as the perspective source for <TASK>",
-    );
-    expect(readme).toContain("one public reference + your dated thought");
+    expect(readme).not.toMatch(/\bpersona\b/i);
+    expect(readme).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
+    expect(readme).toContain("Start with one or more public Origins");
     expect(readme).toContain(
       `codex plugin remove coffee-chat@coffee-chat-marketplace`,
     );
@@ -357,7 +358,7 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(readme).toContain("npm run cc -- hooks inspect --format json");
     expect(readme).toContain("npm run cc -- hooks install --format json");
     expect(readme).toContain("npm run cc -- hooks uninstall --format json");
-    expect(koreanReadme).toContain("## 왜 Coffee Chat인가");
+    expect(koreanReadme).toContain("## 같은 Origin. 다른 Taste.");
     expect(koreanReadme).not.toContain("## Why Coffee Chat");
   });
 
@@ -421,11 +422,8 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(combined).toContain("coffee-chat-fork-owner-marketplace");
     expect(instanceReadme).toContain("# Coffee Chat — Fork Owner");
     expect(instanceKoreanReadme).toContain("# Coffee Chat — Fork Owner");
-    expect(
-      instanceReadme.indexOf("## Have a Coffee Chat without installing"),
-    ).toBeLessThan(instanceReadme.indexOf("## Put Taste to work"));
-    expect(instanceReadme.indexOf("## Put Taste to work")).toBeLessThan(
-      instanceReadme.indexOf("## Build your Coffee Chat"),
+    expect(instanceReadme.indexOf("## Try a Coffee Chat")).toBeLessThan(
+      instanceReadme.indexOf("## Build your own record"),
     );
     expect(instanceReadme).toContain(
       "Open https://github.com/example/fork-chat",
@@ -446,7 +444,7 @@ describe("Task 4 deterministic delivery projections", () => {
       "claude plugin update coffee-chat-fork-owner@coffee-chat-fork-owner-marketplace --scope local",
     );
     expect(instanceReadme).not.toMatch(
-      /\bblog\b|social account|social post|how this author thinks/i,
+      /\bblog\b|social account|social post|how this author thinks|Mental Model|Task Lens|Derived Perspective/i,
     );
     expect(instanceReadme).not.toContain("before writing anything");
     expect(instanceReadme).not.toContain(

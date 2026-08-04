@@ -40,37 +40,31 @@ afterEach(async () => {
 });
 
 describe("README visual asset contract", () => {
-  it("accepts exactly three locked PNG assets without localized duplicates", async () => {
+  it("accepts the cover and two locked product-flow PNGs", async () => {
     const cover = await readFile(resolve(assetRoot, "coffee-chat-cover.png"));
-    const flowEnglish = await readFile(
-      resolve(assetRoot, "coffee-chat-flow.en.png"),
+    const taste = await readFile(
+      resolve(assetRoot, "coffee-chat-taste.en.png"),
     );
-    const trustEnglish = await readFile(
-      resolve(assetRoot, "coffee-chat-trust.en.png"),
+    const agent = await readFile(
+      resolve(assetRoot, "coffee-chat-agent.en.png"),
     );
 
     expect(README_ASSET_PATHS).toEqual([
       "docs/assets/readme/coffee-chat-cover.png",
-      "docs/assets/readme/coffee-chat-flow.en.png",
-      "docs/assets/readme/coffee-chat-trust.en.png",
+      "docs/assets/readme/coffee-chat-taste.en.png",
+      "docs/assets/readme/coffee-chat-agent.en.png",
     ]);
     expect(readPngDimensions(cover)).toEqual({ width: 1280, height: 640 });
-    expect(readPngDimensions(flowEnglish)).toEqual({
-      width: 1200,
-      height: 900,
-    });
-    expect(readPngDimensions(trustEnglish)).toEqual({
-      width: 1200,
-      height: 600,
-    });
+    expect(readPngDimensions(taste)).toEqual({ width: 1200, height: 760 });
+    expect(readPngDimensions(agent)).toEqual({ width: 1200, height: 760 });
     expect(cover.byteLength).toBeLessThan(1024 * 1024);
-    for (const diagram of [flowEnglish, trustEnglish])
-      expect(diagram.byteLength).toBeLessThan(1.5 * 1024 * 1024);
+    expect(taste.byteLength).toBeLessThan(1.5 * 1024 * 1024);
+    expect(agent.byteLength).toBeLessThan(1.5 * 1024 * 1024);
     const assetNames = (await readdir(assetRoot)).sort();
     expect(assetNames).toEqual([
+      "coffee-chat-agent.en.png",
       "coffee-chat-cover.png",
-      "coffee-chat-flow.en.png",
-      "coffee-chat-trust.en.png",
+      "coffee-chat-taste.en.png",
     ]);
     expect(assetNames).not.toEqual(
       expect.arrayContaining([expect.stringMatching(/\.svg$/)]),
@@ -99,7 +93,7 @@ describe("README visual asset contract", () => {
     const fixture = await assetFixture();
     const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-flow.en.png",
+      "docs/assets/readme/coffee-chat-taste.en.png",
     );
     const bytes = Buffer.from(await readFile(path));
     bytes.writeUInt32BE(1199, 16);
@@ -110,7 +104,7 @@ describe("README visual asset contract", () => {
     ).rejects.toMatchObject({
       diagnostic: {
         code: "invalid-readme-asset",
-        path: "./docs/assets/readme/coffee-chat-flow.en.png",
+        path: "./docs/assets/readme/coffee-chat-taste.en.png",
       },
     });
   });
@@ -119,7 +113,7 @@ describe("README visual asset contract", () => {
     const fixture = await assetFixture();
     const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-trust.en.png",
+      "docs/assets/readme/coffee-chat-taste.en.png",
     );
     await writeFile(
       path,
@@ -131,7 +125,7 @@ describe("README visual asset contract", () => {
     ).rejects.toMatchObject({
       diagnostic: {
         code: "readme-asset-drift",
-        path: "./docs/assets/readme/coffee-chat-trust.en.png",
+        path: "./docs/assets/readme/coffee-chat-taste.en.png",
       },
     });
   });
@@ -140,7 +134,7 @@ describe("README visual asset contract", () => {
     const fixture = await assetFixture();
     const path = resolve(
       fixture.root,
-      "docs/assets/readme/coffee-chat-flow.en.png",
+      "docs/assets/readme/coffee-chat-agent.en.png",
     );
     const bytes = Buffer.from(await readFile(path));
     bytes[bytes.length - 13] = (bytes[bytes.length - 13] as number) ^ 1;
@@ -151,7 +145,7 @@ describe("README visual asset contract", () => {
     ).rejects.toMatchObject({
       diagnostic: {
         code: "readme-asset-drift",
-        path: "./docs/assets/readme/coffee-chat-flow.en.png",
+        path: "./docs/assets/readme/coffee-chat-agent.en.png",
       },
     });
   });
