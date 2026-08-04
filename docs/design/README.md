@@ -27,7 +27,7 @@ are not part of this design baseline.
 | --- | --- |
 | [`coffee-chat.md`](./coffee-chat.md) | Short canonical contract and pipeline summary. |
 | [`coffee-chat-architecture.md`](./coffee-chat-architecture.md) | Repository ownership, data lifecycle, source of truth, and security boundaries. |
-| [`coffee-chat-user-scenes.md`](./coffee-chat-user-scenes.md) | Build, Connect, Use, and Update journeys, including completion and stop conditions. |
+| [`coffee-chat-user-scenes.md`](./coffee-chat-user-scenes.md) | Init, Sync, Use, and Update journeys, including completion and stop conditions. |
 | [`coffee-chat-evaluation.md`](./coffee-chat-evaluation.md) | Evaluation-first quality gates and gold cases for every transformation and experience. |
 | [`coffee-chat-evals.md`](./coffee-chat-evals.md) | Separate `coffee-chat-evals` repository contract, adapter, cases, judges, thresholds, and CI gates. |
 | [`coffee-chat-skill-contracts.md`](./coffee-chat-skill-contracts.md) | Per-Skill inputs, outputs, boundaries, adapter observations, and external Eval case IDs. |
@@ -37,15 +37,15 @@ are not part of this design baseline.
 
 ## Fixed decisions
 
-1. Build starts with an Agent and no existing Coffee Chat repository.
-2. Build always creates a new independent Coffee Chat repository.
-3. The repository that invoked Build is never the Build target, storage
+1. Init starts with an Agent and no existing Coffee Chat repository.
+2. Init always creates a new independent Coffee Chat repository.
+3. The repository that invoked Init is never the Init target, storage
    location, or implicit Origin.
 4. Every new instance repository must match
    `^coffee-chat-[a-z0-9]+(?:-[a-z0-9]+)*$`.
 5. The individual `coffee-chat-*` repository is the single source of truth for
    that person's Origins, Green Beans, provenance, and instance configuration.
-6. Connect creates a project-local integration surface; it does not copy
+6. Sync creates a project-local integration surface; it does not copy
    personal records into the work repository.
 7. Coffee Chat is read-only. Coffee Pairing can write only to one explicitly
    named work target.

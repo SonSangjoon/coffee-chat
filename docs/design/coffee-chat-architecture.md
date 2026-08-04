@@ -6,7 +6,7 @@
 
 This document defines what exists, where it lives, who owns it, and which
 operations may cross repository boundaries. It is the system contract behind
-the Build and Use scenes.
+the Init and Use scenes.
 
 ## 1. Product model
 
@@ -62,15 +62,15 @@ A local checkout is only a working copy of that repository. Uncommitted local
 changes are pending state and must not silently become the state used by another
 session.
 
-## 3. Build target and repository identity
+## 3. Init target and repository identity
 
-### 3.1 Build isolation
+### 3.1 Init isolation
 
-Build begins when an Agent has the Coffee Chat Engine Plugin available and the
+Init begins when an Agent has the Coffee Chat Engine Plugin available and the
 user does not yet have an individual Coffee Chat repository. The user may
-invoke Build from a shell, an Agent session, or an unrelated work repository.
+invoke Init from a shell, an Agent session, or an unrelated work repository.
 
-The invocation location is not an input. Build must not:
+The invocation location is not an input. Init must not:
 
 - inspect the current repository to infer an Origin;
 - use the current repository's name as the Coffee Chat repository name;
@@ -79,14 +79,14 @@ The invocation location is not an input. Build must not:
 - turn the current repository into the individual Coffee Chat repository;
 - fall back to a local-only directory when remote repository creation fails.
 
-Origins enter Build only when the user explicitly provides them or explicitly
+Origins enter Init only when the user explicitly provides them or explicitly
 asks the Agent to use a named input. The Engine Plugin package, not the current
 checkout, supplies the initialization runtime.
 
 ### 3.2 Repository name rule
 
 The maintained Engine repository is the canonical `coffee-chat` repository. Any
-new repository created by Build must use this strict instance name pattern:
+new repository created by Init must use this strict instance name pattern:
 
 ```text
 coffee-chat-<lowercase-slug>
@@ -100,17 +100,17 @@ The slug is one or more lowercase ASCII segments separated by single hyphens:
 
 Uppercase characters, underscores, spaces, consecutive hyphens, a trailing
 hyphen, and a missing suffix are invalid. The exact owner and name are fixed in
-the Build Operation Preview before repository creation. The same name is used for the
+the Init Operation Preview before repository creation. The same name is used for the
 default local checkout directory unless the user explicitly approves another
 empty directory.
 
-Build must stop if the exact remote target already exists, the local target is
+Init must stop if the exact remote target already exists, the local target is
 not empty, or the local target is a symlink. It may suggest a different
 `coffee-chat-*` name, but it may not silently choose an unrelated name.
 
 ### 3.3 Repository initialization
 
-Build creates a new independent repository from the Engine Plugin's release
+Init creates a new independent repository from the Engine Plugin's release
 payload. It does not use a repository template, clone the maintained engine
 checkout, or rewrite an existing repository's remote.
 
@@ -164,7 +164,7 @@ author chooses what becomes durable and what remains a one-time input.
 ### 4.2 Green Bean
 
 A Green Bean is the only durable POV record created by the pipeline. It may
-connect one Origin or many Origins, and it may synthesize multiple kinds of
+link one Origin or many Origins, and it may synthesize multiple kinds of
 information when the author can explain the connection.
 
 The record uses a small integrity envelope and an open prose body. The envelope
@@ -203,15 +203,15 @@ Brew produces Coffee in memory. Coffee carries the Bean's Taste, selected
 provenance, current context, and the Agent runtime. It is not a new personal
 record and it must not be committed to the individual repository.
 
-## 5. Connect integration
+## 5. Sync integration
 
-Connect links an Agent's current environment to an existing individual Coffee
-Chat repository. Connect is not Build, and it does not create another canonical
+Sync links an Agent's current environment to an existing individual Coffee
+Chat repository. Sync is not Init, and it does not create another canonical
 repository.
 
 ### Work repository present
 
-When Connect is invoked in a work repository, it creates a managed local
+When Sync is invoked in a work repository, it creates a managed local
 integration surface:
 
 ```text
@@ -235,7 +235,7 @@ user-edited integration file.
 
 ### No work repository
 
-When Connect is invoked from a session without a work repository, the
+When Sync is invoked from a session without a work repository, the
 connection is session-scoped. It is held in runtime state and writes no
 project files. The user may still run Coffee Chat or explicitly name a target
 for Coffee Pairing if the host provides one.
@@ -243,7 +243,7 @@ for Coffee Pairing if the host provides one.
 ### Existing Coffee Chat repository
 
 When the current repository is already an initialized `coffee-chat-*` instance,
-the instance manifest and index are authoritative. Connect is a verification
+the instance manifest and index are authoritative. Sync is a verification
 operation rather than a second local link. It must not create a connection
 inside the instance unless the user is connecting a separate work repository.
 
@@ -296,8 +296,8 @@ contract. There are no compatibility aliases or legacy-language routes.
 
 The following are hard invariants, independent of the host Agent:
 
-- Build target identity is explicit and matches the `coffee-chat-*` rule.
-- Build never uses the invoking repository as a hidden input or output.
+- Init target identity is explicit and matches the `coffee-chat-*` rule.
+- Init never uses the invoking repository as a hidden input or output.
 - The individual Coffee Chat repository is the only durable source of personal
   Origins and Green Beans.
 - Work repositories contain only connection state and their own project data.

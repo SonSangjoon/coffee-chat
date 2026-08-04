@@ -17,8 +17,9 @@
       "license": "MIT",
       "keywords": [
         "coffee-chat",
+        "green-bean",
         "taste",
-        "perspective-annotation"
+        "coffee-pairing"
       ],
       "category": "Productivity",
       "skills": "./skills/"

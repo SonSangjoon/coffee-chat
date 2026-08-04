@@ -89,13 +89,13 @@
     },
     {
       "path": "./docs/design/coffee-chat.md",
-      "digest": "sha256:793ea8e2c6d985c4d35c204f8f8c38c1cfd337c745e4943c7b603429f5d4c435",
+      "digest": "sha256:daf2596261c8948c1856a2b02692b25b7a34309c8e72bb2c436af3afa8c557da",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./method/shared-method.md",
-      "digest": "sha256:ca612dc7edf85e134bcb34ca739905988241599a4d03722b3da45b8859bbf067",
+      "digest": "sha256:f54687c3aa5205d76b3eeb8448cdf1e230f61baf4ce1d5c5086b2e33337a35d5",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -126,6 +126,30 @@
     {
       "path": "./schemas/candidate-request.schema.json",
       "digest": "sha256:6ded87ba4090e61dff059f41b111a4091ba4d78000954ac7a11646c55963d5df",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/coffee-chat-init-preview.schema.json",
+      "digest": "sha256:4d20d93b1e1752b1c12f04acc7323d3667295d82d0ad1ce613d77a0743a2546d",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/coffee-chat-init-receipt.schema.json",
+      "digest": "sha256:7a6871e1423a170d6e0eff16a8795617505c27c31564325d739b6404de0e120a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/coffee-chat-sync-preview.schema.json",
+      "digest": "sha256:c68d3ae8fa61d87d5f27547c85e3b7a2a8614cbb0c4a4a7119b0868eb0d1bab2",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/coffee-chat-sync-receipt.schema.json",
+      "digest": "sha256:7211d6c2318141c6f66b3fb612643ec0d9951a3286111b791096c7f5f4ef582b",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -162,6 +186,18 @@
     {
       "path": "./schemas/note-frontmatter.schema.json",
       "digest": "sha256:2625547284873f8d53e335f1246e00c8828906987177f85b36224696d6ccd6e2",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/operation-preview.schema.json",
+      "digest": "sha256:e038971e5331ea8ac018cfa56481e9d50794acdbfc267f8cd06d56da0484b72f",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./schemas/operation-receipt.schema.json",
+      "digest": "sha256:430c83e09fa8020d38930917e0ffb6ce33982adbf55219b0580357d2ae6432ba",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -251,7 +287,7 @@
     },
     {
       "path": "./site/pages/index.astro",
-      "digest": "sha256:f4a32935ff1b0e059f4857283c49730eb5ebeec7ea20cefc039df6579bb3675f",
+      "digest": "sha256:e470221764fb569eb873b4796516328fb9141d3213b7a5af8af0db045208537d",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -281,61 +317,61 @@
     },
     {
       "path": "./skills/coffee-brew/SKILL.md",
-      "digest": "sha256:05a1f9d925da959c62e3c0acb6bb5378ac986602260cf08f5821f5879ef72732",
+      "digest": "sha256:43be73519909bc6e145f3532b690842b5e3df109b1aac1531b34622b7b141af2",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-brew/references/method.md",
-      "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2",
+      "digest": "sha256:811f8880e431144cb45aabc35fbec71f83b921a918197771af5c968da6ff9615",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-chat/SKILL.md",
-      "digest": "sha256:d74ddf1bcc384cc00356dbb5118309acce1072ee8a7c629f4906c5c2b7daa212",
+      "digest": "sha256:11fb64dacaffab34ff48bde495694cdd42588abb983084698f5224f24794facb",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-chat/references/method.md",
-      "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2",
+      "digest": "sha256:811f8880e431144cb45aabc35fbec71f83b921a918197771af5c968da6ff9615",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-harvest/SKILL.md",
-      "digest": "sha256:df35806696ab5b07b78f656d92ec2869e770156dfc4816e9835519da22f3e3ba",
+      "digest": "sha256:d86ea771a59e771801e68d11934aa35155b620f91896e00e1f181bf88ab52979",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-harvest/references/method.md",
-      "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2",
+      "digest": "sha256:811f8880e431144cb45aabc35fbec71f83b921a918197771af5c968da6ff9615",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-pairing/SKILL.md",
-      "digest": "sha256:30ef83b2327237fb96b921592f1ec694ddd76ccc88aa8f10ff0640a5daa20315",
+      "digest": "sha256:3bac9a622f93af952d6a1246e3405bc5e1f2fdf24be9056d06c3df36f55e1f9a",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-pairing/references/method.md",
-      "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2",
+      "digest": "sha256:811f8880e431144cb45aabc35fbec71f83b921a918197771af5c968da6ff9615",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-roast/SKILL.md",
-      "digest": "sha256:d027ce6b30de0ef26b625b3ee33abaf78ba44a2477f954d2798106f3c701ee29",
+      "digest": "sha256:b535e0603e3e8478c9807ca3fb9dc78a40a58aa7bb2214b6aba193ff6686bdca",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./skills/coffee-roast/references/method.md",
-      "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2",
+      "digest": "sha256:811f8880e431144cb45aabc35fbec71f83b921a918197771af5c968da6ff9615",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -348,6 +384,12 @@
     {
       "path": "./tests/candidate-downstream-identity.test.ts",
       "digest": "sha256:c4f57b78a935eeb850d2189c8099d8912be26aa28062a357662a25b191c12997",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tests/canonical-skill-registry.test.ts",
+      "digest": "sha256:8747ae5bffa470ab24060bb8ab6ed0d02ae25f30afb2de1b42d0023f8ed878ee",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -401,7 +443,7 @@
     },
     {
       "path": "./tests/helpers/skill-harness.ts",
-      "digest": "sha256:7eb5dfc3fd32f7748db8cf8a784004e747494c67924ae9ccdd1a0950ec9e3c94",
+      "digest": "sha256:5e10e3c47d37c8e14e03cb4f93095f5c435ff69e43add5a5b7ee1f6e02ee0b1b",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -419,7 +461,7 @@
     },
     {
       "path": "./tests/plugin-lifecycle.test.ts",
-      "digest": "sha256:7e9443f0dd2ede7a6266da39b0589554b221437310d5ad34f2b78da307664666",
+      "digest": "sha256:556c84ebf2b3dced0b44940dabf4aa3ac90180957b78f23772ba1547f3e569b5",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -431,7 +473,7 @@
     },
     {
       "path": "./tests/readme-projections.test.ts",
-      "digest": "sha256:1932b7790bd259d568b78b22b6a6ce393992174e0e3871d88296cacf02f2c723",
+      "digest": "sha256:ca2fa101067df61cb216d01f83f8831dd73253af2570ca966c80f72cb3917997",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -449,7 +491,7 @@
     },
     {
       "path": "./tests/site-build.test.ts",
-      "digest": "sha256:c37a9a00c685b1cb4373b30c2fb920f5887f934faf9e2db4279a943e9dc748d0",
+      "digest": "sha256:32c2681732ada548509b151973435469adb8b9379c5b18d4c78930ebf7f5adf9",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -467,13 +509,13 @@
     },
     {
       "path": "./tests/skill-contracts.test.ts",
-      "digest": "sha256:5cc51ad969d1b7e521b916327e5b0302f5c0462e2f381b786c12a02b54e73f8f",
+      "digest": "sha256:cebe191f9a42e96731284be446c017a3b79dde58585232cbb11c4ce77f631a15",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./tests/skill-evaluations.test.ts",
-      "digest": "sha256:2eada8ff8292ccb7c68b6be12bfca127624345470a6cf46d364d35e243e0c4e6",
+      "digest": "sha256:ead8e3dc0d751918ceed2ec15dd593fa5caa5aa7a6631b80eba56327062eac58",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -509,13 +551,13 @@
     },
     {
       "path": "./tests/task-4-projections.test.ts",
-      "digest": "sha256:34b0049c4816d3cc4a689a7ec370ca8939b98ea99c6a49196981843f611beec6",
+      "digest": "sha256:91854a686dd2493dc5ce131ea5e6ccbc2a56317f335681e2e034dc04576a3586",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./tests/taste-vocabulary.test.ts",
-      "digest": "sha256:ce7f12835d826b71646810b672895a482c976d144a94dcc5b265969df22af4cb",
+      "digest": "sha256:174f1404e3f17105c405eb637f3509f916c21e0017a484a7a7114333f91ba041",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -533,7 +575,7 @@
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:a1e3b6e8b61f0783285983f45ff4bf6666760cba295ee53fa1ed7f5804f8ecd5",
+      "digest": "sha256:3dbfe87d53f70039e3ef24da9a29395b4d8bee68eb87233c869d74a0f6e78f6d",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -545,7 +587,7 @@
     },
     {
       "path": "./tools/candidate.ts",
-      "digest": "sha256:1dc082c1fbe27c401cf00e449b96ee28d6ed2cba7b0e77992e43b79fb8e4bc82",
+      "digest": "sha256:eac2ebf47a6056c4abbae74149acb84c4f7249b96b3e1f63d215d2d3e342f7c8",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -604,8 +646,14 @@
       "class": "engine-source"
     },
     {
+      "path": "./tools/operation-preview.ts",
+      "digest": "sha256:b40ef6ae84c106fc780eaaadc3c8d16710efb477d2504c9d170bf11b14fb2609",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
       "path": "./tools/projections.ts",
-      "digest": "sha256:0d2c0c544f9682663c60d6f782894ff3317d48381a86b6fbc865bf60a53fc4b7",
+      "digest": "sha256:8f55c11287474dcad4d58037cf29f261bf5604f8b35298c314b9504001623ed3",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -617,13 +665,19 @@
     },
     {
       "path": "./tools/readme.ts",
-      "digest": "sha256:aacc6698816744106b0c652a2d28a3617402906b9e9d7073550ae0443db68f59",
+      "digest": "sha256:7ff19c66549a28961584a1149f8000b60047c56d60ce3b7240527a28df3358e0",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./tools/site-build.ts",
       "digest": "sha256:59751430ecf1ae3f777d41d1e2de5337d54d6c16c33d5ce3cd43daffd7f830de",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./tools/skill-contracts.ts",
+      "digest": "sha256:ebd9799480c1b63ccdbaecf44839c51b639154b3cb89e9488abf92871243a9c6",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -768,6 +822,18 @@
       "class": "engine-delivery"
     },
     {
+      "path": "./tests/coffee-init.test.ts",
+      "digest": "sha256:01f228fe5dd8e4d2c9cbda78434270341c326ac466669088da38892ff319254d",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tests/coffee-sync.test.ts",
+      "digest": "sha256:0ceda96d3291caee5892c0ea39b6c0b70a31a6e7c73c1b03f18fc0dabee89769",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
       "path": "./tests/engine-publication-cli.test.ts",
       "digest": "sha256:84e7ca55e8f162e64d1d041107283bf5b3f31114e076b2f2cb38de65daf61ea7",
       "mode": "100644",
@@ -787,7 +853,7 @@
     },
     {
       "path": "./tests/engine-review-setup-skill.test.ts",
-      "digest": "sha256:9b8daa1fbc72be84065060a891c90294d53278b59e49b4b2cfc653ee68bbc5f9",
+      "digest": "sha256:4ae8b3f1eede313b8f9f15d2a645e351aa69ae73bc00ce8585478d9ae6cd74f8",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -811,7 +877,7 @@
     },
     {
       "path": "./tests/engine-update-skill.test.ts",
-      "digest": "sha256:52d2b22536c6ce64073fb98bba8639ae5c8b234a3605938d452c2d0befecd87b",
+      "digest": "sha256:6fe44801a00dac4a086e7a440b37747ad5da207b25e02cea0dd322d7675e3e02",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -834,8 +900,20 @@
       "class": "engine-delivery"
     },
     {
+      "path": "./tools/coffee-init.ts",
+      "digest": "sha256:c7868a0344d11d2f82ff36808ca94c3325911ae210fd12c7304e6b188a20c5e3",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
+      "path": "./tools/coffee-sync.ts",
+      "digest": "sha256:dfa6a83242cc1e13426e9e363703ab7274cd111af7efe5e17a82c0d6d0b0b76e",
+      "mode": "100644",
+      "class": "engine-delivery"
+    },
+    {
       "path": "./tools/engine-cli.ts",
-      "digest": "sha256:0a47902acf91a47e2a2512ceae3c18827a15cb578143a1d3b350897b5ffe1273",
+      "digest": "sha256:cbd66e55310022c2d027c3e6ff5475f68a061c54200b907ba09e451a93cc435d",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -876,5 +954,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:7569ab6dea4a5c5f27fd09ecada869f76cc9ca6f90939b5ef80a246229ce1505"
+  "release_digest": "sha256:5d6bab28558ee6846cd82156fb6b07932b58eb59268a976d47cf65351804e747"
 }

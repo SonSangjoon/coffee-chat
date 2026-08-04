@@ -31,43 +31,43 @@ thresholds; the Engine must not embed the canonical case corpus.
 
 ## 2. Skill categories
 
-| Category               | Skills                           | State effect                                                                  |
-| ---------------------- | -------------------------------- | ----------------------------------------------------------------------------- |
-| Build and connection   | `coffee-build`, `coffee-connect` | Creates an instance or project-local connection.                              |
-| Durable authoring      | `coffee-harvest`                 | Writes approved Origin/Green Bean records to the canonical instance.          |
-| Context construction   | `coffee-roast`, `coffee-brew`    | Read-only runtime transformations that create Bean and Coffee.                |
-| Conversation           | `coffee-chat`                    | Read-only response through Coffee.                                            |
-| Controlled application | `coffee-pairing`                 | Writes only one named external target.                                        |
-| Lifecycle update       | `coffee-update`                  | Changes owned Engine/instance/integration structure while preserving records. |
+| Category                 | Skills                        | State effect                                                                  |
+| ------------------------ | ----------------------------- | ----------------------------------------------------------------------------- |
+| Init and synchronization | `coffee-init`, `coffee-sync`  | Initializes an instance or records project-local synchronization.             |
+| Durable authoring        | `coffee-harvest`              | Writes approved Origin/Green Bean records to the canonical instance.          |
+| Context construction     | `coffee-roast`, `coffee-brew` | Read-only runtime transformations that create Bean and Coffee.                |
+| Conversation             | `coffee-chat`                 | Read-only response through Coffee.                                            |
+| Controlled application   | `coffee-pairing`              | Writes only one named external target.                                        |
+| Lifecycle update         | `coffee-update`               | Changes owned Engine/instance/integration structure while preserving records. |
 
 `coffee-roast` and `coffee-brew` are internal Skills. `Operation Preview` is a
 shared protocol, not a Skill.
 
-## 3. `coffee-build`
+## 3. `coffee-init`
 
-| Field              | Contract                                                                                                                                                                   |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Trigger            | User wants to build a new personal Coffee Chat without an existing individual instance.                                                                                    |
-| Inputs             | Engine release, GitHub owner, exact `coffee-chat-*` name, empty local path, and optional explicit first Origins.                                                           |
-| Reads              | Engine release payload, exact remote target absence, local path identity/emptiness, and user-provided Origins only when handed to Harvest.                                 |
-| Output             | Independent initialized `coffee-chat-*` repository and verified instance handoff. Full Build ends with first Harvest, Roast/Brew validation, and Coffee Chat smoke result. |
-| Writes             | New remote repository and new local checkout baseline. First Green Bean writing belongs to `coffee-harvest`.                                                               |
-| Operation Preview  | Required. Repository creation and first Harvest use separate previews.                                                                                                     |
-| Forbidden          | Reading/changing the invoking repository, using it as Origin, reusing a repository, template copying, local-only fallback, or arbitrary names.                             |
-| Completion         | Instance identity/index agree, first Green Bean and Coffee receipts exist, and the user confirms Coffee reflects their Taste.                                              |
-| Eval observability | Target identity, invoking-repository read/write trace, baseline tree, Preview, Receipt, and partial-result state.                                                          |
+| Field              | Contract                                                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trigger            | User wants to Init a new personal Coffee Chat without an existing individual instance.                                                                                    |
+| Inputs             | Engine release, GitHub owner, exact `coffee-chat-*` name, empty local path, and optional explicit first Origins.                                                          |
+| Reads              | Engine release payload, exact remote target absence, local path identity/emptiness, and user-provided Origins only when handed to Harvest.                                |
+| Output             | Independent initialized `coffee-chat-*` repository and verified instance handoff. Full Init ends with first Harvest, Roast/Brew validation, and Coffee Chat smoke result. |
+| Writes             | New remote repository and new local checkout baseline. First Green Bean writing belongs to `coffee-harvest`.                                                              |
+| Operation Preview  | Required. Repository creation and first Harvest use separate previews.                                                                                                    |
+| Forbidden          | Reading/changing the invoking repository, using it as Origin, reusing a repository, template copying, local-only fallback, or arbitrary names.                            |
+| Completion         | Instance identity/index agree, first Green Bean and Coffee receipts exist, and the user confirms Coffee reflects their Taste.                                             |
+| Eval observability | Target identity, invoking-repository read/write trace, baseline tree, Preview, Receipt, and partial-result state.                                                         |
 
 External case IDs:
 
 ```text
-build-from-no-repo
-build-from-unrelated-repo
-build-invalid-name
-build-existing-target
-build-partial-remote
+init-from-no-repo
+init-from-unrelated-repo
+init-invalid-name
+init-existing-target
+init-partial-remote
 ```
 
-## 4. `coffee-connect`
+## 4. `coffee-sync`
 
 | Field              | Contract                                                                                                                                                      |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -76,7 +76,7 @@ build-partial-remote
 | Reads              | Instance manifest/index, repository role, knowledge digest, current `.coffee-chat` integration, and ownership metadata.                                       |
 | Output             | Verified session connection or project-local `.coffee-chat` integration.                                                                                      |
 | Writes             | Only `.coffee-chat/connection.json`, generated instructions, and ownership metadata.                                                                          |
-| Operation Preview  | Required for project writes; session-only Connect has no durable write.                                                                                       |
+| Operation Preview  | Required for project writes; session-only Sync has no durable write.                                                                                          |
 | Forbidden          | Guessing URLs, connecting an Engine repository as a person, copying records, installing the Engine Plugin into the work repository, or changing project code. |
 | Completion         | Later Agent invocation resolves the exact instance/digest, or session-only state remains verified without file writes.                                        |
 | Eval observability | Instance verification trace, connection write set, copied-content scan, and resulting digest.                                                                 |
@@ -84,11 +84,11 @@ build-partial-remote
 External case IDs:
 
 ```text
-connect-project
-connect-session-only
-connect-engine-target
-connect-record-copy-temptation
-connect-edited-integration
+sync-project
+sync-session-only
+sync-engine-target
+sync-record-copy-temptation
+sync-edited-integration
 ```
 
 ## 5. `coffee-harvest`
@@ -247,8 +247,8 @@ intent before loading the body:
 
 | Situation                                                | Skill                     |
 | -------------------------------------------------------- | ------------------------- |
-| Engine role + new personal instance                      | `coffee-build`            |
-| Any session/work repository + explicit existing instance | `coffee-connect`          |
+| Engine role + new personal instance                      | `coffee-init`             |
+| Any session/work repository + explicit existing instance | `coffee-sync`             |
 | Verified instance + explicit Origins and durable POV     | `coffee-harvest`          |
 | Coffee Chat/Coffee Pairing needs contextual selection    | `coffee-roast` internally |
 | Bean must be applied to Agent                            | `coffee-brew` internally  |
@@ -294,8 +294,8 @@ The Skill set cannot be released until:
 
 1. Replace Skill metadata, names, routing, and generated artifact contracts.
 2. Implement the Operation Preview adapter and Receipt observations.
-3. Implement `coffee-build` + `coffee-harvest` first-build flow.
-4. Implement `coffee-connect` session/project integration.
+3. Implement `coffee-init` + `coffee-harvest` first-init flow.
+4. Implement `coffee-sync` session/project synchronization.
 5. Implement `coffee-roast` + `coffee-brew` + `coffee-chat` read-only flow.
 6. Implement `coffee-pairing` controlled writes.
 7. Implement `coffee-update` ownership-preserving lifecycle changes.

@@ -22,7 +22,7 @@ type ReadmeContext = {
   name: string;
   profileName: string;
   instanceUrl?: string;
-  buildUrl: string;
+  initUrl: string;
   pluginSelector: string;
   marketplace: string;
   isEngine: boolean;
@@ -43,9 +43,9 @@ function context(manifest: Manifest): ReadmeContext {
       : `Coffee Chat — ${manifest.profile.display_name}`,
     profileName: isEngine ? "Coffee Chat" : manifest.profile.display_name,
     instanceUrl: isEngine ? undefined : manifest.repository.url,
-    buildUrl: isEngine
-      ? "#build-your-coffee-chat"
-      : (engineRepositoryUrl ?? "#build-your-coffee-chat"),
+    initUrl: isEngine
+      ? "#init-your-coffee-chat"
+      : (engineRepositoryUrl ?? "#init-your-coffee-chat"),
     pluginSelector: `${manifest.plugin.name}@${manifest.marketplace_name}`,
     marketplace: manifest.marketplace_name,
     isEngine,
@@ -195,24 +195,24 @@ function engineActions(locale: "en" | "ko"): string[] {
     return [
       "## Choose your next action",
       "",
-      "- **Create yours** — create a separate public instance from the GitHub Template, then Harvest its first Origin into a Green Bean.",
+      "- **Init your Coffee Chat** — initialize a separate public coffee-chat-* repository from the engine, then Harvest its first Origin into a Green Bean.",
       "- **Install engine plugin** — add the neutral engine Skills to your agent for authoring and maintenance.",
       "- **Contribute to engine** — improve schemas, validation, Skills, and the public presentation.",
       "",
       "This engine has no default person or Taste. It contains no personal Origin, Green Bean, Bean, or Coffee to chat with.",
       "",
-      "Do not treat this engine URL as a personal Coffee Chat. Create or open an explicit initialized instance URL first.",
+      "Do not treat this engine URL as a personal Coffee Chat. Init or open an explicit instance URL first.",
     ];
   return [
     "## 다음 행동 선택하기",
     "",
-    "- **Create yours** — GitHub Template으로 별도 공개 인스턴스를 만들고 첫 Origin을 Green Bean으로 Harvest합니다.",
+    "- **나만의 Coffee Chat Init** — 엔진에서 별도의 coffee-chat-* 저장소를 Init하고 첫 Origin을 Green Bean으로 Harvest합니다.",
     "- **Install engine plugin** — 작성과 유지보수를 위한 중립 엔진 Skill을 Agent에 추가합니다.",
     "- **Contribute to engine** — 스키마·검증·Skill·공개 화면을 개선합니다.",
     "",
     "이 엔진에는 기본 인물이나 Taste가 없습니다. 대화할 개인 Origin·Green Bean·Bean·Coffee를 담고 있지 않습니다.",
     "",
-    "이 엔진 URL을 개인 Coffee Chat으로 취급하지 마세요. 먼저 명시적으로 초기화된 인스턴스 URL을 만들거나 열어야 합니다.",
+    "이 엔진 URL을 개인 Coffee Chat으로 취급하지 마세요. 먼저 Init한 인스턴스 URL을 만들거나 열어야 합니다.",
   ];
 }
 
@@ -261,15 +261,15 @@ function renderEnglish(manifest: Manifest): string {
         "",
         "This repository is the neutral engine, not a ready-made personal instance. There is no default person or Taste here.",
         "",
-        "Create a public instance first, then give that explicit URL to an agent. Coffee Roast and Coffee Brew should begin from the instance's `coffee-chat.json` and `AGENTS.md` before the first Coffee Chat.",
+        "Init a public instance first, then give that explicit URL to an agent. Coffee Roast and Coffee Brew should begin from the instance's `coffee-chat.json` and `AGENTS.md` before the first Coffee Chat.",
         "",
         "> **My personal Coffee Chat** — coming soon.",
         "> This space is reserved for my public Coffee Chat.",
         "<!-- PERSONAL_COFFEE_CHAT_URL: replace this marker with your public Coffee Chat link -->",
       ];
-  const buildSection = c.isEngine
+  const initSection = c.isEngine
     ? [
-        "## Build your Coffee Chat",
+        "## Init your Coffee Chat",
         "",
         "Start with one or more public Origins and prepare how you interpreted them, what you considered important, and which values guided that judgment.",
         "",
@@ -278,9 +278,9 @@ function renderEnglish(manifest: Manifest): string {
         ...engineActions("en"),
       ]
     : [
-        "## Build your own record",
+        "## Init your own record",
         "",
-        `This instance belongs to ${c.profileName}. Build a separate public instance from the [neutral engine](${c.buildUrl}) if you want to Harvest your own Green Beans.`,
+        `This instance belongs to ${c.profileName}. Init a separate public instance from the [neutral engine](${c.initUrl}) if you want to Harvest your own Green Beans.`,
         "",
         "Personal Green Beans belong only in the instance controlled by their author.",
       ];
@@ -300,13 +300,13 @@ function renderEnglish(manifest: Manifest): string {
       : "This instance follows the engine's maintained design contract; keep personal content in the instance and reusable behavior in the engine.",
     "",
     c.isEngine
-      ? "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md)."
-      : "Code, schemas, templates, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md).",
+      ? "Code, schemas, engine payloads, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md)."
+      : "Code, schemas, engine payloads, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md).",
   ];
   if (!c.isEngine && c.engineRepositoryUrl && c.engineVersion)
     installSection.push(
       "",
-      `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
+      `Initialized with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
     );
   return markdown([
     "![Coffee Chat cover showing a coffee cup, orbit lines, and four colored nodes](./docs/assets/readme/coffee-chat-cover.png)",
@@ -371,13 +371,13 @@ function renderEnglish(manifest: Manifest): string {
     "- Bean: the Taste needed for the current context",
     "- Coffee: an Agent with that Taste applied",
     "",
-    "A Green Bean may connect one or more Origins. Taste is not a global profile or an executable rule; Roast builds the Bean needed for the current context.",
+    "A Green Bean may link one or more Origins. Taste is not a global profile or an executable rule; Roast forms the Bean needed for the current context.",
     "",
     roleCopy + timelineLinks,
     "",
     ...instanceSection,
     "",
-    ...buildSection,
+    ...initSection,
     "",
     ...installSection,
   ]);
@@ -385,7 +385,7 @@ function renderEnglish(manifest: Manifest): string {
 
 function renderKorean(manifest: Manifest): string {
   const c = context(manifest);
-  const buildUrl = c.isEngine ? "#나만의-coffee-chat-만들기" : c.buildUrl;
+  const initUrl = c.isEngine ? "#나만의-coffee-chat-init" : c.initUrl;
   const roleCopy = c.isEngine
     ? "이곳은 중립 엔진입니다. 기본 인물이나 Taste, 개인 기록이 없으므로 특정 사람을 대신해 답하지 않습니다."
     : `이곳은 ${c.profileName}의 승인된 공개 기록입니다. Agent가 그 사람이라고 주장하는 것이 아니라 문서화된 근거에 접근하는 인터페이스입니다. `;
@@ -417,15 +417,15 @@ function renderKorean(manifest: Manifest): string {
         "",
         "이 저장소는 준비된 개인 인스턴스가 아니라 중립 엔진입니다. 기본 인물이나 Taste가 없습니다.",
         "",
-        "먼저 공개 인스턴스를 만든 뒤 그 명시적 URL을 Agent에 전달하세요. 일회성 Coffee Chat은 인스턴스의 `coffee-chat.json`과 `AGENTS.md`에서 시작해야 합니다.",
+        "먼저 공개 인스턴스를 Init한 뒤 그 명시적 URL을 Agent에 전달하세요. 일회성 Coffee Chat은 인스턴스의 `coffee-chat.json`과 `AGENTS.md`에서 시작해야 합니다.",
         "",
         "> **나의 Coffee Chat** — 준비 중입니다.",
         "> 나의 공개 Coffee Chat 링크가 준비되면 이 자리에 연결합니다.",
         "<!-- PERSONAL_COFFEE_CHAT_URL: 공개 Coffee Chat 링크로 이 표시를 교체하세요 -->",
       ];
-  const buildSection = c.isEngine
+  const initSection = c.isEngine
     ? [
-        "## 나만의 Coffee Chat 만들기",
+        "## 나만의 Coffee Chat Init",
         "",
         "공개 Origins를 엮어 어떻게 해석했고, 무엇을 중요하게 판단했으며, 어떤 가치판단 기준이 작동했는지 Green Bean으로 남기는 것에서 시작합니다.",
         "",
@@ -436,7 +436,7 @@ function renderKorean(manifest: Manifest): string {
     : [
         "## 나의 기록 만들기",
         "",
-        `${c.profileName}의 인스턴스와 별개로 [중립 엔진](${buildUrl})에서 나만의 공개 Origin을 Green Bean으로 Harvest할 수 있습니다.`,
+        `${c.profileName}의 인스턴스와 별개로 [중립 엔진](${initUrl})에서 나만의 공개 Origin을 Green Bean으로 Harvest할 수 있습니다.`,
         "",
         "개인 Green Bean은 작성자가 관리하는 인스턴스에만 둡니다.",
       ];
@@ -455,12 +455,12 @@ function renderKorean(manifest: Manifest): string {
       ? `변경 전 [유지되는 설계 계약](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/design/coffee-chat.md")}), [UX 리서치](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/research/2026-08-04-coffee-chat-ux-research.md")}), [테스트·수용 기준](${repositoryFileUrl(c.engineRepositoryUrl, c.engineDefaultBranch, "docs/testing.md")})을 읽으세요.`
       : "이 인스턴스는 엔진의 유지되는 설계 계약을 따릅니다. 개인 콘텐츠는 인스턴스에, 재사용 가능한 동작은 엔진에 둡니다.",
     "",
-    "코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를 따르고, 원본 Green Bean과 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
+    "코드·스키마·엔진 페이로드·Skill은 [MIT License](./LICENSE)를 따르고, 원본 Green Bean과 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.",
   ];
   if (!c.isEngine && c.engineRepositoryUrl && c.engineVersion)
     installSection.push(
       "",
-      `Built with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
+      `Initialized with [Coffee Chat](${c.engineRepositoryUrl}) · v${c.engineVersion}`,
     );
   return markdown([
     "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)",
@@ -531,7 +531,7 @@ function renderKorean(manifest: Manifest): string {
     "",
     ...instanceSection,
     "",
-    ...buildSection,
+    ...initSection,
     "",
     ...installSection,
   ]);

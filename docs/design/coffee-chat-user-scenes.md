@@ -12,13 +12,13 @@ is complete, and what must never happen.
 
 The product has two visible modes:
 
-1. **Build:** create and establish an independent personal Coffee Chat.
-2. **Use:** connect that Coffee Chat to an environment, then talk with Coffee
+1. **Init:** create and establish an independent personal Coffee Chat.
+2. **Use:** Sync that Coffee Chat to an environment, then talk with Coffee
    or pair Coffee with named work.
 
 Use includes two supporting operations:
 
-- **Connect:** make an existing individual Coffee Chat available in the current
+- **Sync:** make an existing individual Coffee Chat available in the current
   environment.
 - **Update:** refresh the Engine or a connection without moving personal
   records into another repository.
@@ -26,7 +26,7 @@ Use includes two supporting operations:
 ```text
 Agent + no Coffee Chat repository
           │
-          └── Build ──> new coffee-chat-* repository
+          └── Init ──> new coffee-chat-* repository
                               │
                               └── Harvest ──> Green Bean
                                                │
@@ -36,13 +36,13 @@ Agent + no Coffee Chat repository
                                                                               ├── Coffee Chat
                                                                               └── Coffee Pairing
 
-Any session or work repository ── Connect ──> project-local connection
+Any session or work repository ── Sync ──> project-local connection
 ```
 
 The current work repository, if one exists, is never silently promoted into
 the first branch of this diagram.
 
-## 2. Build scene
+## 2. Init scene
 
 ### Starting point
 
@@ -52,7 +52,7 @@ They do not have an individual Coffee Chat repository yet.
 
 ### User inputs
 
-Build asks for or confirms:
+Init asks for or confirms:
 
 - GitHub owner or account;
 - an instance name or slug that resolves to `coffee-chat-*`;
@@ -62,23 +62,23 @@ Build asks for or confirms:
   Origins.
 
 The user may provide an Origin as a URL, document, excerpt, or named source.
-Build never reads the invoking repository as an implicit Origin. The user can
+Init never reads the invoking repository as an implicit Origin. The user can
 add more Origins later through Harvest.
 
-### Build stages
+### Init stages
 
-#### B0 — Choose the independent target
+#### I0 — Choose the independent target
 
 The Agent resolves the exact remote repository name and local checkout path.
 It verifies that the remote target does not exist, the local path is empty and
 not a symlink, and the name matches the strict `coffee-chat-*` rule.
 
 If the requested name is `coffee-chat`, contains uppercase characters, or uses
-an unrelated prefix, Build stops and asks for a valid `coffee-chat-*` name.
+an unrelated prefix, Init stops and asks for a valid `coffee-chat-*` name.
 
-#### B1 — Confirm isolation
+#### I1 — Confirm isolation
 
-Before any write, Build states:
+Before any write, Init states:
 
 - the current invocation location;
 - the new remote target;
@@ -89,9 +89,9 @@ Before any write, Build states:
 This is a product boundary, not merely a log message. The target and source
 must be different repository identities.
 
-#### B2 — Provision and initialize
+#### I2 — Provision and initialize
 
-Build creates the new remote repository and initializes the new checkout from
+Init creates the new remote repository and initializes the new checkout from
 the Engine Plugin release payload. It writes the instance manifest, agent
 router, bilingual README surfaces, engine lock, generated ownership marker,
 knowledge index, and empty Origin/Green Bean directories.
@@ -99,7 +99,7 @@ knowledge index, and empty Origin/Green Bean directories.
 The result is an independent instance, not a template copy and not a work
 repository extension.
 
-#### B3 — Harvest the first Green Bean
+#### I3 — Harvest the first Green Bean
 
 Harvest receives the explicitly named Origins and guides the user to record a
 POV in prose. The system should help the user articulate:
@@ -114,23 +114,23 @@ The body may be written as a paragraph, a letter, a short essay, or another
 natural form. The system evaluates the result; it does not require a fixed
 entity questionnaire.
 
-#### B4 — Roast and Brew smoke validation
+#### I4 — Roast and Brew smoke validation
 
 After the first Green Bean is approved, the system performs one contextual
 Roast and Brew using a small validation prompt. This proves that the saved POV
 can be selected as Taste and applied to an Agent without turning it into a
 global profile or a command list.
 
-#### B5 — First Coffee Chat
+#### I5 — First Coffee Chat
 
 The user has one Coffee Chat with the resulting Coffee. The user should be able
 to recognize that the response reflects the saved POV and can identify the
 relevant Green Bean provenance. This is a validation conversation, not a
 durable transcript.
 
-### Build completion
+### Init completion
 
-Build is complete only when all of the following are true:
+Init is complete only when all of the following are true:
 
 1. the remote independent repository exists with a valid `coffee-chat-*` name;
 2. the instance baseline is initialized and its identity is verified;
@@ -145,7 +145,7 @@ not `built`. A Green Bean written without a successful Coffee validation is
 `taste_ready`, not `built`. Partial results are preserved for recovery and are
 reported as partial; they are never concealed by deleting the repository.
 
-## 3. Connect scene
+## 3. Sync scene
 
 ### Starting point
 
@@ -155,14 +155,14 @@ session. The individual Coffee Chat repository remains the source of truth.
 
 ### User input
 
-Connect requires an explicit repository URL, local instance path, or an
+Sync requires an explicit repository URL, local instance path, or an
 existing verified connection. It must verify the instance manifest and index,
 the repository role, the `coffee-chat-*` identity, and the current knowledge
 digest before making the connection.
 
 ### Work repository path
 
-When a work repository is present, Connect creates or updates only this local
+When a work repository is present, Sync creates or updates only this local
 integration:
 
 ```text
@@ -179,14 +179,14 @@ Coffee, or personal prose into the work repository. The installed Engine Plugin
 supplies the Skills; `.coffee-chat` supplies project-local routing and
 connection state.
 
-Connect is complete when the work repository can resolve the exact instance on
+Sync is complete when the work repository can resolve the exact instance on
 a later Agent invocation and the generated files are recorded as managed
 outputs. If the local integration is edited outside its managed boundary,
-Connect reports a conflict and does not overwrite it.
+Sync reports a conflict and does not overwrite it.
 
 ### Session-only path
 
-When no work repository is present, Connect stores the verified instance in the
+When no work repository is present, Sync stores the verified instance in the
 current session only. It writes no repository files. The user can immediately
 start Coffee Chat, and can run Coffee Pairing only when a concrete target is
 available and explicitly named.
@@ -259,7 +259,7 @@ Origin bodies are never rewritten by an Engine update.
 
 ### Connection update
 
-After the individual repository changes, Connect or an explicit refresh updates
+After the individual repository changes, Sync or an explicit refresh updates
 the work repository's `.coffee-chat` connection metadata and generated
 instructions. It does not pull personal records into the work repository.
 
@@ -269,7 +269,7 @@ An update is complete only after the intended repository is re-read, its
 identity and content digest are verified, and all protected records remain
 byte-equivalent. A dirty or conflicting target is a stop condition. The current
 contract does not attempt to migrate an incompatible older instance; the user
-must Build a new `coffee-chat-*` repository.
+must Init a new `coffee-chat-*` repository.
 
 ## 7. Stop and recovery rules
 
@@ -277,7 +277,7 @@ must Build a new `coffee-chat-*` repository.
 | --------------------------------------------- | -------------------------------------------------------------------- |
 | Invalid repository name                       | Stop before remote creation and request a `coffee-chat-*` name.      |
 | Existing remote target                        | Stop; never reuse, overwrite, or silently select another repository. |
-| Current repo would be used as Build target    | Stop and restate the independent target.                             |
+| Current repo would be used as Init target     | Stop and restate the independent target.                             |
 | Ambiguous instance URL or role                | Stop; do not guess a personal record source.                         |
 | Dirty canonical instance checkout             | Report pending local changes; do not use it as a clean source.       |
 | User-edited generated integration file        | Show conflict; do not overwrite.                                     |
@@ -290,7 +290,7 @@ must Build a new `coffee-chat-*` repository.
 After reading the instance README and using these scenes, a new user should be
 able to say:
 
-- Build creates my own independent `coffee-chat-*` repository, even if I start
+- Init creates my own independent `coffee-chat-*` repository, even if I start
   from another repository.
 - Harvest leaves my POV as a Green Bean; the body is mine, not a generic
   summary.

@@ -60,14 +60,14 @@ The analysis itself runs only on GitHub-hosted runners as `CodeQL / Analyze (jav
 
 The fictional fixture under `tests/fixtures/example-input/` is input-only and non-canonical. Release inventory tests prove that its bytes and the synthetic instance bytes do not enter the engine Profile, knowledge graph, plugin, README, or Pages.
 
-## Create yours Skill evaluation
+## Init Skill evaluation
 
-`tests/skill-evaluations.test.ts` keeps the creation pressure prompts as a
-static filesystem/instruction contract. It does not execute a model, call
-GitHub, or treat a transcript as a runtime. The prompts cover native Template
-creation, complete Preview-before-POST, Template-mode/provenance checks,
+`tests/skill-evaluations.test.ts` keeps the Init pressure prompts as a static
+filesystem/instruction contract. It does not execute a model, call GitHub, or
+treat a transcript as a runtime. The prompts cover engine-release
+initialization, complete Preview-before-publication, release identity checks,
 credential redaction, safe empty checkout paths, timeout reconciliation,
-Coffee Brew handoff, pre-conversion non-recursion, and the separate
+Coffee Brew handoff, pre-initialization non-recursion, and the separate
 commit/push/PR/merge publication boundary.
 
 The pre-Skill diagnostic runs use isolated temporary homes and a hermetic
@@ -84,8 +84,8 @@ non-secret receipts:
 
 These are explicit environment limitations rather than model pass claims. The
 reproducible static contract remains the deterministic gate: it requires the
-complete Preview before POST, separate publication approval, exactly-once
-pre-conversion Build KG routing, and credential-free behavior. A live host
+complete Preview before publication, separate publication approval, exactly-once
+pre-initialization routing, and credential-free behavior. A live host
 evaluation must be repeated in an environment with the corresponding host and
 network access before claiming runtime model compliance.
 

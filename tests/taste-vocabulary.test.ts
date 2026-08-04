@@ -68,7 +68,7 @@ describe("Coffee Chat product vocabulary", () => {
     );
     expect(design).toContain("Green Bean → Bean");
     expect(design).toContain("Bean → Coffee");
-    expect(design).toContain("Bean is contextual and ephemeral");
+    expect(design).toContain("Ephemeral contextual Taste");
     expect(design).not.toContain("Perspective");
     expect(design).not.toContain("Source-grounded");
   });
@@ -78,11 +78,14 @@ describe("Coffee Chat product vocabulary", () => {
     const paths = [...projected.keys()];
 
     for (const name of [
+      "coffee-init",
+      "coffee-sync",
       "coffee-harvest",
       "coffee-roast",
       "coffee-brew",
       "coffee-chat",
       "coffee-pairing",
+      "coffee-update",
     ])
       expect(paths).toContain(`plugins/coffee-chat/skills/${name}/SKILL.md`);
     expect(paths).toContain("plugins/coffee-chat/skills/coffee-chat/SKILL.md");
@@ -101,7 +104,7 @@ describe("Coffee Chat product vocabulary", () => {
     const agents = projected.get("AGENTS.md")?.toString("utf8");
 
     expect(readme).toContain("This engine has no default person or Taste");
-    expect(readme).toContain("Create yours");
+    expect(readme).toContain("Init your Coffee Chat");
     expect(readme).toContain("Install engine plugin");
     expect(readme).toContain("Contribute to engine");
     expect(readme).not.toContain("Open <COFFEE_CHAT_INSTANCE_URL>");
@@ -111,7 +114,7 @@ describe("Coffee Chat product vocabulary", () => {
   it("keeps the maintained design and research documents authored", async () => {
     await expect(
       readFile(resolve(projectRoot, "docs/design/coffee-chat.md"), "utf8"),
-    ).resolves.toContain("Canonical and maintained");
+    ).resolves.toContain("Approved system baseline");
     await expect(
       readFile(
         resolve(

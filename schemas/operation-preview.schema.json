@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/operation-preview.schema.json",
+  "title": "Coffee Chat Operation Preview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "preview_id",
+    "operation",
+    "status",
+    "created_at",
+    "expires_at",
+    "actor",
+    "sources",
+    "targets",
+    "scope",
+    "changes",
+    "content",
+    "revalidation",
+    "approval",
+    "fingerprint"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "preview_id": { "type": "string", "minLength": 1 },
+    "operation": {
+      "enum": ["init", "harvest", "sync", "coffee-pairing", "update"]
+    },
+    "status": { "const": "pending_approval" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine_version", "session_id"],
+      "properties": {
+        "engine_version": { "type": "string" },
+        "session_id": { "type": "string" }
+      }
+    },
+    "sources": { "type": "array", "items": { "$ref": "#/$defs/locator" } },
+    "targets": { "type": "array", "items": { "$ref": "#/$defs/locator" } },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["read_set", "write_set", "protected_set"],
+      "properties": {
+        "read_set": { "type": "array", "items": { "type": "string" } },
+        "write_set": { "type": "array", "items": { "type": "string" } },
+        "protected_set": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path_or_field",
+          "action",
+          "before_digest",
+          "after_digest",
+          "summary"
+        ],
+        "properties": {
+          "path_or_field": { "type": "string" },
+          "action": { "enum": ["create", "update", "delete"] },
+          "before_digest": { "type": ["string", "null"] },
+          "after_digest": { "type": ["string", "null"] },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation_specific_summary", "provenance", "risks"],
+      "properties": {
+        "operation_specific_summary": { "type": "string" },
+        "provenance": { "type": "array", "items": { "type": "string" } },
+        "risks": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "revalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fingerprint", "required_observations"],
+      "properties": {
+        "fingerprint": { "$ref": "#/$defs/digest" },
+        "required_observations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "fingerprint", "status"],
+      "properties": {
+        "required": { "const": true },
+        "fingerprint": { "$ref": "#/$defs/digest" },
+        "status": { "const": "pending" }
+      }
+    },
+    "fingerprint": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "identity", "locator", "digest"],
+      "properties": {
+        "kind": { "type": "string" },
+        "identity": { "type": "string" },
+        "locator": { "type": "string" },
+        "repository_role": { "type": "string" },
+        "digest": { "type": "string" }
+      }
+    }
+  }
+}

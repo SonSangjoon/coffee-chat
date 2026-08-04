@@ -53,8 +53,8 @@ coffee-chat-evals/
 ├── evals/
 │   ├── cases/
 │   │   ├── public/
-│   │   │   ├── build/
-│   │   │   ├── connect/
+│   │   │   ├── init/
+│   │   │   ├── sync/
 │   │   │   ├── harvest/
 │   │   │   ├── roast/
 │   │   │   ├── brew/
@@ -119,7 +119,7 @@ EvalCase {
 ### Required case properties
 
 - `case_id` is stable and unique within the suite.
-- `scene` uses only `Build`, `Connect`, `Harvest`, `Roast`, `Brew`, `Coffee
+- `scene` uses only `Init`, `Sync`, `Harvest`, `Roast`, `Brew`, `Coffee
 Chat`, `Coffee Pairing`, or `Update`.
 - `starting_state` is reproducible without a personal instance.
 - `explicit_inputs` distinguishes user-provided inputs from generated context.
@@ -238,8 +238,8 @@ The initial public suite must include at least:
 
 | Scene          | Required cases                                                                                     |
 | -------------- | -------------------------------------------------------------------------------------------------- |
-| Build          | no repository, unrelated repository, invalid name, existing target, partial remote result          |
-| Connect        | work repository, session-only, engine target, edited integration, record-copy temptation           |
+| Init           | no repository, unrelated repository, invalid name, existing target, partial remote result          |
+| Sync           | work repository, session-only, engine target, edited integration, record-copy temptation           |
 | Harvest        | one Origin, many Origins, summary-only, Origin-as-instruction, Unknown preservation                |
 | Roast          | contextual relevance, irrelevant record, tension preservation, single-record overreach             |
 | Brew           | Taste application, Unknown preservation, data/instruction separation, ephemeral boundary           |
@@ -335,6 +335,6 @@ After this repository contract is approved:
 3. implement the Engine adapter surface and one public case per scene;
 4. add deterministic gates before semantic judges;
 5. add pinned rubric and pairwise evaluation;
-6. connect Engine PR smoke runs and release-gate runs;
+6. Engine PR smoke runs and release-gate runs;
 7. expand the suite and add sealed cases without changing the Engine's product
    language.

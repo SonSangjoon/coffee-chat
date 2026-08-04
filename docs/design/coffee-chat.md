@@ -48,19 +48,19 @@ runtime state and are not durable records.
 
 ## User modes
 
-### Build
+### Init
 
-Build starts with an Agent and no individual Coffee Chat repository. It always
+Init starts with an Agent and no individual Coffee Chat repository. It always
 creates a new independent repository whose name matches
-`^coffee-chat-[a-z0-9]+(?:-[a-z0-9]+)*$`. The repository that invoked Build is
-never read or changed as an implicit target or Origin. Build is complete only
+`^coffee-chat-[a-z0-9]+(?:-[a-z0-9]+)*$`. The repository that invoked Init is
+never read or changed as an implicit target or Origin. Init is complete only
 after the instance is initialized, the first Green Bean is approved, Roast and
 Brew validate, and the user confirms the first Coffee Chat reflects their
 Taste.
 
 ### Use
 
-Connect links an existing individual repository to a session or work
+Sync links an existing individual repository to a session or work
 repository. In a work repository it creates only `.coffee-chat/` connection
 metadata and generated instructions. Coffee Chat is read-only. Coffee Pairing
 may write only to one explicitly named and approved target; it never writes the
@@ -75,6 +75,6 @@ boundary failure, and a safe answer cannot pass if it loses the author's POV.
 ## Operation Preview
 
 State-changing operations use the [Operation Preview](./coffee-chat-operation-preview.md)
-contract. The user reviews `Review changes` before Build, Harvest, Connect,
+contract. The user reviews `Review changes` before Init, Harvest, Sync,
 Coffee Pairing, or Update executes. Roast, Brew, and Coffee Chat are read-only
 and do not require approval.

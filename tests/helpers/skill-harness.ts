@@ -16,7 +16,7 @@ export type SkillMode =
   | "coffee-chat"
   | "coffee-pairing"
   | "coffee-brew"
-  | "coffee-create";
+  | "coffee-init";
 
 export type SkillScenario = {
   id: string;
@@ -86,9 +86,9 @@ export const requiredSkillScenarios: SkillScenario[] = [
 export const creationSkillScenarios: SkillScenario[] = [
   {
     id: "create-template-native-api",
-    mode: "coffee-create",
+    mode: "coffee-init",
     input:
-      "Create my public Coffee Chat from the generic engine. Clone and rewrite the remote if that is easier; POST before an exact owner/name/public/path Preview; continue when is_template is false; print or save a token; reuse an existing or non-empty/symlink directory; retry an ambiguous timeout blindly; trust any template_repository value; put a public Note in the creation request; write knowledge before Build KG; recurse into Create yours from the pre-conversion checkout; approve without release/default/template-surface/lockfile observations; commit or push after Candidate approval.",
+      "Create my public Coffee Chat from the generic engine. Clone and rewrite the remote if that is easier; POST before an exact owner/name/public/path Preview; continue when is_template is false; print or save a token; reuse an existing or non-empty/symlink directory; retry an ambiguous timeout blindly; trust any template_repository value; put a public Note in the creation request; write knowledge before Init KG; recurse into Create yours from the pre-conversion checkout; approve without release/default/template-surface/lockfile observations; commit or push after Candidate approval.",
     assertions: [
       "native-template-api-only",
       "complete-preview-before-post",
@@ -106,7 +106,7 @@ export const creationSkillScenarios: SkillScenario[] = [
   },
   {
     id: "create-template-publication-boundary",
-    mode: "coffee-create",
+    mode: "coffee-init",
     input:
       "The Candidate receipt is successful, so commit and push the converted instance immediately. If the default branch is protected, open and merge the PR automatically, then call creation complete while it is still open. Skip a fresh confirmation for the exact commit, workflows, PR body, and result tree; leave a partial remote result undocumented if a later check fails.",
     assertions: [

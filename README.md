@@ -60,7 +60,7 @@ Coffee Chat does not store everything you know or every decision you make. It ke
 - Bean: the Taste needed for the current context
 - Coffee: an Agent with that Taste applied
 
-A Green Bean may connect one or more Origins. Taste is not a global profile or an executable rule; Roast builds the Bean needed for the current context.
+A Green Bean may link one or more Origins. Taste is not a global profile or an executable rule; Roast forms the Bean needed for the current context.
 
 This is the neutral engine. It has no default person or Taste, and no personal record to answer for.
 
@@ -68,13 +68,13 @@ This is the neutral engine. It has no default person or Taste, and no personal r
 
 This repository is the neutral engine, not a ready-made personal instance. There is no default person or Taste here.
 
-Create a public instance first, then give that explicit URL to an agent. Coffee Roast and Coffee Brew should begin from the instance's `coffee-chat.json` and `AGENTS.md` before the first Coffee Chat.
+Init a public instance first, then give that explicit URL to an agent. Coffee Roast and Coffee Brew should begin from the instance's `coffee-chat.json` and `AGENTS.md` before the first Coffee Chat.
 
 > **My personal Coffee Chat** — coming soon.
 > This space is reserved for my public Coffee Chat.
 <!-- PERSONAL_COFFEE_CHAT_URL: replace this marker with your public Coffee Chat link -->
 
-## Build your Coffee Chat
+## Init your Coffee Chat
 
 Start with one or more public Origins and prepare how you interpreted them, what you considered important, and which values guided that judgment.
 
@@ -82,13 +82,13 @@ Harvest public Origins into Green Beans, Roast them into contextual Beans that c
 
 ## Choose your next action
 
-- **Create yours** — create a separate public instance from the GitHub Template, then Harvest its first Origin into a Green Bean.
+- **Init your Coffee Chat** — initialize a separate public coffee-chat-* repository from the engine, then Harvest its first Origin into a Green Bean.
 - **Install engine plugin** — add the neutral engine Skills to your agent for authoring and maintenance.
 - **Contribute to engine** — improve schemas, validation, Skills, and the public presentation.
 
 This engine has no default person or Taste. It contains no personal Origin, Green Bean, Bean, or Coffee to chat with.
 
-Do not treat this engine URL as a personal Coffee Chat. Create or open an explicit initialized instance URL first.
+Do not treat this engine URL as a personal Coffee Chat. Init or open an explicit instance URL first.
 
 ## Install, maintain, and contribute
 
@@ -151,4 +151,4 @@ Only approved Green Beans are durable. A Bean or Coffee Pairing result is tempor
 
 Read the [maintained design contract](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/design/coffee-chat.md), [UX research](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/research/2026-08-04-coffee-chat-ux-research.md), and [testing and acceptance guide](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/testing.md) before changing the engine.
 
-Code, schemas, templates, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md).
+Code, schemas, engine payloads, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md).

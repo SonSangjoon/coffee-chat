@@ -39,35 +39,35 @@ so they are not mistaken for direct user commands.
 
 ## 3. Canonical Skill set
 
-| Skill            | Canonical description                                                                                                                                                                                                  | Role                                |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `coffee-build`   | `Use when a user wants to build a new independent Coffee Chat from an Agent with no existing Coffee Chat repository; create a new coffee-chat-* instance without using the invoking repository as a source or target.` | User-facing orchestration.          |
-| `coffee-connect` | `Use when a user wants to connect an existing coffee-chat-* instance to the current session or work repository; create only project-local connection state and never copy personal records.`                           | User-facing connection.             |
-| `coffee-harvest` | `Use when a user wants to turn one or more explicit Origins into a durable Green Bean that records their POV in the canonical Coffee Chat repository.`                                                                 | Durable authoring.                  |
-| `coffee-roast`   | `Use internally when Coffee Chat or Coffee Pairing needs relevant Green Beans selected and formed into an ephemeral contextual Bean for the current question or task.`                                                 | Internal contextual selection.      |
-| `coffee-brew`    | `Use internally when a Bean must be applied to an Agent to create ephemeral Coffee for the current Coffee Chat or Coffee Pairing context.`                                                                             | Internal Agent conditioning.        |
-| `coffee-chat`    | `Use when a user wants a read-only conversation with Coffee from an explicit verified coffee-chat-* instance; do not write to the instance or work repository.`                                                        | User-facing conversation.           |
-| `coffee-pairing` | `Use when a user wants to apply Coffee to one explicitly named project or task; write only the approved target after Review changes.`                                                                                  | User-facing controlled application. |
-| `coffee-update`  | `Use when a user explicitly requests an Engine, Coffee Chat instance, or connected work-repository update; preserve personal records and require exact ownership checks.`                                              | User-facing lifecycle update.       |
+| Skill            | Canonical description                                                                                                                                                                                                           | Role                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `coffee-init`    | `Use when a user wants to initialize a new independent Coffee Chat from an Agent with no existing Coffee Chat repository; initialize a new coffee-chat-* instance without using the invoking repository as a source or target.` | User-facing orchestration.          |
+| `coffee-sync`    | `Use when a user wants to synchronize an existing coffee-chat-* instance with the current session or work repository; write only project-local sync state and never copy personal records.`                                     | User-facing synchronization.        |
+| `coffee-harvest` | `Use when a user wants to turn one or more explicit Origins into a durable Green Bean that records their POV in the canonical Coffee Chat repository.`                                                                          | Durable authoring.                  |
+| `coffee-roast`   | `Use internally when Coffee Chat or Coffee Pairing needs relevant Green Beans selected and formed into an ephemeral contextual Bean for the current question or task.`                                                          | Internal contextual selection.      |
+| `coffee-brew`    | `Use internally when a Bean must be applied to an Agent to create ephemeral Coffee for the current Coffee Chat or Coffee Pairing context.`                                                                                      | Internal Agent conditioning.        |
+| `coffee-chat`    | `Use when a user wants a read-only conversation with Coffee from an explicit verified coffee-chat-* instance; do not write to the instance or work repository.`                                                                 | User-facing conversation.           |
+| `coffee-pairing` | `Use when a user wants to apply Coffee to one explicitly named project or task; write only the approved target after Review changes.`                                                                                           | User-facing controlled application. |
+| `coffee-update`  | `Use when a user explicitly requests an Engine, Coffee Chat instance, or connected work-repository update; preserve personal records and require exact ownership checks.`                                                       | User-facing lifecycle update.       |
 
 The descriptions are intentionally explicit about `coffee-chat-*`, durability,
-and write boundaries. A Skill list should let an Agent distinguish Build from
-Connect, Harvest from Roast, and Coffee Chat from Coffee Pairing without reading
+and write boundaries. A Skill list should let an Agent distinguish Init from
+Sync, Harvest from Roast, and Coffee Chat from Coffee Pairing without reading
 the full bodies.
 
 ## 4. Skill responsibilities
 
-### `coffee-build`
+### `coffee-init`
 
-Own the Build scene from target selection through independent repository
-initialization. Build creates the repository baseline but does not silently
+Own the Init scene from target selection through independent repository
+initialization. Init creates the repository baseline but does not silently
 create the first Green Bean. Repository creation and first Harvest use separate
 Operation Previews.
 
-### `coffee-connect`
+### `coffee-sync`
 
 Verify an explicit individual instance and create or refresh only the
-project-local `.coffee-chat` integration. Connect does not copy Origins, Green
+project-local `.coffee-chat` integration. Sync does not copy Origins, Green
 Beans, Bean, Coffee, or personal prose into the work repository.
 
 ### `coffee-harvest`

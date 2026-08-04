@@ -1,27 +1,24 @@
 ---
 name: coffee-brew
-description: Use when an owner wants to brew a Taste Bean into Coffee for a Coffee Chat or Coffee Pairing task.
-compatibility: Requires a verified public Coffee Chat instance and a current conversation or named task scope.
+description: Use internally when a Bean must be applied to an Agent; read-only execution returns Coffee with bounded context and writes nothing.
+compatibility: Requires a verified Coffee Chat repository and a current conversation or named task context.
 ---
 
-# Coffee Brew
+# Brew Bean into Coffee
 
-Read the [shared method](references/method.md) completely before preparing
-Agent context.
+Read the [shared method](references/method.md) completely before applying a
+Bean to an Agent.
 
-Coffee Brew turns the current Taste/Bean into Coffee: it invokes Coffee Roast
-for the current session or task, then gives the Agent that Taste for the bounded
-scope.
+Brew takes the contextual Bean produced by Roast and applies its Taste to the
+Agent for one bounded conversation or named task. Coffee is the resulting
+Agent with Taste applied.
 
 ## Boundary
 
-- Coffee is the Agent context with Taste applied; Brew does not change Agent
-  configuration, system prompts, or global memory.
-- Brew does not persist Taste, Agent context, or query output.
-- Brew preserves the Green Bean and Origin provenance selected by Roast.
-- Brew ends when the Coffee Chat session or Coffee Pairing task ends.
+- Coffee is ephemeral Agent context, not a stored personality model.
+- Brew does not change Agent configuration, global memory, or project code.
+- Brew preserves the Green Bean and Origin references selected by Roast.
+- Brew ends when the current Coffee Chat or Coffee Pairing operation ends.
 
-Coffee Harvest is the only canonical writer. Route every Green Bean mutation
-through its external Candidate, complete Preview, and later literal digest
-approval. Never persist agent-conditioned interpretations, scores, or query
-caches.
+Brew is read-only. It returns Coffee and its trace references without writing
+the Coffee Chat repository, Bean, Green Bean, or a query cache.

@@ -466,7 +466,7 @@ async function createFictionalInstanceMarketplace(
       cp(resolve(projectRoot, path), resolve(root, path)),
     ),
   ]);
-  await rm(resolve(root, "skills/coffee-create"), {
+  await rm(resolve(root, "skills/coffee-init"), {
     recursive: true,
     force: true,
   });
@@ -634,12 +634,12 @@ async function assertV1SkillOnlySurface(
   ];
   if (role === "engine")
     common.push(
-      "skills/coffee-create/SKILL.md",
-      "skills/coffee-create/references/engine-release.schema.json",
-      "skills/coffee-create/references/engine-template-surface.schema.json",
-      "skills/coffee-create/references/method.md",
-      "skills/coffee-create/references/release.json",
-      "skills/coffee-create/references/template-surface.json",
+      "skills/coffee-init/SKILL.md",
+      "skills/coffee-init/references/engine-release.schema.json",
+      "skills/coffee-init/references/engine-template-surface.schema.json",
+      "skills/coffee-init/references/method.md",
+      "skills/coffee-init/references/release.json",
+      "skills/coffee-init/references/template-surface.json",
       "skills/coffee-update/SKILL.md",
       "skills/coffee-update/references/advisory.json",
       "skills/coffee-update/references/engine-migration-document.schema.json",

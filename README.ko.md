@@ -68,13 +68,13 @@ Coffee Chat은 내가 무엇을 알고 있는지나 어떤 결정을 내렸는�
 
 이 저장소는 준비된 개인 인스턴스가 아니라 중립 엔진입니다. 기본 인물이나 Taste가 없습니다.
 
-먼저 공개 인스턴스를 만든 뒤 그 명시적 URL을 Agent에 전달하세요. 일회성 Coffee Chat은 인스턴스의 `coffee-chat.json`과 `AGENTS.md`에서 시작해야 합니다.
+먼저 공개 인스턴스를 Init한 뒤 그 명시적 URL을 Agent에 전달하세요. 일회성 Coffee Chat은 인스턴스의 `coffee-chat.json`과 `AGENTS.md`에서 시작해야 합니다.
 
 > **나의 Coffee Chat** — 준비 중입니다.
 > 나의 공개 Coffee Chat 링크가 준비되면 이 자리에 연결합니다.
 <!-- PERSONAL_COFFEE_CHAT_URL: 공개 Coffee Chat 링크로 이 표시를 교체하세요 -->
 
-## 나만의 Coffee Chat 만들기
+## 나만의 Coffee Chat Init
 
 공개 Origins를 엮어 어떻게 해석했고, 무엇을 중요하게 판단했으며, 어떤 가치판단 기준이 작동했는지 Green Bean으로 남기는 것에서 시작합니다.
 
@@ -82,13 +82,13 @@ Origin을 Harvest해 Green Bean을 만들고, 이를 Roast해 현재 맥락의 T
 
 ## 다음 행동 선택하기
 
-- **Create yours** — GitHub Template으로 별도 공개 인스턴스를 만들고 첫 Origin을 Green Bean으로 Harvest합니다.
+- **나만의 Coffee Chat Init** — 엔진에서 별도의 coffee-chat-* 저장소를 Init하고 첫 Origin을 Green Bean으로 Harvest합니다.
 - **Install engine plugin** — 작성과 유지보수를 위한 중립 엔진 Skill을 Agent에 추가합니다.
 - **Contribute to engine** — 스키마·검증·Skill·공개 화면을 개선합니다.
 
 이 엔진에는 기본 인물이나 Taste가 없습니다. 대화할 개인 Origin·Green Bean·Bean·Coffee를 담고 있지 않습니다.
 
-이 엔진 URL을 개인 Coffee Chat으로 취급하지 마세요. 먼저 명시적으로 초기화된 인스턴스 URL을 만들거나 열어야 합니다.
+이 엔진 URL을 개인 Coffee Chat으로 취급하지 마세요. 먼저 Init한 인스턴스 URL을 만들거나 열어야 합니다.
 
 ## 설치, 유지보수, 기여
 
@@ -151,4 +151,4 @@ Claude Code에서는 `local` scope가 가장 좁은 임시 선택입니다. upda
 
 변경 전 [유지되는 설계 계약](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/design/coffee-chat.md), [UX 리서치](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/research/2026-08-04-coffee-chat-ux-research.md), [테스트·수용 기준](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/testing.md)을 읽으세요.
 
-코드·스키마·템플릿·Skill은 [MIT License](./LICENSE)를 따르고, 원본 Green Bean과 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.
+코드·스키마·엔진 페이로드·Skill은 [MIT License](./LICENSE)를 따르고, 원본 Green Bean과 공개 문장은 [콘텐츠 조건](./CONTENT_LICENSE.md)을 따릅니다.

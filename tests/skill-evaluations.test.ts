@@ -250,7 +250,7 @@ describe("Task 4 Skill evaluation harness", () => {
     ];
 
   it.each(invalidApprovalCases)(
-    "rejects Build KG output after %s",
+    "rejects Init KG output after %s",
     async (_label, override) => {
       const { sandbox, changes } = await canonicalChange();
       expect(
@@ -316,10 +316,10 @@ describe("Task 5 creation Skill evaluation harness", () => {
     expect(
       creationSkillScenarios.map(({ id, mode }) => ({ id, mode })),
     ).toEqual([
-      { id: "create-template-native-api", mode: "coffee-create" },
+      { id: "create-template-native-api", mode: "coffee-init" },
       {
         id: "create-template-publication-boundary",
-        mode: "coffee-create",
+        mode: "coffee-init",
       },
     ]);
     const assertions = new Set(
@@ -365,7 +365,7 @@ describe("Task 5 creation Skill evaluation harness", () => {
       before,
       await snapshotFilesystem(sandbox.root),
     );
-    expect(evaluateSideEffects("coffee-create", changes, sandbox)).toEqual([
+    expect(evaluateSideEffects("coffee-init", changes, sandbox)).toEqual([
       "cache/derived-perspective.md",
     ]);
   });

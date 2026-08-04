@@ -121,7 +121,7 @@ describe("localized README projections", () => {
       expect(korean).not.toContain(term);
     }
     expect(english).toContain("This engine has no default person or Taste");
-    expect(english).toContain("Create yours");
+    expect(english).toContain("Init your Coffee Chat");
     expect(english).toContain("Install engine plugin");
     expect(english).toContain("Contribute to engine");
     expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
@@ -170,7 +170,7 @@ describe("localized README projections", () => {
       "## Put your Taste to work",
       "## What makes it different",
       "## Try a Coffee Chat",
-      "## Build your Coffee Chat",
+      "## Init your Coffee Chat",
       "## Choose your next action",
       "## Install, maintain, and contribute",
     ]);
@@ -182,7 +182,7 @@ describe("localized README projections", () => {
       "## Taste를 실제로 사용하기",
       "## Coffee Chat이 다른 이유",
       "## Coffee Chat 해보기",
-      "## 나만의 Coffee Chat 만들기",
+      "## 나만의 Coffee Chat Init",
       "## 다음 행동 선택하기",
       "## 설치, 유지보수, 기여",
     ]);
@@ -207,7 +207,7 @@ describe("localized README projections", () => {
     );
     expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
     expect(korean).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
-    expect(korean).toContain("[중립 엔진](#build-your-coffee-chat)");
+    expect(korean).toContain("[중립 엔진](#init-your-coffee-chat)");
     expect(english).not.toContain("Sangjoon Son");
     expect(korean).not.toContain("Sangjoon Son");
     expect(english).not.toContain("Built with [Coffee Chat]");
@@ -238,7 +238,7 @@ describe("localized README projections", () => {
     for (const readme of projected.values()) {
       const lines = readme.toString("utf8").trimEnd().split("\n");
       expect(lines.at(-1)).toBe(
-        "Built with [Coffee Chat](https://github.com/example/coffee-chat-engine) · v2026.08.04",
+        "Initialized with [Coffee Chat](https://github.com/example/coffee-chat-engine) · v2026.08.04",
       );
       expect(readme.toString("utf8")).not.toContain(
         "https://github.com/SonSangjoon/coffee-chat",

@@ -11,11 +11,12 @@
   "license": "MIT",
   "keywords": [
     "coffee-chat",
+    "coffee-init",
+    "coffee-sync",
     "harvest",
     "roast",
-    "taste",
     "brew",
-    "blend"
+    "pairing"
   ],
   "skills": "./skills/",
   "interface": {

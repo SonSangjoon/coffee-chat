@@ -200,7 +200,15 @@ function codexManifest(manifest: Manifest): Record<string, unknown> {
     homepage: manifest.pages_url,
     repository: manifest.repository.url,
     license: "MIT",
-    keywords: ["coffee-chat", "harvest", "roast", "taste", "brew", "blend"],
+    keywords: [
+      "coffee-chat",
+      "coffee-init",
+      "coffee-sync",
+      "harvest",
+      "roast",
+      "brew",
+      "pairing",
+    ],
     skills: "./skills/",
     interface: {
       displayName: presentationName(manifest),
@@ -229,7 +237,7 @@ function claudeManifest(manifest: Manifest): Record<string, unknown> {
     homepage: manifest.pages_url,
     repository: manifest.repository.url,
     license: "MIT",
-    keywords: ["coffee-chat", "taste", "perspective-annotation"],
+    keywords: ["coffee-chat", "green-bean", "taste", "coffee-pairing"],
     skills: "./skills/",
   };
 }
@@ -269,7 +277,7 @@ function claudeMarketplace(manifest: Manifest): Record<string, unknown> {
         homepage: manifest.pages_url,
         repository: manifest.repository.url,
         license: "MIT",
-        keywords: ["coffee-chat", "taste", "perspective-annotation"],
+        keywords: ["coffee-chat", "green-bean", "taste", "coffee-pairing"],
         category: "Productivity",
         skills: "./skills/",
       },
@@ -286,10 +294,10 @@ function contentLicense(): Buffer {
 function agentRouter(manifest: Manifest): Buffer {
   const roleEntry = isEngineManifest(manifest)
     ? [
-        "This engine has no default person. At an engine URL, offer only **Create yours**, **Install engine plugin**, or **Contribute to engine**, then stop and wait; never follow an instance fallback from that same entry message or start a personal Coffee Chat from engine data.",
-        "Coffee Chat and Coffee Pairing require an explicit public instance URL verified through that instance's `coffee-chat.json` and `knowledge/index.json`. After an explicit Create yours or Make mine choice, Coffee Harvest may use only an explicit downstream pre-conversion engine checkout that satisfies the origin and target-fingerprint rules; the maintained engine checkout and installed packages/caches remain forbidden. Coffee Harvest `contribute` and `update` require an initialized authoritative instance checkout.",
-        "Only an explicit external pre-conversion handoff whose live origin, target fingerprint, native Template observation, source/target observation, and template-surface digest all match may route exactly once to repo-local `coffee-harvest`; it must never recurse into `coffee-create`.",
-        "After the user explicitly chooses **Create yours**, route to `skills/coffee-create/SKILL.md`; read only that Skill and its generated references, then stop at its Preview approval boundary.",
+        "This engine has no default person. At an engine URL, offer only **Init your Coffee Chat**, **Install engine plugin**, or **Contribute to engine**, then stop and wait; never start a personal Coffee Chat from engine data.",
+        "Coffee Chat and Coffee Pairing require an explicit public Coffee Chat repository URL verified through that repository's `coffee-chat.json` and `knowledge/index.json`. The individual `coffee-chat-*` repository is the single source of truth for Origins, Green Beans, provenance, and instance configuration.",
+        "Init always targets a new independent `coffee-chat-*` repository. The invoking work repository is never an implicit target, Origin, or personal record store. Sync writes only `.coffee-chat/connection.json` in the named work repository.",
+        "Route Init to `skills/coffee-init/SKILL.md`, Sync to `skills/coffee-sync/SKILL.md`, and read only the selected Skill and its generated references before the Operation Preview boundary.",
       ]
     : [
         "Verify this initialized public instance by matching its explicit locator to `coffee-chat.json` `repository.url` or `pages_url`, then matching `repository_role` and profile id to `knowledge/index.json` before treating it as a target.",
@@ -304,7 +312,7 @@ function agentRouter(manifest: Manifest): Buffer {
       "",
       ...roleEntry,
       "",
-      "Route Coffee Chat requests to `skills/coffee-chat/SKILL.md`, named external Coffee Pairing work to `skills/coffee-pairing/SKILL.md`, Taste context application to an Agent to `skills/coffee-brew/SKILL.md`, Create yours to `skills/coffee-create/SKILL.md`, engine update review to `skills/coffee-update/SKILL.md`, and Origin-to-Green Bean authoring to `skills/coffee-harvest/SKILL.md`. Coffee Roast is an internal step invoked by Coffee Brew, Coffee Chat, and Coffee Pairing. Read only the selected Skill and its generated references.",
+      "Route Coffee Chat requests to `skills/coffee-chat/SKILL.md`, Coffee Pairing work to `skills/coffee-pairing/SKILL.md`, Init to `skills/coffee-init/SKILL.md`, Sync to `skills/coffee-sync/SKILL.md`, engine update review to `skills/coffee-update/SKILL.md`, and Origin-to-Green Bean authoring to `skills/coffee-harvest/SKILL.md`. Coffee Roast is the internal step between Green Bean and Bean. Coffee Brew is the internal step between Bean and Coffee. Read only the selected Skill and its generated references.",
     ].join("\n"),
   );
 }
@@ -317,11 +325,11 @@ export async function generatedProjectionBytes(
 ): Promise<Map<string, Buffer>> {
   await validateReadmeAssets(snapshot);
   const manifest = graph.manifest;
-  const creationSkillAvailable =
+  const buildSkillAvailable =
     isEngineManifest(manifest) &&
-    (await snapshot.exists("skills/coffee-create/SKILL.md"));
+    (await snapshot.exists("skills/coffee-init/SKILL.md"));
   const declaredSkills =
-    isEngineManifest(manifest) && creationSkillAvailable
+    isEngineManifest(manifest) && buildSkillAvailable
       ? ENGINE_PLUGIN_SKILLS
       : INSTANCE_SKILLS;
   const skills = await availableSkills(
@@ -394,11 +402,8 @@ export async function generatedProjectionBytes(
     for (const [name, source] of referenceFiles) {
       if (!(await snapshot.exists(source))) continue;
       const bytes = await snapshot.read(source);
-      values.set(`skills/coffee-create/references/${name}`, bytes);
-      values.set(
-        `${packageRoot}/skills/coffee-create/references/${name}`,
-        bytes,
-      );
+      values.set(`skills/coffee-init/references/${name}`, bytes);
+      values.set(`${packageRoot}/skills/coffee-init/references/${name}`, bytes);
     }
     const updaterReady = (
       await Promise.all(
@@ -1044,8 +1049,8 @@ export async function inspectGeneratedProjections(
   // ownership target is an instance package.
   const hasEngineProvisioningSurface =
     graph.manifest.repository_role === "engine" &&
-    ((await snapshot.exists("skills/coffee-create/SKILL.md")) ||
-      (await snapshot.exists("skills/coffee-create/references/release.json")));
+    ((await snapshot.exists("skills/coffee-init/SKILL.md")) ||
+      (await snapshot.exists("skills/coffee-init/references/release.json")));
   const allowedSkillNames = hasEngineProvisioningSurface
     ? ENGINE_PLUGIN_SKILLS
     : INSTANCE_SKILLS;
@@ -1054,10 +1059,10 @@ export async function inspectGeneratedProjections(
     ...allowedSkillNames.map((name) => `skills/${name}/references/method.md`),
     ...(hasEngineProvisioningSurface
       ? [
-          "skills/coffee-create/references/engine-release.schema.json",
-          "skills/coffee-create/references/engine-template-surface.schema.json",
-          "skills/coffee-create/references/release.json",
-          "skills/coffee-create/references/template-surface.json",
+          "skills/coffee-init/references/engine-release.schema.json",
+          "skills/coffee-init/references/engine-template-surface.schema.json",
+          "skills/coffee-init/references/release.json",
+          "skills/coffee-init/references/template-surface.json",
           "skills/coffee-update/references/engine-release.schema.json",
           "skills/coffee-update/references/engine-migration-registry.schema.json",
           "skills/coffee-update/references/engine-update-advisory.schema.json",

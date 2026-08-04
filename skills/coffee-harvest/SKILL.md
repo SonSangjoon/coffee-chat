@@ -1,28 +1,39 @@
 ---
 name: coffee-harvest
-description: Use when an owner wants to harvest one or more public Origins into a Green Bean.
-compatibility: Requires an explicit downstream Coffee Chat instance checkout and access to its CLI.
+description: Use when the user asks to turn one or more Origins into durable Green Bean prose; preview writes only the approved Green Bean record and returns a harvest receipt.
+compatibility: Requires an authoritative Coffee Chat repository, explicit Origins, and a later approval of the complete Operation Preview.
 ---
 
-# Coffee Harvest
+# Harvest Origins into Green Bean
 
-Read the [shared method](references/method.md) completely before preparing any
+Read the [shared method](references/method.md) completely before preparing a
 Green Bean change.
 
-Harvest is the guided preparation step between an Origin and a Green Bean. It
-helps the owner leave the intended point of view in a consistent form without
-turning it into a decision rule, personality profile, or global Taste.
+Harvest is the guided authoring step between Origins and Green Bean. It helps
+the author preserve a personal POV without turning it into a global profile,
+score, or executable rule.
 
-The harvested Green Bean records:
+## Green Bean quality
 
-- the one or more Origins considered;
-- what the owner noticed and treated as important;
-- how the owner interpreted it and why;
-- the value or criterion active in that reading;
-- limits, disagreement, and Unknown;
-- the applicable perspective time and recorded date.
+The prose must:
 
-Harvest is the only canonical writer. It prepares an external Candidate and
-complete Preview, then waits for the later literal digest approval defined by
-the shared method. It never writes directly and never creates the roasted Bean,
-Taste, or Coffee context.
+- identify every Origin it is grounded in;
+- state what the author treated as important and why;
+- express the value criterion active in that reading;
+- separate observed information from the author's interpretation;
+- include limits, disagreement, or Unknown where evidence is incomplete;
+- preserve the author's wording and avoid invented facts.
+
+One Green Bean may connect multiple Origins. The prose is flexible; provenance
+and uncertainty are required, but the POV is not forced into a rigid record
+form.
+
+## Write boundary
+
+Harvest is the only durable personal-record writer. It prepares one
+Operation Preview, waits for literal approval, revalidates the same Origins and
+target, and writes only the approved Green Bean record and receipt.
+
+It never writes Bean, Coffee, Agent context, project code, or a query cache.
+Harvest is complete only when the Green Bean is traceable, author-approved, and
+the protected paths are unchanged.

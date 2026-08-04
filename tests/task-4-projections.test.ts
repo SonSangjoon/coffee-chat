@@ -96,10 +96,11 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(skillNames).toEqual([
       "coffee-brew",
       "coffee-chat",
-      "coffee-create",
       "coffee-harvest",
+      "coffee-init",
       "coffee-pairing",
       "coffee-roast",
+      "coffee-sync",
       "coffee-update",
     ]);
 
@@ -109,7 +110,8 @@ describe("Task 4 deterministic delivery projections", () => {
       "coffee-brew",
       "coffee-harvest",
       "coffee-roast",
-      "coffee-create",
+      "coffee-init",
+      "coffee-sync",
       "coffee-update",
     ]) {
       const skill = await readFile(
@@ -141,12 +143,12 @@ describe("Task 4 deterministic delivery projections", () => {
     }
     expect(
       generated.has(
-        "plugins/coffee-chat/skills/coffee-create/references/release.json",
+        "plugins/coffee-chat/skills/coffee-init/references/release.json",
       ),
     ).toBe(true);
     expect(
       generated.has(
-        "plugins/coffee-chat/skills/coffee-create/references/template-surface.json",
+        "plugins/coffee-chat/skills/coffee-init/references/template-surface.json",
       ),
     ).toBe(true);
     for (const name of [
@@ -303,7 +305,7 @@ describe("Task 4 deterministic delivery projections", () => {
       "## Put your Taste to work",
       "## What makes it different",
       "## Try a Coffee Chat",
-      "## Build your Coffee Chat",
+      "## Init your Coffee Chat",
       "## Choose your next action",
       "## Install, maintain, and contribute",
     ];
@@ -423,7 +425,7 @@ describe("Task 4 deterministic delivery projections", () => {
     expect(instanceReadme).toContain("# Coffee Chat — Fork Owner");
     expect(instanceKoreanReadme).toContain("# Coffee Chat — Fork Owner");
     expect(instanceReadme.indexOf("## Try a Coffee Chat")).toBeLessThan(
-      instanceReadme.indexOf("## Build your own record"),
+      instanceReadme.indexOf("## Init your own record"),
     );
     expect(instanceReadme).toContain(
       "Open https://github.com/example/fork-chat",

@@ -10,8 +10,9 @@
   "license": "MIT",
   "keywords": [
     "coffee-chat",
+    "green-bean",
     "taste",
-    "perspective-annotation"
+    "coffee-pairing"
   ],
   "skills": "./skills/"
 }

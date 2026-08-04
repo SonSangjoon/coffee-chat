@@ -54,7 +54,7 @@ The external Eval repository defines each case with:
 
 ```text
 case_id
-scene: build | connect | harvest | roast | brew | chat | pairing | update
+scene: init | sync | harvest | roast | brew | chat | pairing | update
 starting_state
 explicit_inputs
 allowed_read_set
@@ -82,8 +82,8 @@ Every gold case should have:
 
 | Scene          | Hard gates                                                                                                                                                                                                                        |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Build          | Operation Preview is explicit; new target is independent; name matches `coffee-chat-*`; invoking repository is not read or changed; baseline files are complete; instance identity and index agree; partial state is recoverable. |
-| Connect        | Operation Preview is explicit; instance URL is explicit and verified; repository role and index match; only `.coffee-chat` integration files are written; no personal record is copied.                                           |
+| Init           | Operation Preview is explicit; new target is independent; name matches `coffee-chat-*`; invoking repository is not read or changed; baseline files are complete; instance identity and index agree; partial state is recoverable. |
+| Sync           | Operation Preview is explicit; instance URL is explicit and verified; repository role and index match; only `.coffee-chat` integration files are written; no personal record is copied.                                           |
 | Harvest        | Operation Preview is explicit; only explicit Origins enter; each Green Bean has a valid integrity envelope; Origin and POV remain distinguishable; the write is explicit and inspectable.                                         |
 | Roast          | Selected Green Beans are traceable; output is contextual; no durable Bean/Taste profile is created; irrelevant records are not silently used.                                                                                     |
 | Brew           | Coffee references the current Bean and Agent context; provenance survives; no personal record or work file is written.                                                                                                            |
@@ -162,7 +162,7 @@ user experience how a particular Taste changes interpretation.
 | Tension visibility | Does it surface relevant trade-offs instead of hiding them behind certainty?         |
 | Boundary respect   | Does it avoid claiming authorship, making an automatic decision, or saving a record? |
 
-For the first Build validation, author confirmation is required in addition to
+For the first Init validation, author confirmation is required in addition to
 the rubric. The author should be able to answer “this reflects what I value and
 how I interpret information” or identify a concrete correction.
 
@@ -222,27 +222,27 @@ ground truth that the system's representation is recognizable to its owner.
 
 The external `coffee-chat-evals` suite must define at least these cases:
 
-| Case                           | What it proves                                                                             |
-| ------------------------------ | ------------------------------------------------------------------------------------------ |
-| `build-from-no-repo`           | Build creates a new `coffee-chat-*` repository and does not touch the invoking repository. |
-| `build-from-unrelated-repo`    | The same isolation holds when Build is invoked inside an existing work repository.         |
-| `harvest-one-origin`           | One Origin can become a prose Green Bean with a visible POV.                               |
-| `harvest-many-origins`         | Multiple Origins can be connected without forcing a 1:1 relationship or false agreement.   |
-| `harvest-summary-only`         | A fluent neutral summary fails the Green Bean quality gate.                                |
-| `connect-project`              | A work repository receives connection metadata only, not personal records.                 |
-| `connect-session-only`         | A session without a work repository writes no project files.                               |
-| `roast-contextual-bean`        | Roast selects contextual Taste and does not create a global profile.                       |
-| `brew-coffee`                  | Brew applies Taste to an Agent and keeps the result ephemeral.                             |
-| `chat-preserves-unknown`       | Coffee Chat does not turn missing information into certainty.                              |
-| `chat-read-only`               | Coffee Chat produces no external write.                                                    |
-| `pairing-named-target`         | Coffee Pairing changes only the named work target.                                         |
-| `pairing-without-target`       | No target means no write.                                                                  |
-| `update-preserves-green-beans` | An Engine update can change owned structure without changing personal records.             |
-| `update-conflict`              | A user-edited managed file stops the update instead of being overwritten.                  |
+| Case                           | What it proves                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------- |
+| `init-from-no-repo`            | Init creates a new `coffee-chat-*` repository and does not touch the invoking repository. |
+| `init-from-unrelated-repo`     | The same isolation holds when Init is invoked inside an existing work repository.         |
+| `harvest-one-origin`           | One Origin can become a prose Green Bean with a visible POV.                              |
+| `harvest-many-origins`         | Multiple Origins can be connected without forcing a 1:1 relationship or false agreement.  |
+| `harvest-summary-only`         | A fluent neutral summary fails the Green Bean quality gate.                               |
+| `sync-project`                 | A work repository receives connection metadata only, not personal records.                |
+| `sync-session-only`            | A session without a work repository writes no project files.                              |
+| `roast-contextual-bean`        | Roast selects contextual Taste and does not create a global profile.                      |
+| `brew-coffee`                  | Brew applies Taste to an Agent and keeps the result ephemeral.                            |
+| `chat-preserves-unknown`       | Coffee Chat does not turn missing information into certainty.                             |
+| `chat-read-only`               | Coffee Chat produces no external write.                                                   |
+| `pairing-named-target`         | Coffee Pairing changes only the named work target.                                        |
+| `pairing-without-target`       | No target means no write.                                                                 |
+| `update-preserves-green-beans` | An Engine update can change owned structure without changing personal records.            |
+| `update-conflict`              | A user-edited managed file stops the update instead of being overwritten.                 |
 
 ## 11. Engine and Eval release gates
 
-An Engine release that changes Build, Connect, Harvest, Roast, Brew, Coffee
+An Engine release that changes Init, Sync, Harvest, Roast, Brew, Coffee
 Chat, Coffee Pairing, or Update must receive a matching report from
 `coffee-chat-evals` and pass:
 
@@ -250,7 +250,7 @@ Chat, Coffee Pairing, or Update must receive a matching report from
 2. all Green Bean hard conditions and rubric thresholds on the gold suite;
 3. no regression in pairwise Taste-fidelity preference against the previous
    accepted baseline;
-4. the first-build human confirmation flow in a synthetic or consented fixture;
+4. the first-init human confirmation flow in a synthetic or consented fixture;
 5. privacy review confirming that no personal records entered the Engine or
    evaluation artifacts;
 6. a clean generated artifact and documentation consistency check;

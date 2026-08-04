@@ -64,9 +64,9 @@ succeed; it is a precise statement of what the operation is authorized to try.
 
 | Operation        | Why a preview is required                                                  |
 | ---------------- | -------------------------------------------------------------------------- |
-| `Build`          | Creates a new remote repository and initializes a local checkout.          |
+| `Init`           | Creates a new remote repository and initializes a local checkout.          |
 | `Harvest`        | Persists an Origin and/or a new Green Bean in the canonical repository.    |
-| `Connect`        | Writes project-local connection files into a work repository.              |
+| `Sync`           | Writes project-local connection files into a work repository.              |
 | `Coffee Pairing` | Changes a named external project or task.                                  |
 | `Update`         | Changes Engine-owned or generated files in an instance or work repository. |
 
@@ -111,7 +111,7 @@ Will change:
   local: initialize /Users/sangjoon/coffee-chat-sangjoon
 
 Will not change:
-  the repository where Build was started
+  the repository where Init was started
   any existing Coffee Chat repository
   any personal record outside this new repository
 
@@ -273,9 +273,9 @@ than copying the prose.
 
 ## 6. Operation-specific contracts
 
-### Build
+### Init
 
-Build has two separate previews because repository creation and personal
+Init has two separate previews because repository creation and personal
 writing are different consequences.
 
 #### Repository preview
@@ -307,7 +307,7 @@ Must show:
 - the exact canonical repository and file to change;
 - that no Bean, Coffee, work file, or unrelated Green Bean will change.
 
-### Connect
+### Sync
 
 Must show:
 
