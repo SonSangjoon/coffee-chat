@@ -30,6 +30,7 @@ are not part of this design baseline.
 | [`coffee-chat-user-scenes.md`](./coffee-chat-user-scenes.md) | Build, Connect, Use, and Update journeys, including completion and stop conditions. |
 | [`coffee-chat-evaluation.md`](./coffee-chat-evaluation.md) | Evaluation-first quality gates and gold cases for every transformation and experience. |
 | [`coffee-chat-operation-preview.md`](./coffee-chat-operation-preview.md) | The common approval, scope, revalidation, and Receipt contract for state-changing operations. |
+| [`coffee-chat-skills.md`](./coffee-chat-skills.md) | Canonical Skill names, descriptions, responsibilities, routing, and evaluation rules. |
 | [`../research/2026-08-04-coffee-chat-ux-research.md`](../research/2026-08-04-coffee-chat-ux-research.md) | Product reasoning behind the language and two-step journey. |
 
 ## Fixed decisions
@@ -49,6 +50,8 @@ are not part of this design baseline.
 8. Bean and Coffee exist only for the current conversation or named task.
 9. Operation Preview is the common approval boundary for every state-changing
    operation. Its user-facing action is `Review changes`.
+10. Every Skill uses the `coffee-*` namespace, and its description states the
+    trigger, operation, and boundary clearly.
 
 ## Design status
 
