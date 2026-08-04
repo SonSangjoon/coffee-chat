@@ -1,6 +1,6 @@
 # Coffee Chat evaluation design
 
-**Status:** Evaluation baseline
+**Status:** Approved system baseline
 
 **Date:** 2026-08-04
 

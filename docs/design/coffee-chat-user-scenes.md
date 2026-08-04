@@ -1,6 +1,6 @@
 # Coffee Chat user scenes
 
-**Status:** Design baseline
+**Status:** Approved system baseline
 
 **Date:** 2026-08-04
 

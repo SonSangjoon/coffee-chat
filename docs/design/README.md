@@ -1,5 +1,7 @@
 # Coffee Chat design
 
+**Status:** Approved system baseline
+
 This directory contains the maintained design baseline for Coffee Chat. The
 README explains the product. These documents explain the system that must make
 the product true.
