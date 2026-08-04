@@ -20,6 +20,13 @@ npm run test:site
 
 `npm run test:acceptance` runs the cross-cutting local acceptance set. It covers the input-only Make mine flow, generated-artifact isolation, secret rejection, query behavior, and native plugin lifecycle before the browser suite runs separately through `npm run test:site`.
 
+Release preparation is CI-owned. The GitHub Actions release workflow derives a
+UTC `YYYY.MM.DD` version, creates the next migration edge, regenerates the
+release and plugin projections, runs the full verification gates, and only
+then creates the release commit and tag. The deterministic preparation command
+can be used locally to reproduce a CI diagnosis, but routine development does
+not edit version-bearing files by hand.
+
 `npm test` caps Vitest at two workers because Candidate fixtures materialize and hash the shared README PNG support files. Higher local concurrency can turn filesystem contention into unrelated per-test timeouts.
 
 The two integration cases that repeatedly spawn the CLI or copy the complete engine checkout declare explicit 15-second and 30-second budgets. The assertions remain unchanged; the larger budgets absorb filesystem variance on GitHub-hosted runners without weakening the default timeout for unit-scale tests.
@@ -27,6 +34,11 @@ The two integration cases that repeatedly spawn the CLI or copy the complete eng
 ## CodeQL analysis
 
 `npm test -- tests/workflow-contracts.test.ts` validates the source-controlled CodeQL workflow contract locally, including its triggers, least-privilege permissions, pinned Actions, JavaScript/TypeScript language selection, and secret-free pull-request boundary.
+
+The same workflow contract test validates the engine-only release workflow:
+manual dispatch on `main`, `contents: write` only, pinned Actions, the
+release-preparation and generation gates, no duplicate date tag, and the
+credential-persistence exception required for its single push effect.
 
 The analysis itself runs only on GitHub-hosted runners as `CodeQL / Analyze (javascript-typescript)` for pull requests and pushes to `main`. JavaScript/TypeScript extraction needs no project-specific build step.
 
@@ -55,7 +67,7 @@ static filesystem/instruction contract. It does not execute a model, call
 GitHub, or treat a transcript as a runtime. The prompts cover native Template
 creation, complete Preview-before-POST, Template-mode/provenance checks,
 credential redaction, safe empty checkout paths, timeout reconciliation,
-Build KG handoff, pre-conversion non-recursion, and the separate
+Coffee Brew handoff, pre-conversion non-recursion, and the separate
 commit/push/PR/merge publication boundary.
 
 The pre-Skill diagnostic runs use isolated temporary homes and a hermetic

@@ -14,6 +14,7 @@ import {
 } from "./artifact-inventory.ts";
 import { canonicalizeJson, compareCodePoints } from "./generate.ts";
 import { type EngineManifest, isEngineManifest } from "./knowledge.ts";
+import { isCalver } from "./calver.ts";
 import type {
   EngineDeliveryFile,
   EngineManagedFile,
@@ -51,14 +52,8 @@ function isSafeRepositoryPath(path: string): boolean {
   );
 }
 
-function validSemver(value: string): boolean {
-  return /^(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(
-    value,
-  );
-}
-
 function assertConfig(config: EngineReleaseConfig): void {
-  if (config.schema_version !== "1.0.0" || !validSemver(config.version))
+  if (config.schema_version !== "1.0.0" || !isCalver(config.version))
     throw new ValidationFailure({
       code: "engine-release-config-invalid",
       path: "./engine/release-config.json",
@@ -70,11 +65,11 @@ function assertConfig(config: EngineReleaseConfig): void {
       path: "./engine/release-config.json",
       message: "The release source ref must be refs/tags/v<version>.",
     });
-  if (!validSemver(config.target_manifest_schema_version))
+  if (config.target_manifest_schema_version !== "1.1.0")
     throw new ValidationFailure({
       code: "engine-release-manifest-schema-invalid",
       path: "./engine/release-config.json",
-      message: "The target manifest schema version is not valid SemVer.",
+      message: "The target manifest schema version is not supported.",
     });
 }
 

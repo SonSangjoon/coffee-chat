@@ -2,9 +2,9 @@
   "schema_version": "1.0.0",
   "repository": "https://github.com/SonSangjoon/coffee-chat",
   "release": {
-    "version": "1.1.0",
-    "source_ref": "refs/tags/v1.1.0",
-    "release_digest": "sha256:721573b91fe197d16c945c2b1f102228deeb2d6b0f3050eae215964d63a6b2d2"
+    "version": "2026.08.04",
+    "source_ref": "refs/tags/v2026.08.04",
+    "release_digest": "sha256:7569ab6dea4a5c5f27fd09ecada869f76cc9ca6f90939b5ef80a246229ce1505"
   },
   "files": [
     {
@@ -26,7 +26,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:18534d6dd42bcbb838e2e1fc7fe9099f1b8a24546573e82b1b41d0d7b3ce1e83"
+        "digest": "sha256:736121f9ba28e1186b92dbd9524351c52dbab9ffb6c907d291cd0a8c50e20cc4"
       }
     },
     {
@@ -37,7 +37,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:4e7d839d139f5b20e46730c673d661df7ca08973a0e6dfa49da1491f9b7188ff"
+        "digest": "sha256:20eb5a734f87e2e386cf6aa1f750fe3ff129378ca68a4b04e23df666f3fb5e28"
       }
     },
     {
@@ -48,7 +48,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:53f9252da35c477812cd69c4e5848caeffef3ea16d2b864d618a56074c9fc0a3"
+        "digest": "sha256:56b5bb1465d5a79d4d3fabe991453681b64dbf8ba06e9ce3d2ec0fe8fdeee0ab"
       }
     },
     {
@@ -59,7 +59,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:29fc1a396dfce2458f596f5297b4176e525c3b540c33148eb90016b5ca00774a"
+        "digest": "sha256:36297ceaeacae0c4b8722ad118557d8978979dcdf84c856ec2abd3fabfbb3670"
       }
     },
     {
@@ -180,7 +180,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:59f9d7f9794035845c956e3accf5b98d81d3677a43edadac522da271d1f7d251"
+        "digest": "sha256:74247b5db4556302b7b799b50769f062ee87d267163c20b1af552f9156e88cb4"
       }
     },
     {
@@ -224,7 +224,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:63966f46222652fe170014b5ea578361246a6e690c0f3f12dd786721d169a0a0"
+        "digest": "sha256:ea78409cd66043a06533895a325107fd4402f7df642722db5dced1d49e5e1fcb"
       }
     },
     {
@@ -235,7 +235,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:a2ebfd77ee38a8448fee6eda679a24b65a3e3df9730f0aeebc3cfb87d9626f6e"
+        "digest": "sha256:9855a22fe38e5045da57b672943791138e9cad42c6958f69cae54b7e604b9f13"
       }
     },
     {
@@ -257,7 +257,18 @@
       "disposition": "replace-instance-authored",
       "binding": {
         "kind": "content",
-        "digest": "sha256:852ac7cbea10dec24d63bf09d21c7a7438b20ab05f5ec9906709a07a1f2fafeb"
+        "digest": "sha256:8da01206a9410ba773d46373889032228a006f683bf8076b806973e576d5fb8a"
+      }
+    },
+    {
+      "path": "./docs/assets/readme/coffee-chat-agent.en.png",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:18b746128a84f2b4eae98662e6fde796a0ecabac27c7d3b8316093b3243c8f5e"
       }
     },
     {
@@ -272,25 +283,25 @@
       }
     },
     {
-      "path": "./docs/assets/readme/coffee-chat-flow.en.png",
+      "path": "./docs/assets/readme/coffee-chat-taste.en.png",
       "mode": "100644",
       "engine_audience": "instance",
       "engine_ownership": "source",
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:399aeedde8920153d7c2fe9cc2d62d26ecc07a51d01d9f20e97ebb9ac180064c"
+        "digest": "sha256:d10069500923088a4f72910c6f3599da1253caffe67d6e14597fc67956476de3"
       }
     },
     {
-      "path": "./docs/assets/readme/coffee-chat-trust.en.png",
+      "path": "./docs/design/coffee-chat.md",
       "mode": "100644",
       "engine_audience": "instance",
       "engine_ownership": "source",
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:fe668c6c795baeccd1f07fa586d30b4d1d0fcaa7077bba5c47d35f0874bf8df4"
+        "digest": "sha256:793ea8e2c6d985c4d35c204f8f8c38c1cfd337c745e4943c7b603429f5d4c435"
       }
     },
     {
@@ -301,7 +312,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:776ec1e855fcec8ee5cbf7f37f8f47b2dd56220af9f0b5b9c4a17ee75807d01b"
+        "digest": "sha256:ca612dc7edf85e134bcb34ca739905988241599a4d03722b3da45b8859bbf067"
       }
     },
     {
@@ -312,7 +323,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:cec8e9ad863861bc24b72691d43947ba394ed85fa5268fb3cda0f7280e8b339f"
+        "digest": "sha256:ff15527403b411a111f289b02e2dc8fa569e9d37c3988dceb5de57939e1d6e60"
       }
     },
     {
@@ -323,7 +334,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e7f11ed7cc05bfeec14a837bc6a234c8e21515d6453454ba2622a30954bf275f"
+        "digest": "sha256:4999479f2d070588a8ef6f962b599229006532d51447ab2600045ed02e1a4d78"
       }
     },
     {
@@ -345,7 +356,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:428d8f596c775ca3007bd6fec5edc29b5f04a736b403483146284019afecae70"
+        "digest": "sha256:146cf66daf675f5caf8f4afcb200ffcb9dfe91f2d4bd06b5c8bfd22c5ebe5a68"
       }
     },
     {
@@ -356,7 +367,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:8273db9a54075a3ebde7fa958c9aea2f0dcef9392c7f367fce4ea187eff6b1a9"
+        "digest": "sha256:6ded87ba4090e61dff059f41b111a4091ba4d78000954ac7a11646c55963d5df"
       }
     },
     {
@@ -367,7 +378,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c06ab3651a6167b5a2dfd098e67458f024135f160754d5250e6a1fb9a84935a5"
+        "digest": "sha256:cb2527034ed46ebd3483cd703976a96db56b8c480b90ea7a51e98f734892e0f4"
       }
     },
     {
@@ -378,7 +389,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:369bed55bacbb8e397aca41f742d3bc92cedb2d87d19cb43ba48ccf537d1d052"
+        "digest": "sha256:13b1bac6697f6d511461904369a9887ecabab6c0a28c538ddf580c451bf025bb"
       }
     },
     {
@@ -400,7 +411,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:fb3cb54dafdb65a33f70acf11a66fd51c7033a6c6036ae6c4019efecd86b19a3"
+        "digest": "sha256:0c0a1d83144e0530bd87f3deeb0658bab36310a3232ed332bac8f06a0c4af90e"
       }
     },
     {
@@ -433,7 +444,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:31484847db24e68af41f7d806e3e577d0605e2a5e51811a187099e56bf5ebf57"
+        "digest": "sha256:bb57c0d1d70cb5341111a8867f49ba9f7503fd4be7546ce0dff6befe4a68e72e"
       }
     },
     {
@@ -444,7 +455,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:dba9c0288f2cc50e1653d9a51a98804bf5902619a766e0aa7754f9603c0d06cc"
+        "digest": "sha256:1cf408d3b0fbba2933dc15df983aad4aad9a6de9092391e0acd1e939e162457b"
       }
     },
     {
@@ -466,7 +477,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e8725ec974f23eef591340419bbf1ea878cb445534bffea122b926ef71e7d4c2"
+        "digest": "sha256:1cfbd32f18b03a1ace6d62e43b435ca8c819c14e5fc29b0e3c072ec5b3153190"
       }
     },
     {
@@ -477,7 +488,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:5dc16acbe535a8617990fb8504b4419bea281cc843929d5c3f70549cc3090f16"
+        "digest": "sha256:3095b3c3285ca47f4bbe3931bab60e637fdbd5e3e7f0b026425cce52e6fa2d6c"
       }
     },
     {
@@ -565,7 +576,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:81375275b0b5c63d669c01cee05e429f57de7b365b2236fb8e3089007e69f8b8"
+        "digest": "sha256:3c3d753c97e81a87631693e49c48b0984716f3141fb94ef6b9a9c5356a8e9ddd"
       }
     },
     {
@@ -576,7 +587,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:37b79d167b1acbaaf119ca3eaa1b9d034b6f1919283e86ec1f21d9d641bcb760"
+        "digest": "sha256:6b17a8522863c8fa9003efc4cf941f6f72f58183817107590d6fbce718e81b9b"
       }
     },
     {
@@ -587,7 +598,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:454a45656854ccd78d6e5081bbd69127712e1eddab4432f98a14dd92e980252f"
+        "digest": "sha256:f4a32935ff1b0e059f4857283c49730eb5ebeec7ea20cefc039df6579bb3675f"
       }
     },
     {
@@ -598,7 +609,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c694fae9439e2ccc54c7c249a1e9001f1b868d70691a50df1be0af5b0b262302"
+        "digest": "sha256:75edc6c0b4f695766c1f57e8831429e6c9554a695b1247b47c994e749a35b00e"
       }
     },
     {
@@ -609,7 +620,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:f9f1789ff640130b780c88673cbd79e272598a5dcb801f67bde0b6a4d788748d"
+        "digest": "sha256:feb62f70b6ebe73c9f99eca2ee103ba3b3a4793080f90865d2c5f09e569f3575"
       }
     },
     {
@@ -620,7 +631,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:f443cb93c990cb7cc545e7d0603201f2feb23fcdcb493ef3af2eb60b1372b17d"
+        "digest": "sha256:95cb62c125cb092b354c10f6a846edde12ee0b139e971ba74dab7e47b9b48af7"
       }
     },
     {
@@ -635,47 +646,25 @@
       }
     },
     {
-      "path": "./skills/apply-perspective/SKILL.md",
+      "path": "./skills/coffee-brew/SKILL.md",
       "mode": "100644",
       "engine_audience": "instance",
       "engine_ownership": "source",
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e3ff981a5ad87770ebca575a40d2d4060c9000ae5d64821248476ba3484895d5"
+        "digest": "sha256:05a1f9d925da959c62e3c0acb6bb5378ac986602260cf08f5821f5879ef72732"
       }
     },
     {
-      "path": "./skills/apply-perspective/references/method.md",
+      "path": "./skills/coffee-brew/references/method.md",
       "mode": "100644",
       "engine_audience": "instance",
       "engine_ownership": "source",
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8"
-      }
-    },
-    {
-      "path": "./skills/build-kg/SKILL.md",
-      "mode": "100644",
-      "engine_audience": "instance",
-      "engine_ownership": "source",
-      "disposition": "adopt-engine-source",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:1708f877660b2c64303b32214af863e4b708204b3d6bb6d884be2c6f26d86b71"
-      }
-    },
-    {
-      "path": "./skills/build-kg/references/method.md",
-      "mode": "100644",
-      "engine_audience": "instance",
-      "engine_ownership": "source",
-      "disposition": "adopt-engine-source",
-      "binding": {
-        "kind": "content",
-        "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8"
+        "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2"
       }
     },
     {
@@ -686,7 +675,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:da5445fbc387944316c894538ec25787f83b10836b4ea4efb46e9e7de5813f8d"
+        "digest": "sha256:d74ddf1bcc384cc00356dbb5118309acce1072ee8a7c629f4906c5c2b7daa212"
       }
     },
     {
@@ -697,7 +686,73 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:1d4d90fef434ae5ced86a3f12dfda956674b861a40d4cc5d69cb4af2d8d0c0b8"
+        "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2"
+      }
+    },
+    {
+      "path": "./skills/coffee-harvest/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:df35806696ab5b07b78f656d92ec2869e770156dfc4816e9835519da22f3e3ba"
+      }
+    },
+    {
+      "path": "./skills/coffee-harvest/references/method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2"
+      }
+    },
+    {
+      "path": "./skills/coffee-pairing/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:30ef83b2327237fb96b921592f1ec694ddd76ccc88aa8f10ff0640a5daa20315"
+      }
+    },
+    {
+      "path": "./skills/coffee-pairing/references/method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2"
+      }
+    },
+    {
+      "path": "./skills/coffee-roast/SKILL.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:d027ce6b30de0ef26b625b3ee33abaf78ba44a2477f954d2798106f3c701ee29"
+      }
+    },
+    {
+      "path": "./skills/coffee-roast/references/method.md",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:0985364403bb4e0c70a371ccf346faf4a3d7badb8d272f4ed0776269da5852f2"
       }
     },
     {
@@ -719,7 +774,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:0018acaf4331fcccc501fc69c9f449ea6229afe8691810fa2951991a849a6cdb"
+        "digest": "sha256:c4f57b78a935eeb850d2189c8099d8912be26aa28062a357662a25b191c12997"
       }
     },
     {
@@ -730,7 +785,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:a903d92db647fe47a5019c0808636f8eb0c2cc452464f8f1f527b068c4ce168f"
+        "digest": "sha256:940364f413ec1c82ec42cf3256fb5f25ffb047eb02c09274050c3dfd739290d3"
       }
     },
     {
@@ -752,7 +807,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c62770a291a7658e5b9bbd05a020c841bb6487fdb1cd1d0c4bcdc9ea57ed6fff"
+        "digest": "sha256:0628d2edf8890e9916812d1b3e1cdaa047c5ca07c2ccb2576c15eef10f2f7cdf"
       }
     },
     {
@@ -763,7 +818,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:dba22cc9b54eeda48bed4ccb09531c7b06fcc727dd51a60a8fc67bde9cd5520f"
+        "digest": "sha256:c17d4ad946e821bceef5e3423600c056c449e4d6b06090dae01886fd8c9f7d2f"
       }
     },
     {
@@ -818,7 +873,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:4ca61bba47f6ff791a3a736397884c782e969428a39a86ee211efd708f3eeeb8"
+        "digest": "sha256:7eb5dfc3fd32f7748db8cf8a784004e747494c67924ae9ccdd1a0950ec9e3c94"
       }
     },
     {
@@ -840,7 +895,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:1821dbe0e0f30d3f92f8d559eca891fb35fe2e762069240201203636d4f2fd07"
+        "digest": "sha256:15b6bdf4b93680a6809783a934979697510b838c4c7b59edc7fe83e7ffa6888b"
       }
     },
     {
@@ -851,7 +906,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:33b6fc7cfc1b3bdaba75c8d1c863396955867f5c13fc856aefd5fa419e0f676b"
+        "digest": "sha256:7e9443f0dd2ede7a6266da39b0589554b221437310d5ad34f2b78da307664666"
       }
     },
     {
@@ -862,7 +917,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c8673deb3fd181c7fa9a4398685737f37232813a52d034d6b21eb42f0fa5ecb8"
+        "digest": "sha256:caa9287d5e515b98a7abd365d41bbe50281250fa4c83f38dd978b3bf73768c21"
       }
     },
     {
@@ -873,7 +928,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:6d7218b556474542487970558e40513c0cca13471d6f0358ca40ee98add2f028"
+        "digest": "sha256:1932b7790bd259d568b78b22b6a6ce393992174e0e3871d88296cacf02f2c723"
       }
     },
     {
@@ -906,7 +961,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e5b11484e5ed191e794758a923cc6726b17a4684a24ab00cd060058d5eb804ff"
+        "digest": "sha256:c37a9a00c685b1cb4373b30c2fb920f5887f934faf9e2db4279a943e9dc748d0"
       }
     },
     {
@@ -917,7 +972,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:9be2b04ae671e7183aebd4dfed8596d4fb88a092a9dba8f31794f2e3a352be20"
+        "digest": "sha256:f162bb6ec4fe4f53e77b19810e66b5a0518b5fa4b1425bbe2cdae3f9d48c194a"
       }
     },
     {
@@ -939,7 +994,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:974d82299832bfd0ca11464b0a031c4cbd39f07ddede3736d9b903b4595b3442"
+        "digest": "sha256:5cc51ad969d1b7e521b916327e5b0302f5c0462e2f381b786c12a02b54e73f8f"
       }
     },
     {
@@ -950,7 +1005,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:5f4d9297f784ef91ee74d8b4c9356625c0e96f15f32e7608bd02c654ec83e96b"
+        "digest": "sha256:2eada8ff8292ccb7c68b6be12bfca127624345470a6cf46d364d35e243e0c4e6"
       }
     },
     {
@@ -961,7 +1016,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c5b78f13d2f33d47f8b283d9f6109e52bef4fa43ce6e751e2fe436ec487c36b1"
+        "digest": "sha256:5809641cb0dfd9462b045b0ba6215d5fdc86c73389f81aff13354b7bcd78f759"
       }
     },
     {
@@ -972,7 +1027,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e5182b4c5f3a2f6aeb24b17761ddf47bb71883d38c33ad46511179b4ced6f883"
+        "digest": "sha256:97d3fd31904c6ab66cb067fe8f87bfb19e7be3765f6f338e832e8db177dfe8cf"
       }
     },
     {
@@ -1005,7 +1060,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:b11ec5a654683cfe411b027f7bda71896d1d986cca2972c06477526f21735067"
+        "digest": "sha256:d66e6977bf6334923aa2814b487ba814b6e678299f518496638d0b32101d926f"
       }
     },
     {
@@ -1016,7 +1071,18 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:f17ea68d40fe03302c599915eefec9c3483790259b91fe0d334b0923258d3fb8"
+        "digest": "sha256:34b0049c4816d3cc4a689a7ec370ca8939b98ea99c6a49196981843f611beec6"
+      }
+    },
+    {
+      "path": "./tests/taste-vocabulary.test.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:ce7f12835d826b71646810b672895a482c976d144a94dcc5b265969df22af4cb"
       }
     },
     {
@@ -1038,7 +1104,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c7b713e6b6b8a29a0e1d8ec2f624b279d9380e9cec396fc3aa9af967108e6a05"
+        "digest": "sha256:138ed22a64d9263215652233c533e00d3f11163cc11003e3fa51e2d72e9a6cfd"
       }
     },
     {
@@ -1049,7 +1115,18 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:adb15872afe94816ec046455c173346e63a5798cfc5a7da2a6a63745397d0ec3"
+        "digest": "sha256:a1e3b6e8b61f0783285983f45ff4bf6666760cba295ee53fa1ed7f5804f8ecd5"
+      }
+    },
+    {
+      "path": "./tools/calver.ts",
+      "mode": "100644",
+      "engine_audience": "instance",
+      "engine_ownership": "source",
+      "disposition": "adopt-engine-source",
+      "binding": {
+        "kind": "content",
+        "digest": "sha256:34e88b970ebfe465ca147b1a4b8d35fd513462f439bd7edb2ad41f3cdaeccf30"
       }
     },
     {
@@ -1060,7 +1137,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:0fda8aec6fc7bd47c25dc0a9e432e0957ddcdff215767f6928890a9fe84a729f"
+        "digest": "sha256:1dc082c1fbe27c401cf00e449b96ee28d6ed2cba7b0e77992e43b79fb8e4bc82"
       }
     },
     {
@@ -1104,7 +1181,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:4db33062474be28bd90be871df4f6bfdeee7d584daae94a55ac9c1f9b6b4e317"
+        "digest": "sha256:943c8db32d3c774fb3d2ec7446bd67932413f67c37f236eae0280bf33f0a16c7"
       }
     },
     {
@@ -1126,7 +1203,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:3a6dd110e85daab612a58b39b9709fadefba4e0e355db03f098b8e9a09280b63"
+        "digest": "sha256:ec586bdb28b9e5b67e5c0283a4830b22d98c2a1d2572b83788b9e1525daf3625"
       }
     },
     {
@@ -1137,7 +1214,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:ccc9cef0fa5f75cbec5867802c39ded7c60170136a4d52f76da107f3c971e606"
+        "digest": "sha256:c656611ba3d5789f979a0135d4b942ea7bc22aef9c6ec5b27f2453370c08e93b"
       }
     },
     {
@@ -1170,7 +1247,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:6d67da0633b0c3f5201fe56f1fb1190c45df585f508e3ce7678807748b95aee9"
+        "digest": "sha256:0d2c0c544f9682663c60d6f782894ff3317d48381a86b6fbc865bf60a53fc4b7"
       }
     },
     {
@@ -1181,7 +1258,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:e845b30b6d9000cd901db1ec7c402bf5802a675a6ad442b0abf576613fd81433"
+        "digest": "sha256:85404c5cdef35ce0cafe8ce8b9fd03134f5fea2686f4b2f6d7e7c303c497bf6c"
       }
     },
     {
@@ -1192,7 +1269,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:c02c10ca81f3bcc63a41a1487559e9123fb59e9544ec42a308c1590b27823800"
+        "digest": "sha256:aacc6698816744106b0c652a2d28a3617402906b9e9d7073550ae0443db68f59"
       }
     },
     {
@@ -1269,7 +1346,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:10b50a4bd7fa3a25953fd06a1c2edd2b2ed11bb7e7c376e8cdd615a63ccce5f6"
+        "digest": "sha256:1e797839ac9f0da7e582604220d2f97ba67e584927d23f4c6f2f374e0da9207a"
       }
     },
     {
@@ -1295,5 +1372,5 @@
       }
     }
   ],
-  "surface_digest": "sha256:ada255c0b5e1b3109995947b750d2e23e64d6992278ca82f7b3a87a3e1f0ce6b"
+  "surface_digest": "sha256:a91ef2b91ab88ee852a2d4b70a75becbb7eb16fbd30714d986d533df6040b8f7"
 }

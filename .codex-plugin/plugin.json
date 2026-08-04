@@ -1,7 +1,7 @@
 {
   "name": "coffee-chat",
-  "version": "1.1.0",
-  "description": "Converse with and apply a public, dated perspective graph.",
+  "version": "2026.08.04",
+  "description": "Harvest Origins into Green Beans, Roast them into contextual Beans, and Brew Coffee for Coffee Chat or Coffee Pairing.",
   "author": {
     "name": "Coffee Chat",
     "url": "https://github.com/SonSangjoon/coffee-chat"
@@ -11,14 +11,17 @@
   "license": "MIT",
   "keywords": [
     "coffee-chat",
-    "knowledge-graph",
-    "perspective"
+    "harvest",
+    "roast",
+    "taste",
+    "brew",
+    "blend"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Coffee Chat",
-    "shortDescription": "Talk with a public, dated perspective graph",
-    "longDescription": "Converse with, apply, or extend a source-grounded temporal perspective graph.",
+    "shortDescription": "Harvest, roast, and brew a public Taste",
+    "longDescription": "Harvest Origins into Green Beans, Roast them into Beans that carry Taste, and Brew a Bean into Coffee.",
     "developerName": "Coffee Chat",
     "category": "Productivity",
     "capabilities": [
@@ -27,9 +30,9 @@
     ],
     "websiteURL": "https://sonsangjoon.github.io/coffee-chat/",
     "defaultPrompt": [
-      "Start a one-time Coffee Chat from the public dated graph.",
-      "Apply the documented perspective to my named task.",
-      "Add a public Source-backed Note through Preview approval."
+      "Harvest one or more public Origins into a Green Bean.",
+      "Roast relevant Green Beans into a Bean for the current session or task.",
+      "Brew that Bean into Coffee, then use Coffee Chat or Coffee Pairing."
     ]
   }
 }
