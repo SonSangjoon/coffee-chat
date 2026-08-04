@@ -14,9 +14,9 @@
     }
   },
   "$defs": {
-    "semver": {
+    "calver": {
       "type": "string",
-      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^[0-9]{4}\\.(?:0[1-9]|1[0-2])\\.(?:0[1-9]|[12][0-9]|3[01])$"
     },
     "repository": {
       "type": "string",
@@ -33,7 +33,7 @@
       "required": ["repository", "version", "source_commit", "release_digest"],
       "properties": {
         "repository": { "$ref": "#/$defs/repository" },
-        "version": { "$ref": "#/$defs/semver" },
+        "version": { "$ref": "#/$defs/calver" },
         "source_commit": { "$ref": "#/$defs/commit" },
         "release_digest": { "$ref": "#/$defs/digest" }
       }

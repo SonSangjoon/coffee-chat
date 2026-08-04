@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/operation-receipt.schema.json",
+  "title": "Coffee Chat Operation Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "preview_id",
+    "operation",
+    "status",
+    "fingerprint",
+    "changed_paths",
+    "protected_paths",
+    "verified"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "receipt_id": { "type": "string", "minLength": 1 },
+    "preview_id": { "type": "string", "minLength": 1 },
+    "operation": {
+      "enum": ["init", "harvest", "sync", "coffee-pairing", "update"]
+    },
+    "status": { "enum": ["applied", "partial_failure"] },
+    "fingerprint": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "changed_paths": { "type": "array", "items": { "type": "string" } },
+    "protected_paths": { "type": "array", "items": { "type": "string" } },
+    "verified": { "type": "boolean" }
+  }
+}

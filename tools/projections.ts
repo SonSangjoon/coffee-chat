@@ -100,6 +100,39 @@ function jsonBytes(value: unknown): Buffer {
   return Buffer.from(`${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+function advisoryJsonBytes(value: unknown): Buffer {
+  const lines = JSON.stringify(value, null, 2).split("\n");
+  const output: string[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]!;
+    if (
+      !line.includes('"migration_edge_ids": [') ||
+      line.includes('"migration_edge_ids": []')
+    ) {
+      output.push(line);
+      continue;
+    }
+    const block = [line];
+    const values: string[] = [];
+    index += 1;
+    while (index < lines.length && !lines[index]!.trim().startsWith("]")) {
+      values.push(lines[index]!.trim().replace(/,$/, ""));
+      block.push(lines[index]!);
+      index += 1;
+    }
+    if (index >= lines.length) {
+      output.push(...block);
+      break;
+    }
+    block.push(lines[index]!);
+    const prefix = line.slice(0, line.indexOf("[") + 1);
+    const compact = `${prefix}${values.join(", ")}]`;
+    if (compact.length <= 80) output.push(compact);
+    else output.push(...block);
+  }
+  return Buffer.from(`${output.join("\n")}\n`, "utf8");
+}
+
 function textBytes(value: string): Buffer {
   return Buffer.from(value.endsWith("\n") ? value : `${value}\n`, "utf8");
 }
@@ -167,21 +200,29 @@ function codexManifest(manifest: Manifest): Record<string, unknown> {
     homepage: manifest.pages_url,
     repository: manifest.repository.url,
     license: "MIT",
-    keywords: ["coffee-chat", "knowledge-graph", "perspective"],
+    keywords: [
+      "coffee-chat",
+      "coffee-init",
+      "coffee-sync",
+      "harvest",
+      "roast",
+      "brew",
+      "pairing",
+    ],
     skills: "./skills/",
     interface: {
       displayName: presentationName(manifest),
-      shortDescription: "Talk with a public, dated perspective graph",
+      shortDescription: "Harvest, roast, and brew a public Taste",
       longDescription:
-        "Converse with, apply, or extend a source-grounded temporal perspective graph.",
+        "Harvest Origins into Green Beans, Roast them into Beans that carry Taste, and Brew a Bean into Coffee.",
       developerName: ownerName(manifest),
       category: "Productivity",
       capabilities: ["Read", "Write"],
       websiteURL: manifest.pages_url,
       defaultPrompt: [
-        "Start a one-time Coffee Chat from the public dated graph.",
-        "Apply the documented perspective to my named task.",
-        "Add a public Source-backed Note through Preview approval.",
+        "Harvest one or more public Origins into a Green Bean.",
+        "Roast relevant Green Beans into a Bean for the current session or task.",
+        "Brew that Bean into Coffee, then use Coffee Chat or Coffee Pairing.",
       ],
     },
   };
@@ -196,7 +237,7 @@ function claudeManifest(manifest: Manifest): Record<string, unknown> {
     homepage: manifest.pages_url,
     repository: manifest.repository.url,
     license: "MIT",
-    keywords: ["coffee-chat", "knowledge-graph", "perspective"],
+    keywords: ["coffee-chat", "green-bean", "taste", "coffee-pairing"],
     skills: "./skills/",
   };
 }
@@ -236,7 +277,7 @@ function claudeMarketplace(manifest: Manifest): Record<string, unknown> {
         homepage: manifest.pages_url,
         repository: manifest.repository.url,
         license: "MIT",
-        keywords: ["coffee-chat", "knowledge-graph", "perspective"],
+        keywords: ["coffee-chat", "green-bean", "taste", "coffee-pairing"],
         category: "Productivity",
         skills: "./skills/",
       },
@@ -253,15 +294,15 @@ function contentLicense(): Buffer {
 function agentRouter(manifest: Manifest): Buffer {
   const roleEntry = isEngineManifest(manifest)
     ? [
-        "This engine has no default person. At an engine URL, offer only **Create yours**, **Install engine plugin**, or **Contribute to engine**, then stop and wait; never follow an instance fallback from that same entry message or start a personal Coffee Chat from engine data.",
-        "Coffee Chat and Apply Perspective require an explicit public instance URL verified through that instance's `coffee-chat.json` and `knowledge/index.json`. After an explicit Create yours or Make mine choice, Build KG may use only an explicit downstream pre-conversion engine checkout that satisfies the origin and target-fingerprint rules; the maintained engine checkout and installed packages/caches remain forbidden. Build KG `contribute` and `update` require an initialized authoritative instance checkout.",
-        "Only an explicit external pre-conversion handoff whose live origin, target fingerprint, native Template observation, source/target observation, and template-surface digest all match may route exactly once to repo-local `build-kg`; it must never recurse into `create-coffee-chat`.",
-        "After the user explicitly chooses **Create yours**, route to `skills/create-coffee-chat/SKILL.md`; read only that Skill and its generated references, then stop at its Preview approval boundary.",
+        "This engine has no default person. At an engine URL, offer only **Init your Coffee Chat**, **Install engine plugin**, or **Contribute to engine**, then stop and wait; never start a personal Coffee Chat from engine data.",
+        "Coffee Chat and Coffee Pairing require an explicit public Coffee Chat repository URL verified through that repository's `coffee-chat.json` and `knowledge/index.json`. The individual `coffee-chat-*` repository is the single source of truth for Origins, Green Beans, provenance, and instance configuration.",
+        "Init always targets a new independent `coffee-chat-*` repository. The invoking work repository is never an implicit target, Origin, or personal record store. Sync writes only `.coffee-chat/connection.json` in the named work repository.",
+        "Route Init to `skills/coffee-init/SKILL.md`, Sync to `skills/coffee-sync/SKILL.md`, and read only the selected Skill and its generated references before the Operation Preview boundary.",
       ]
     : [
         "Verify this initialized public instance by matching its explicit locator to `coffee-chat.json` `repository.url` or `pages_url`, then matching `repository_role` and profile id to `knowledge/index.json` before treating it as a target.",
         "At instance entry, ask the user to choose **one-time Coffee Chat** or **install instance plugin**, then wait before continuing.",
-        "When the installed generic plugin exposes `update-coffee-chat`, it may perform one read-only advisory check against the instance engine tuple. If one locally consistent candidate exists, offer **Review Coffee Chat update** and stop; never fetch, write, install, branch, publish, or merge during discovery.",
+        "When the installed generic plugin exposes `coffee-update`, it may perform one read-only advisory check against the instance engine tuple. If one locally consistent candidate exists, offer **Review Coffee Chat update** and stop; never fetch, write, install, branch, publish, or merge during discovery.",
       ];
   return textBytes(
     [
@@ -271,7 +312,7 @@ function agentRouter(manifest: Manifest): Buffer {
       "",
       ...roleEntry,
       "",
-      "Route conversation requests to `skills/coffee-chat/SKILL.md`, named external task application to `skills/apply-perspective/SKILL.md`, Create yours to `skills/create-coffee-chat/SKILL.md`, engine update review to `skills/update-coffee-chat/SKILL.md`, and Make mine or public graph updates to `skills/build-kg/SKILL.md`. Read only the selected Skill and its generated references.",
+      "Route Coffee Chat requests to `skills/coffee-chat/SKILL.md`, Coffee Pairing work to `skills/coffee-pairing/SKILL.md`, Init to `skills/coffee-init/SKILL.md`, Sync to `skills/coffee-sync/SKILL.md`, engine update review to `skills/coffee-update/SKILL.md`, and Origin-to-Green Bean authoring to `skills/coffee-harvest/SKILL.md`. Coffee Roast is the internal step between Green Bean and Bean. Coffee Brew is the internal step between Bean and Coffee. Read only the selected Skill and its generated references.",
     ].join("\n"),
   );
 }
@@ -284,11 +325,11 @@ export async function generatedProjectionBytes(
 ): Promise<Map<string, Buffer>> {
   await validateReadmeAssets(snapshot);
   const manifest = graph.manifest;
-  const creationSkillAvailable =
+  const buildSkillAvailable =
     isEngineManifest(manifest) &&
-    (await snapshot.exists("skills/create-coffee-chat/SKILL.md"));
+    (await snapshot.exists("skills/coffee-init/SKILL.md"));
   const declaredSkills =
-    isEngineManifest(manifest) && creationSkillAvailable
+    isEngineManifest(manifest) && buildSkillAvailable
       ? ENGINE_PLUGIN_SKILLS
       : INSTANCE_SKILLS;
   const skills = await availableSkills(
@@ -361,11 +402,8 @@ export async function generatedProjectionBytes(
     for (const [name, source] of referenceFiles) {
       if (!(await snapshot.exists(source))) continue;
       const bytes = await snapshot.read(source);
-      values.set(`skills/create-coffee-chat/references/${name}`, bytes);
-      values.set(
-        `${packageRoot}/skills/create-coffee-chat/references/${name}`,
-        bytes,
-      );
+      values.set(`skills/coffee-init/references/${name}`, bytes);
+      values.set(`${packageRoot}/skills/coffee-init/references/${name}`, bytes);
     }
     const updaterReady = (
       await Promise.all(
@@ -431,7 +469,7 @@ export async function generatedProjectionBytes(
       const updaterReferences = new Map<string, Buffer>([
         ["release.json", engineReleaseBytes(release)],
         ["migration-registry.json", migrationRegistryBytes],
-        ["advisory.json", jsonBytes(advisory)],
+        ["advisory.json", advisoryJsonBytes(advisory)],
         ["engine-release.schema.json", advisorySchemas.release],
         [
           "engine-migration-registry.schema.json",
@@ -444,9 +482,9 @@ export async function generatedProjectionBytes(
         ],
       ]);
       for (const [name, bytes] of updaterReferences) {
-        values.set(`skills/update-coffee-chat/references/${name}`, bytes);
+        values.set(`skills/coffee-update/references/${name}`, bytes);
         values.set(
-          `${packageRoot}/skills/update-coffee-chat/references/${name}`,
+          `${packageRoot}/skills/coffee-update/references/${name}`,
           bytes,
         );
       }
@@ -1011,10 +1049,8 @@ export async function inspectGeneratedProjections(
   // ownership target is an instance package.
   const hasEngineProvisioningSurface =
     graph.manifest.repository_role === "engine" &&
-    ((await snapshot.exists("skills/create-coffee-chat/SKILL.md")) ||
-      (await snapshot.exists(
-        "skills/create-coffee-chat/references/release.json",
-      )));
+    ((await snapshot.exists("skills/coffee-init/SKILL.md")) ||
+      (await snapshot.exists("skills/coffee-init/references/release.json")));
   const allowedSkillNames = hasEngineProvisioningSurface
     ? ENGINE_PLUGIN_SKILLS
     : INSTANCE_SKILLS;
@@ -1023,17 +1059,17 @@ export async function inspectGeneratedProjections(
     ...allowedSkillNames.map((name) => `skills/${name}/references/method.md`),
     ...(hasEngineProvisioningSurface
       ? [
-          "skills/create-coffee-chat/references/engine-release.schema.json",
-          "skills/create-coffee-chat/references/engine-template-surface.schema.json",
-          "skills/create-coffee-chat/references/release.json",
-          "skills/create-coffee-chat/references/template-surface.json",
-          "skills/update-coffee-chat/references/engine-release.schema.json",
-          "skills/update-coffee-chat/references/engine-migration-registry.schema.json",
-          "skills/update-coffee-chat/references/engine-update-advisory.schema.json",
-          "skills/update-coffee-chat/references/engine-migration-document.schema.json",
-          "skills/update-coffee-chat/references/release.json",
-          "skills/update-coffee-chat/references/migration-registry.json",
-          "skills/update-coffee-chat/references/advisory.json",
+          "skills/coffee-init/references/engine-release.schema.json",
+          "skills/coffee-init/references/engine-template-surface.schema.json",
+          "skills/coffee-init/references/release.json",
+          "skills/coffee-init/references/template-surface.json",
+          "skills/coffee-update/references/engine-release.schema.json",
+          "skills/coffee-update/references/engine-migration-registry.schema.json",
+          "skills/coffee-update/references/engine-update-advisory.schema.json",
+          "skills/coffee-update/references/engine-migration-document.schema.json",
+          "skills/coffee-update/references/release.json",
+          "skills/coffee-update/references/migration-registry.json",
+          "skills/coffee-update/references/advisory.json",
         ]
       : []),
   ]);
@@ -1045,7 +1081,7 @@ export async function inspectGeneratedProjections(
       message:
         graph.manifest.repository_role === "engine"
           ? "Engine root Skills are closed to the three instance Skills and engine provisioning/update Skills."
-          : "Instance root Skills are closed to coffee-chat, apply-perspective, and build-kg.",
+          : "Instance root Skills are closed to coffee-chat, coffee-harvest, coffee-roast, coffee-brew, and coffee-pairing.",
     };
     diagnostics.push(diagnostic);
     blockingDiagnostics.push(diagnostic);

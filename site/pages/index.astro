@@ -7,12 +7,12 @@ const model = siteModel;
 const data = model.role === "engine" ? model.documentation : model.graph;
 const title =
   model.role === "engine"
-    ? "Coffee Chat — Public perspective infrastructure"
+    ? "Coffee Chat — Origins, Beans, and Coffee"
     : `Coffee Chat with ${model.manifest.profile.short_name}`;
 const description =
   model.role === "engine"
-    ? "Build a public, source-linked, temporal knowledge graph that agents can use at query time."
-    : `Explore ${model.manifest.profile.display_name}'s public, dated knowledge graph.`;
+    ? "A neutral engine for Harvesting Origins, Roasting Beans, and Brewing Coffee."
+    : `Explore ${model.manifest.profile.display_name}'s public, dated Green Beans.`;
 ---
 
 <BaseLayout {model} {title} {description}>
@@ -20,14 +20,16 @@ const description =
     model.role === "engine" ? (
       <>
         <section class="hero">
-          <p class="eyebrow">Generic engine / 범용 엔진</p>
-          <h1>Your point of view, traceable over time.</h1>
+          <p class="eyebrow">Neutral engine / 중립 엔진</p>
+          <h1>The same Origin is not the same Roast.</h1>
           <p class="lede">
-            Coffee Chat turns public Sources and dated author Notes into a temporal
-            knowledge graph. Agents derive a perspective only when someone asks a
-            question or applies it to a task. / Coffee Chat은 공개 출처와 날짜가
-            있는 작성자 기록을 시계열 지식 그래프로 만듭니다. 관점은 질문이나
-            작업이 있을 때만 에이전트가 발현합니다.
+            Coffee Chat stores what someone noticed in a specific Origin, what
+            they treated as important, and why. A Green Bean is the durable record;
+            Taste is the Bean-shaped pattern that becomes visible across Roasts. / 같은
+            Origin이라도 같은 관점이 되지는 않습니다. Coffee Chat은 누군가 특정
+            Origin에서 무엇을 보았고 무엇을 중요하게 여겼는지, 왜 그랬는지를
+            저장합니다. Green Bean이 지속 기록이고 Taste는 기록 사이에서
+            드러나는 패턴입니다.
           </p>
           <div class="hero-actions">
             <a
@@ -36,77 +38,92 @@ const description =
               target="_blank"
               rel="noopener noreferrer"
             >
-              Create your own / 나만의 그래프 만들기
+              Init your Coffee Chat / 나만의 Coffee Chat Init
             </a>
-            <a class="button secondary" href="#how-it-works">
-              How it works / 작동 방식
+            <a class="button secondary" href="#contract">
+              Read the contract / 설계 계약 보기
             </a>
           </div>
         </section>
-        <section class="section" id="how-it-works">
-          <p class="eyebrow">Two layers / 두 개의 층</p>
-          <h2>Store evidence. Derive perspective.</h2>
+        <section class="section" id="contract">
+          <p class="eyebrow">Core contract / Core 계약</p>
+          <h2>Store the annotation. Retrieve the context.</h2>
           <div class="card-grid">
             <article class="card">
-              <h3>1. Temporal KG / 시계열 KG</h3>
+              <h3>Origin</h3>
               <p>
-                Store only public Source links, dated author Notes, and neutral
-                Entities. A later view does not erase an earlier one.
+                Keep the exact public information being considered and its
+                Citation metadata. Coffee Chat does not pretend a URL is the
+                author's view.
               </p>
             </article>
             <article class="card">
-              <h3>2. Query-time synthesis / 질의 시점 합성</h3>
+              <h3>Green Bean</h3>
               <p>
-                Coffee Chat and Apply Perspective derive a view from relevant
-                records without committing a fixed mental model back to Git.
+                Record what the author noticed, valued, and left Unknown. The
+                author approves the dated Green Bean before it becomes durable.
               </p>
             </article>
             <article class="card">
-              <h3>3. Approval boundary / 승인 경계</h3>
+              <h3>Taste projection</h3>
               <p>
-                Build KG prepares a complete public preview. Canonical knowledge
-                changes only after the author approves its exact digest.
+                Let a pattern emerge across annotations. Do not create a
+                separate global Taste object or an executable rule.
               </p>
             </article>
           </div>
         </section>
         <section class="section">
-          <p class="eyebrow">Start light / 가볍게 시작하기</p>
-          <h2>A URL is enough for a one-time Coffee Chat.</h2>
+          <p class="eyebrow">Runtime path / Runtime 경로</p>
+          <h2>One record, two bounded uses.</h2>
           <div class="card-grid">
             <article class="card">
-              <h3>Use an instance URL / 인스턴스 URL 사용</h3>
+              <h3>Coffee Chat</h3>
               <p>
-                Give an agent a public Coffee Chat instance URL and ask it to read
-                <code>coffee-chat.json</code>, then <code>AGENTS.md</code>.
+                A verified public instance answers a person's question from
+                relevant Green Beans, Origins, dates, and Unknown.
               </p>
             </article>
             <article class="card">
-              <h3>Install the engine plugin / 엔진 플러그인 설치</h3>
+              <h3>Coffee Pairing</h3>
               <p>
-                Install <code>coffee-chat</code> for reusable authoring and
-                conversation Skills. The engine ships no person's knowledge.
+                A named external task can receive contextual retrieval and
+                agent-conditioned interpretation without persisting the task
+                result.
               </p>
             </article>
             <article class="card">
-              <h3>Contribute to the engine / 엔진 기여</h3>
+              <h3>Context delivery</h3>
               <p>
-                Improve schemas, validation, authoring, and presentation without
-                mixing downstream personal content into this repository.
+                Every response keeps Authored, Sourced, Inferred, and Unknown
+                distinct so a person can inspect the boundary.
               </p>
             </article>
           </div>
+        </section>
+        <section class="section">
+          <p class="eyebrow">Start here / 여기서 시작</p>
+          <h2>This engine has no default person or Taste.</h2>
+          <p class="lede">
+            There is no personal record or person-specific demo at this engine
+            URL. Choose one explicit next step: Init your Coffee Chat, Install
+            engine plugin, or Contribute to engine. / 이 엔진 URL에는 개인 기록이나
+            특정 인물 데모가 없습니다. Init your Coffee Chat·Install engine
+            plugin·Contribute to engine 중 하나를 명시적으로 선택하세요.
+          </p>
         </section>
       </>
     ) : (
       <>
         <section class="hero">
-          <p class="eyebrow">Public temporal knowledge graph / 공개 시계열 지식 그래프</p>
+          <p class="eyebrow">Public instance / 공개 인스턴스</p>
           <h1>Coffee Chat with {model.manifest.profile.short_name}</h1>
           <p class="lede">
-            Explore public Sources and dated Notes, then ask an agent to derive a
-            perspective for this conversation. / 공개 출처와 날짜가 있는 기록을
-            살펴보고, 이 대화에 필요한 관점을 에이전트가 발현하도록 요청하세요.
+            Explore public Origins and dated Green Beans. Ask what was noticed,
+            what mattered, and why—then keep
+            the answer tied to its evidence. / 공개 Source와 날짜가 있는
+            Green Bean을 살펴보세요. 무엇을 보았고
+            무엇이 중요했는지, 왜 그랬는지 근거와 함께 질문할 수 있습니다.
           </p>
           {
             model.graph.engine_provenance && (
@@ -128,49 +145,49 @@ const description =
               Browse timeline / 타임라인 보기
             </a>
             <a class="button secondary" href={siteHref(data.base_path, "graph/")}>
-              Browse graph / 그래프 보기
+              Browse provenance graph / 근거 그래프 보기
             </a>
           </div>
         </section>
         <section class="section">
-          <p class="eyebrow">Choose your entry / 시작 방법</p>
-          <h2>Talk once, or install a reusable lens.</h2>
+          <p class="eyebrow">What you can inspect / 살펴볼 수 있는 것</p>
+          <h2>Follow the Green Bean back to its Origin.</h2>
           <div class="card-grid">
             <article class="card">
-              <h3>Coffee Chat / 커피챗</h3>
+              <h3>Green Beans</h3>
               <p>
-                Give this URL to your agent for a one-time, read-only conversation
-                grounded in this graph.
+                Read the author's dated annotations and the perspective time
+                they describe.
               </p>
             </article>
             <article class="card">
-              <h3>Install plugin / 플러그인 설치</h3>
+              <h3>Origins</h3>
               <p>
-                Install <code>{model.manifest.plugin.name}</code> when you want the
-                three Skills available across later conversations and tasks.
+                Open the exact public URLs and inspect what each Green Bean observed
+                from them.
               </p>
             </article>
             <article class="card">
-              <h3>Make mine / 내 것으로 만들기</h3>
+              <h3>Taste over time</h3>
               <p>
-                Fork the generic engine and let Build KG initialize your own
-                namespace from an approved first Note.
+                Compare annotations across time. A pattern is not a personality
+                profile and does not replace asking the person.
               </p>
             </article>
           </div>
         </section>
         <section class="section">
-          <p class="eyebrow">AI synthesis disclosure / AI 합성 고지</p>
-          <h2>No fixed avatar is stored here.</h2>
+          <p class="eyebrow">AI interpretation disclosure / AI 해석 고지</p>
+          <h2>The record is durable. The answer is bounded.</h2>
           <p class="lede">
-            Responses are AI-derived at query time from selected public records.
-            They may be incomplete and are not the author speaking in real time.
-            Derived Perspective and Task Lens are not written back to Git. / 응답은
-            선택된 공개 기록에서 질의 시점에 AI가 합성합니다. 불완전할 수 있으며
-            작성자가 실시간으로 말하는 것이 아닙니다. 발현된 관점과 작업 렌즈는
-            Git에 저장하지 않습니다.
+            A response is an agent-conditioned interpretation generated at
+            request time from selected public records. It may be incomplete and
+            is not the author speaking live. It is not written back to Git. /
+            응답은 선택된 공개 기록에서 요청 시점에 생성된
+            agent-conditioned interpretation입니다. 불완전할 수 있으며 작성자가
+            실시간으로 말하는 것이 아닙니다. Git에 다시 저장되지 않습니다.
           </p>
-          <ul class="tag-list" aria-label="Knowledge graph counts / 지식 그래프 개수">
+          <ul class="tag-list" aria-label="Public record counts / 공개 기록 개수">
             <li class="tag">{data.notes.length} Notes</li>
             <li class="tag">{data.entities.length} Entities</li>
             <li class="tag">{data.sources.length} Sources</li>

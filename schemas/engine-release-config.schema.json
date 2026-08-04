@@ -13,17 +13,21 @@
   "properties": {
     "schema_version": { "const": "1.0.0" },
     "version": {
-      "$ref": "https://coffee-chat.dev/schemas/engine-release-config.schema.json#/$defs/semver"
+      "$ref": "https://coffee-chat.dev/schemas/engine-release-config.schema.json#/$defs/calver"
     },
     "source_ref": {
       "type": "string",
-      "pattern": "^refs/tags/v(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+      "pattern": "^refs/tags/v[0-9]{4}\\.(?:0[1-9]|1[0-2])\\.(?:0[1-9]|[12][0-9]|3[01])$"
     },
     "target_manifest_schema_version": {
       "$ref": "https://coffee-chat.dev/schemas/engine-release-config.schema.json#/$defs/semver"
     }
   },
   "$defs": {
+    "calver": {
+      "type": "string",
+      "pattern": "^[0-9]{4}\\.(?:0[1-9]|1[0-2])\\.(?:0[1-9]|[12][0-9]|3[01])$"
+    },
     "semver": {
       "type": "string",
       "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-9-]+)*)?(?:\\+[0-9A-Za-z-9-]+(?:\\.[0-9A-Za-z-9-]+)*)?$"

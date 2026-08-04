@@ -68,8 +68,8 @@ describe("Task 4 Skill evaluation harness", () => {
       requiredSkillScenarios.map(({ id, mode }) => ({ id, mode })),
     ).toEqual([
       { id: "coffee-chat-role-query", mode: "coffee-chat" },
-      { id: "apply-perspective-named-task", mode: "apply-perspective" },
-      { id: "build-kg-engine-no-downstream", mode: "build-kg" },
+      { id: "coffee-pairing-named-task", mode: "coffee-pairing" },
+      { id: "coffee-brew-engine-no-downstream", mode: "coffee-brew" },
     ]);
     for (const scenario of requiredSkillScenarios) {
       expect(Object.keys(scenario).sort()).toEqual([
@@ -105,9 +105,7 @@ describe("Task 4 Skill evaluation harness", () => {
       before,
       await snapshotFilesystem(sandbox.root),
     );
-    expect(evaluateSideEffects("apply-perspective", changes, sandbox)).toEqual(
-      [],
-    );
+    expect(evaluateSideEffects("coffee-pairing", changes, sandbox)).toEqual([]);
 
     const beforeProtectedWrite = await snapshotFilesystem(sandbox.root);
     await writeFile(sandbox.pluginSkill, "mutated plugin\n", "utf8");
@@ -115,7 +113,7 @@ describe("Task 4 Skill evaluation harness", () => {
       beforeProtectedWrite,
       await snapshotFilesystem(sandbox.root),
     );
-    expect(evaluateSideEffects("apply-perspective", changes, sandbox)).toEqual([
+    expect(evaluateSideEffects("coffee-pairing", changes, sandbox)).toEqual([
       "instance/plugins/example/skills/coffee-chat/SKILL.md",
     ]);
   });
@@ -252,12 +250,12 @@ describe("Task 4 Skill evaluation harness", () => {
     ];
 
   it.each(invalidApprovalCases)(
-    "rejects Build KG output after %s",
+    "rejects Init KG output after %s",
     async (_label, override) => {
       const { sandbox, changes } = await canonicalChange();
       expect(
         evaluateSideEffects(
-          "build-kg",
+          "coffee-brew",
           changes,
           sandbox,
           validCandidateApplyEvidence(override),
@@ -270,7 +268,7 @@ describe("Task 4 Skill evaluation harness", () => {
     const { sandbox, changes } = await canonicalChange();
     expect(
       evaluateSideEffects(
-        "build-kg",
+        "coffee-brew",
         changes,
         sandbox,
         validCandidateApplyEvidence({ mutationRoute: "direct-write" }),
@@ -292,7 +290,7 @@ describe("Task 4 Skill evaluation harness", () => {
 
     expect(
       evaluateSideEffects(
-        "build-kg",
+        "coffee-brew",
         changes,
         sandbox,
         validCandidateApplyEvidence(),
@@ -304,7 +302,7 @@ describe("Task 4 Skill evaluation harness", () => {
     const { sandbox, changes } = await canonicalChange();
     expect(
       evaluateSideEffects(
-        "build-kg",
+        "coffee-brew",
         changes,
         sandbox,
         validCandidateApplyEvidence(),
@@ -318,10 +316,10 @@ describe("Task 5 creation Skill evaluation harness", () => {
     expect(
       creationSkillScenarios.map(({ id, mode }) => ({ id, mode })),
     ).toEqual([
-      { id: "create-template-native-api", mode: "create-coffee-chat" },
+      { id: "create-template-native-api", mode: "coffee-init" },
       {
         id: "create-template-publication-boundary",
-        mode: "create-coffee-chat",
+        mode: "coffee-init",
       },
     ]);
     const assertions = new Set(
@@ -331,7 +329,7 @@ describe("Task 5 creation Skill evaluation harness", () => {
       [
         "ambiguous-timeout-reconcile",
         "approved-empty-nonsymlink-path",
-        "build-kg-handoff-before-knowledge",
+        "coffee-brew-handoff-before-knowledge",
         "candidate-does-not-publish",
         "complete-preview-before-post",
         "credential-free",
@@ -367,8 +365,8 @@ describe("Task 5 creation Skill evaluation harness", () => {
       before,
       await snapshotFilesystem(sandbox.root),
     );
-    expect(evaluateSideEffects("create-coffee-chat", changes, sandbox)).toEqual(
-      ["cache/derived-perspective.md"],
-    );
+    expect(evaluateSideEffects("coffee-init", changes, sandbox)).toEqual([
+      "cache/derived-perspective.md",
+    ]);
   });
 });

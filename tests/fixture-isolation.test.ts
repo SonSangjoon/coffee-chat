@@ -291,8 +291,12 @@ describe("Task 5 fixture and output isolation", () => {
       ...note.sources.flatMap((source) => [
         source.url,
         source.title,
-        source.published_on,
-        source.accessed_on,
+        source.published_on
+          ? `${source.title}::published_on=${source.published_on}`
+          : undefined,
+        source.accessed_on
+          ? `${source.title}::accessed_on=${source.accessed_on}`
+          : undefined,
       ]),
       syntheticManifest.profile.display_name,
       syntheticManifest.repository.url,

@@ -21,7 +21,7 @@ function graph(): InstanceGraph {
       pages_url: "https://example.github.io/coffee-chat-projection/",
       plugin: {
         name: "coffee-chat-projection",
-        version: "1.0.0",
+        version: "2026.08.04",
         description: "Fixture",
       },
       marketplace_name: "coffee-chat-projection-marketplace",
@@ -33,7 +33,7 @@ function graph(): InstanceGraph {
       provenance: {
         engine: {
           repository: "https://github.com/SonSangjoon/coffee-chat",
-          version: "1.1.0",
+          version: "2026.08.04",
           source_commit: "a".repeat(40),
           release_digest: `sha256:${"b".repeat(64)}`,
         },

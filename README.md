@@ -4,122 +4,95 @@
 
 # Coffee Chat
 
-## AI makes execution abundant. Taste decides what is worth making.
+## Same Origin. Different Taste.
 
-Taste here means trained judgment under uncertainty: what you notice, value, choose, refine, reject, and stop. Coffee Chat turns public Sources and dated, author-approved thinking into a temporal perspective graph that people and agents can question and use.
+AI made information cheap. It did not make judgment personal.
 
-It does not clone a person or store a fixed Mental Model. It derives only the perspective relevant to the current question or task, shows what supports it, and makes the boundary of the public record visible.
+Your Agent may already know a lot. It still does not know what matters to you.
 
-[**Have a Coffee Chat — no install**](#have-a-coffee-chat-without-installing) · [**Build your Coffee Chat**](#build-your-coffee-chat)
+## When information is not enough
 
-## Why Coffee Chat
+The same information can lead to different judgments. People notice different things, assign importance differently, and make different value judgments.
 
-A coffee chat helps you understand how someone sees and decides through your own questions. Coffee Chat gives people and agents that same entry point into a documented point of view—with Sources, dates, and visible limits.
+Taste is the recurring value system behind how a person interprets information and assigns importance. It is not a score, a personality profile, or a decision rule. Its criteria remain recognizable across different Origins and situations, even when conclusions change.
 
-- **Your agent has a Coffee Chat with you:** it reads the relevant record before a task and derives a temporary POV, Mental Model, or Task Lens.
-- **Someone else has a Coffee Chat with you:** they or their agent ask their own questions to understand, compare, or carefully apply the recorded perspective.
+That recurring consistency is why Taste matters. It makes a person's way of seeing information recognizable to other people and useful to an Agent.
 
-This is the neutral engine: it has no person to chat with. Use an initialized public instance URL for a conversation.
+## Your Agent needs more than knowledge
 
-## Two needs, one graph
+- People who use Agents for real work and keep explaining what matters to them.
 
-| Build and use your Taste | Understand and use another perspective |
-| --- | --- |
-| Add one public Source and your dated thought through an agent interview. | Open an instance URL and ask a question without installing. |
-| Let your own Agent retrieve the relevant record before a named task. | Trace the response to dated Notes and public Sources. |
-| Derive a temporary POV, Mental Model, or Task Lens without storing it. | Surface alignment, tension, and Unknown without impersonation or scores. |
+- People who share information but want to show their point of view, not only a summary.
 
-## Have a Coffee Chat without installing
+- People who want to understand each other's criteria before collaborating.
 
-Start with an initialized public instance URL. A one-time Coffee Chat installs nothing.
+> Your Agent already knows a lot. Coffee Chat helps it understand what matters to you.
 
-```text
-Open <COFFEE_CHAT_INSTANCE_URL>.
-Read coffee-chat.json, then AGENTS.md.
-Start a one-time Coffee Chat. Do not install anything.
+## From Origin to Taste
 
-Help me understand how this person approaches <ROLE_OR_PROJECT>.
-Show documented alignment, tension, and Unknown.
-Distinguish Authored, Sourced, Inferred, and Unknown.
-Do not score the person or make a hiring decision.
-```
-
-Try asking:
-
-- What does this person optimize for when making this kind of decision?
-- What public evidence shaped that judgment?
-- How has the view changed over time, and why?
-- Where might this role or project align with or challenge the documented view?
-- What should I ask the person directly because the public record cannot answer it?
-
-Role or hiring comparison is one optional question pattern, not the product identity.
-
-## One record, two directions
-
-![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.png)
-
-Derived Perspective and Task Lens are used for the current question or task and are not written back.
-
-- **Build:** begin with one public Source and one dated thought.
-- **Use:** recover relevant judgment before a named task.
-- **Talk:** explore a documented point of view without installation.
-- **Apply:** inform a relevant task with attribution and limits.
-
-## Why this is not another knowledge base
-
-Other systems make information retrievable or teach an AI to remember or represent a user. Coffee Chat makes documented judgment usable by its owner and their agents, inspectable by other people, and selectively applicable by their agents.
-
-| Category | Primary question | Coffee Chat boundary |
-| --- | --- | --- |
-| Personal knowledge base | What has the owner saved or learned? | What does the approved public record show about how this issue was judged? |
-| RAG or GraphRAG | What does this corpus say? | What is Authored, Sourced, Inferred, or Unknown? |
-| Agent memory | What should the agent remember? | Only approved public records persist; task synthesis does not. |
-
-A knowledge base retrieves what someone knows. Coffee Chat lets people and agents work with how that person's documented judgment has evolved.
-
-## How it earns trust
-
-![Four separate trust layers: Authored, Sourced, Inferred, and Unknown](./docs/assets/readme/coffee-chat-trust.en.png)
-
-- A public Source anchors each record.
-- The author approves each dated Note.
-- Change over time remains visible.
-- Answers distinguish Authored, Sourced, Inferred, and Unknown.
-- No personality or fixed Mental Model is stored.
-- Derived perspectives are not persisted.
-
-Use it to make work more consistent and conversations more informed—not to freeze or replace a person.
-
-## Put Taste to work
-
-Name an exact external task and target. The agent retrieves only relevant dated records, discloses the Notes that support an advisory Task Lens, changes only the named target, and leaves Coffee Chat knowledge and installed plugin data untouched.
+Coffee Chat is an open-source workflow for turning Origin-based points of view into contextual Taste, putting that Taste on an Agent, and using it in conversation or work.
 
 ```text
-Use <YOUR_COFFEE_CHAT_URL> as the perspective source for <TASK>.
-Retrieve only the public, dated records relevant to the task.
-Derive a temporary POV, Mental Model, and Task Lens.
-Explain which judgment criteria affect the work and cite the supporting Notes.
-Work only on <TARGET>.
-Do not write the synthesis back to Coffee Chat.
+Origin → Green Bean → Bean → Coffee → Coffee Chat / Coffee Pairing
+          Harvest        Roast   Brew
 ```
 
-## Build your Coffee Chat
+### Build your Taste
 
-```text
-one public reference + your dated thought
-→ agent interview
-→ public Preview and approval
-→ first Note and temporal graph
-→ Coffee Chat and task use
-```
+![Origin becomes Green Bean through Harvest, then Bean through Roast](./docs/assets/readme/coffee-chat-taste.en.png)
 
-Choose **Create yours** through the generic `coffee-chat` plugin. It uses the official GitHub Template flow, then hands the new public checkout to `skills/create-coffee-chat/SKILL.md` and Build KG. Authors do not fill in a personality profile or a fixed Mental Model; the first useful result is one approved Note that can support a question or task immediately.
+Harvest one or more Origins into Green Beans. Roast the relevant Green Beans into a contextual Bean that carries Taste for the current question or task.
 
-The owner using the graph with their own agents is the primary loop. Public conversation and careful reuse by others grow from that same record.
+## Put your Taste to work
 
-## Install, remove, contribute, and license
+![Bean becomes Coffee through Brew, then branches to Coffee Chat and Coffee Pairing](./docs/assets/readme/coffee-chat-agent.en.png)
 
-Install the engine plugin to build and operate an instance. For repeated conversation or task work, install the relevant person's instance plugin instead.
+Brew that Bean into Coffee—the Agent with your Taste—for the current Coffee Chat or task. The Taste context is dynamic and is not shown as a fixed profile.
+
+Have a Coffee Chat with that Coffee, or use Coffee Pairing to apply it to a named project or task.
+
+## What makes it different
+
+Coffee Chat does not store everything you know or every decision you make. It keeps how you interpreted an Origin and what you considered important.
+
+- Origin: the information and its provenance
+- Green Bean: your authored point of view
+- Bean: the Taste needed for the current context
+- Coffee: an Agent with that Taste applied
+
+A Green Bean may link one or more Origins. Taste is not a global profile or an executable rule; Roast forms the Bean needed for the current context.
+
+This is the neutral engine. It has no default person or Taste, and no personal record to answer for.
+
+## Try a Coffee Chat
+
+This repository is the neutral engine, not a ready-made personal instance. There is no default person or Taste here.
+
+Init a public instance first, then give that explicit URL to an agent. Coffee Roast and Coffee Brew should begin from the instance's `coffee-chat.json` and `AGENTS.md` before the first Coffee Chat.
+
+> **My personal Coffee Chat** — coming soon.
+> This space is reserved for my public Coffee Chat.
+<!-- PERSONAL_COFFEE_CHAT_URL: replace this marker with your public Coffee Chat link -->
+
+## Init your Coffee Chat
+
+Start with one or more public Origins and prepare how you interpreted them, what you considered important, and which values guided that judgment.
+
+Harvest public Origins into Green Beans, Roast them into contextual Beans that carry Taste, and Brew a Bean into Coffee—the Agent with your Taste—for Coffee Chat or Coffee Pairing.
+
+## Choose your next action
+
+- **Init your Coffee Chat** — initialize a separate public coffee-chat-* repository from the engine, then Harvest its first Origin into a Green Bean.
+- **Install engine plugin** — add the neutral engine Skills to your agent for authoring and maintenance.
+- **Contribute to engine** — improve schemas, validation, Skills, and the public presentation.
+
+This engine has no default person or Taste. It contains no personal Origin, Green Bean, Bean, or Coffee to chat with.
+
+Do not treat this engine URL as a personal Coffee Chat. Init or open an explicit instance URL first.
+
+## Install, maintain, and contribute
+
+Install the engine plugin for reusable authoring and maintenance. Install an instance plugin only when you need repeated access to a particular public record.
 
 <details><summary>Codex install and remove</summary>
 
@@ -172,10 +145,10 @@ Codex exposes no plugin scope selector in `plugin add` and no separate plugin up
 
 Claude Code `local` scope is the narrowest temporary choice. Its update command refreshes this namespaced plugin; the two list commands are the same presence-or-absence receipt. Host-managed caches, conversation history, logs, and retention may remain after removal.
 
-Derived POVs, Mental Models, Task Lenses, and new personal knowledge are never appended to the installed snapshot at runtime.
+Only approved Green Beans are durable. A Bean or Coffee Pairing result is temporary and is not appended to the installed snapshot at runtime.
 
 </details>
 
-Contribute reusable schemas, methods, Skills, and safety guardrails to the [engine](https://github.com/SonSangjoon/coffee-chat). Personal Notes belong only in an instance controlled by their author.
+Read the [maintained design contract](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/design/coffee-chat.md), [UX research](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/research/2026-08-04-coffee-chat-ux-research.md), and [testing and acceptance guide](https://github.com/SonSangjoon/coffee-chat/blob/main/docs/testing.md) before changing the engine.
 
-See [testing and acceptance](./docs/testing.md). Code, schemas, templates, and Skills use the [MIT License](./LICENSE); Notes and original public prose use the [content terms](./CONTENT_LICENSE.md).
+Code, schemas, engine payloads, and Skills use the [MIT License](./LICENSE); original Green Beans and public prose use the [content terms](./CONTENT_LICENSE.md).

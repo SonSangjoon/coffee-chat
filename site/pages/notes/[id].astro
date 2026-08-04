@@ -23,7 +23,7 @@ const { noteId } = Astro.props;
 const model = siteModel;
 const graph = instanceGraph(model);
 const note = graph.notes.find((value) => value.id === noteId);
-if (!note) throw new Error(`Unknown generated Note route: ${noteId}`);
+if (!note) throw new Error(`Unknown generated Green Bean route: ${noteId}`);
 const sources = note.source_urls
   .map((url) => graph.sources.find((source) => source.url === url))
   .filter((source) => source !== undefined);
@@ -44,22 +44,22 @@ const body = renderMarkdown(note.body, {
 <BaseLayout
   {model}
   title={`${note.title} — Coffee Chat`}
-  description={`A dated public Note recorded on ${note.recorded_on}.`}
+  description={`A dated public Green Bean recorded on ${note.recorded_on}.`}
 >
   <article>
     <header class="hero">
-      <p class="eyebrow">Note / 기록</p>
+      <p class="eyebrow">Green Bean / 기록</p>
       <h1>{note.title}</h1>
       <p class="lede">
-        Perspective time / 관점의 시간: <time>{note.temporal_coverage}</time><br />
+        Green Bean time / 관점이 적용되는 시간: <time>{note.temporal_coverage}</time><br />
         First recorded / 최초 기록: <time datetime={note.recorded_on}>{note.recorded_on}</time>
       </p>
     </header>
     <div class="detail-grid section">
       <div class="markdown-body" set:html={body} />
-      <aside class="provenance-panel" aria-label="Note provenance / 기록 출처">
+      <aside class="provenance-panel" aria-label="Green Bean provenance / 기록 출처">
         <p class="eyebrow">Explicit provenance / 명시적 출처</p>
-        <h2>Sources / 출처</h2>
+        <h2>Origins / 출처</h2>
         <ul class="plain-list">
           {
             sources.map((source) => (

@@ -54,7 +54,7 @@ describe("Coffee Chat foundation contracts", () => {
       repository_role: "engine",
       repository: { url: "https://github.com/SonSangjoon/coffee-chat" },
       pages_url: "https://sonsangjoon.github.io/coffee-chat/",
-      plugin: { name: "coffee-chat", version: "1.1.0" },
+      plugin: { name: "coffee-chat", version: "2026.08.04" },
       marketplace_name: "coffee-chat-marketplace",
     });
     expect(manifest).not.toHaveProperty("profile");
@@ -114,7 +114,7 @@ describe("Coffee Chat foundation contracts", () => {
         schema_version: "1.0.0",
         engine: {
           repository: "https://github.com/sonsangjoon/coffee-chat",
-          version: "1.1.0",
+          version: "2026.08.04",
           source_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           release_digest:
             "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -138,14 +138,14 @@ describe("Coffee Chat foundation contracts", () => {
           pages_url: "https://example.github.io/downstream/",
           plugin: {
             name: "coffee-chat-projection",
-            version: "1.0.0",
+            version: "2026.08.04",
             description: "A public perspective graph.",
           },
           content_notice: "# Content Notice\n",
           provenance: {
             engine: {
               repository: "https://github.com/sonsangjoon/coffee-chat",
-              version: "1.1.0",
+              version: "2026.08.04",
               source_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
               release_digest:
                 "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -163,7 +163,7 @@ describe("Coffee Chat foundation contracts", () => {
             source_default_branch: "main",
             source_default_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             source_default_tree: "cccccccccccccccccccccccccccccccccccccccc",
-            source_release_ref: "refs/tags/v1.1.0",
+            source_release_ref: "refs/tags/v2026.08.04",
             source_release_commit: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             source_release_tree: "cccccccccccccccccccccccccccccccccccccccc",
             release_digest:
@@ -603,7 +603,7 @@ describe("Coffee Chat foundation contracts", () => {
             pages_url: "https://example.com/pages/",
             plugin: {
               name: "wrong-mode",
-              version: "1.0.0",
+              version: "2026.08.04",
               description: "Wrong mode.",
             },
           },

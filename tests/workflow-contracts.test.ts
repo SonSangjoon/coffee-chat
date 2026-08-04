@@ -203,6 +203,51 @@ describe("Task 1 CodeQL workflow", () => {
   });
 });
 
+describe("Coffee Chat CalVer release workflow", () => {
+  it("owns the release mutation and keeps its write boundary explicit", async () => {
+    const { raw, value } = await loadWorkflow("release.yml");
+    const events = object(value.on, "Release on");
+    const permissions = object(value.permissions, "Release permissions");
+    const jobs = object(value.jobs, "Release jobs");
+    const releaseJob = object(jobs.release, "Release job");
+    const steps = jobSteps(releaseJob);
+    const runs = runCorpus(steps);
+
+    expect(value.name).toBe("Coffee Chat Release");
+    expect(Object.keys(events)).toEqual(["workflow_dispatch"]);
+    expect(permissions).toEqual({ contents: "write" });
+    expect(releaseJob.if).toBe("${{ github.ref == 'refs/heads/main' }}");
+    expect(effectivePermissions(value, releaseJob)).toEqual({
+      contents: "write",
+    });
+    expect([...new Set(usedActions(value))].sort()).toEqual(
+      [checkoutAction, setupNodeAction].sort(),
+    );
+    expect(
+      object(
+        steps.find((step) => step.uses === checkoutAction)?.with,
+        "Release checkout inputs",
+      )["persist-credentials"],
+    ).toBe(true);
+    expect(runs).toMatch(/tools\/release-version\.ts calver/);
+    expect(runs).toMatch(/tools\/release-version\.ts prepare --version/);
+    expect(runs).toContain("npm run cc -- generate");
+    expect(runs).toContain("npm run cc -- generate --check --format json");
+    expect(runs).toContain("npm test");
+    expect(runs).toContain("npm run typecheck");
+    expect(runs).toContain("npm run format:check");
+    expect(runs).toContain("npm run gitleaks:scan");
+    expect(runs).toContain("npm run site:build");
+    expect(runs).toContain("npm run site:check");
+    expect(runs).toContain("Publishing the existing CalVer baseline");
+    expect(runs).toMatch(/git tag -a "v\$\{VERSION\}"/);
+    expect(runs).toMatch(/git push origin "v\$\{VERSION\}"/);
+    expect(runs).toMatch(/gh release create "v\$\{VERSION\}"/);
+    expect(raw).not.toMatch(/git push[^\n]*--force/);
+    expect(raw).not.toMatch(/\$\{\{\s*secrets\./i);
+  });
+});
+
 async function loadWorkflow(name: string): Promise<LoadedWorkflow> {
   const repositoryPath = `.github/workflows/${name}`;
   const raw = decodeCanonicalText(

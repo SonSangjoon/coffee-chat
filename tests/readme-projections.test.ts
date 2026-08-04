@@ -54,37 +54,98 @@ describe("localized README projections", () => {
         "![커피잔, 궤도선, 네 개의 색상 노드가 있는 Coffee Chat 커버](./docs/assets/readme/coffee-chat-cover.png)\n\n[English](./README.md)\n",
       ),
     ).toBe(true);
+    expect(english).toContain("## Same Origin. Different Taste.");
+    expect(korean).toContain("## 같은 Origin. 다른 Taste.");
+    expect(english).toContain("## When information is not enough");
+    expect(korean).toContain("## 정보만으로는 충분하지 않을 때");
+    expect(english).toContain("## Your Agent needs more than knowledge");
+    expect(korean).toContain("## Agent가 알아야 할 것은 지식만이 아닙니다");
+    expect(english).toContain("## From Origin to Taste");
+    expect(korean).toContain("## Origin에서 Taste까지");
+    expect(english).toContain("## Put your Taste to work");
+    expect(korean).toContain("## Taste를 실제로 사용하기");
     expect(english).toContain(
-      "## AI makes execution abundant. Taste decides what is worth making.",
+      "Taste is the recurring value system behind how a person interprets information and assigns importance.",
     );
     expect(korean).toContain(
-      "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
-    );
-    expect(english).toContain(
-      "Taste here means trained judgment under uncertainty",
-    );
-    expect(korean).toContain(
-      "여기서 Taste는 미적 취향이나 성격이 아니라, 불확실성 속에서 훈련된 판단입니다.",
-    );
-    expect(english).toContain("## Why Coffee Chat");
-    expect(korean).toContain("## 왜 Coffee Chat인가");
-    expect(english).not.toContain("Coffee Chat과 대화하기");
-    expect(korean).not.toContain("Talk with a Coffee Chat / ");
-    expect(korean).toContain(
-      "[**나만의 Coffee Chat 만들기**](#나만의-coffee-chat-만들기)",
+      "Taste는 정보를 해석하고 중요도를 부여하는 과정에서 반복적으로 작동하는 가치체계입니다.",
     );
     expect(english).toContain(
-      "![One public record branches toward the owner's Task Lens and another person's grounded Coffee Chat](./docs/assets/readme/coffee-chat-flow.en.png)",
+      "Your Agent already knows a lot. Coffee Chat helps it understand what matters to you.",
     );
     expect(korean).toContain(
-      "![하나의 공개 기록이 주인의 Task Lens와 다른 사람의 근거 기반 Coffee Chat으로 이어지는 흐름](./docs/assets/readme/coffee-chat-flow.en.png)",
+      "당신의 Agent는 이미 많은 것을 알고 있습니다. Coffee Chat은 그 Agent가 당신에게 무엇이 중요한지 이해하도록 돕습니다.",
     );
+    expect(english).toContain("coffee-chat-taste.en.png");
+    expect(english).toContain("coffee-chat-agent.en.png");
+    expect(korean).toContain("coffee-chat-taste.en.png");
+    expect(korean).toContain("coffee-chat-agent.en.png");
+    expect(english).toContain("### Build your Taste");
+    expect(korean).toContain("### Taste 만들기");
+    expect(english).toContain("## Put your Taste to work");
+    expect(korean).toContain("## Taste를 실제로 사용하기");
+    expect(english).toContain("Harvest one or more Origins into Green Beans");
     expect(english).toContain(
-      "![Four separate trust layers: Authored, Sourced, Inferred, and Unknown](./docs/assets/readme/coffee-chat-trust.en.png)",
+      "Roast the relevant Green Beans into a contextual Bean",
+    );
+    expect(english).toContain("Brew that Bean into Coffee");
+    expect(english).toContain(
+      "Coffee Pairing to apply it to a named project or task",
     );
     expect(korean).toContain(
-      "![작성자 기록, 출처 내용, 제한된 추론, 기록으로 알 수 없음의 분리된 네 가지 신뢰 층](./docs/assets/readme/coffee-chat-trust.en.png)",
+      "하나 이상의 Origin을 Harvest해 Green Bean을 만듭니다",
     );
+    expect(korean).toContain(
+      "Green Bean을 Roast하면 현재 맥락의 Taste를 담은 Bean",
+    );
+    expect(korean).toContain("그 Bean을 Brew해 Coffee를 만들면");
+    expect(english).toContain("Have a Coffee Chat with that Coffee");
+    expect(english).toContain(
+      "Coffee Pairing to apply it to a named project or task",
+    );
+    expect(korean).toContain(
+      "Coffee Pairing을 통해 특정 프로젝트와 작업에 같은 기준을 적용합니다.",
+    );
+    expect(english).toContain("PERSONAL_COFFEE_CHAT_URL");
+    expect(korean).toContain("PERSONAL_COFFEE_CHAT_URL");
+    expect(english).not.toMatch(/\bpersona\b/i);
+    expect(korean).not.toMatch(/\bpersona\b/i);
+    expect(english).toContain("## What makes it different");
+    expect(korean).toContain("## Coffee Chat이 다른 이유");
+    expect(english).toContain("Green Bean");
+    expect(korean).toContain("Green Bean");
+    expect(english).not.toContain("Source-grounded Perspective Annotation");
+    expect(korean).not.toContain("Source-grounded Perspective Annotation");
+    for (const term of ["Sip", "Serve", "Project"]) {
+      expect(english).not.toContain(term);
+      expect(korean).not.toContain(term);
+    }
+    expect(english).toContain("This engine has no default person or Taste");
+    expect(english).toContain("Init your Coffee Chat");
+    expect(english).toContain("Install engine plugin");
+    expect(english).toContain("Contribute to engine");
+    expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
+    expect(korean).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
+    for (const deprecated of [
+      "Mental Model",
+      "Task Lens",
+      "Derived Perspective",
+      "judgment policy",
+    ]) {
+      expect(english).not.toContain(deprecated);
+      expect(korean).not.toContain(deprecated);
+    }
+    for (const removedAsset of [
+      "coffee-chat-flow.en.png",
+      "coffee-chat-trust.en.png",
+    ]) {
+      expect(english).not.toContain(removedAsset);
+      expect(korean).not.toContain(removedAsset);
+    }
+    for (const removedTerm of ["Authored", "Sourced", "Inferred"]) {
+      expect(english).not.toContain(removedTerm);
+      expect(korean).not.toContain(removedTerm);
+    }
     for (const command of [
       "npm run cc -- hooks inspect --format json",
       "npm run cc -- hooks install --format json",
@@ -102,28 +163,28 @@ describe("localized README projections", () => {
     }
 
     expectHeadingOrder(english!, [
-      "## AI makes execution abundant. Taste decides what is worth making.",
-      "## Why Coffee Chat",
-      "## Two needs, one graph",
-      "## Have a Coffee Chat without installing",
-      "## One record, two directions",
-      "## Why this is not another knowledge base",
-      "## How it earns trust",
-      "## Put Taste to work",
-      "## Build your Coffee Chat",
-      "## Install, remove, contribute, and license",
+      "## Same Origin. Different Taste.",
+      "## When information is not enough",
+      "## Your Agent needs more than knowledge",
+      "## From Origin to Taste",
+      "## Put your Taste to work",
+      "## What makes it different",
+      "## Try a Coffee Chat",
+      "## Init your Coffee Chat",
+      "## Choose your next action",
+      "## Install, maintain, and contribute",
     ]);
     expectHeadingOrder(korean!, [
-      "## AI가 실행을 풍부하게 만들수록, 무엇을 만들 가치가 있는지 결정하는 Taste가 중요해집니다.",
-      "## 왜 Coffee Chat인가",
-      "## 두 가지 필요, 하나의 그래프",
-      "## 설치 없이 Coffee Chat 하기",
-      "## 하나의 기록, 두 방향",
-      "## 또 하나의 지식 베이스가 아닌 이유",
-      "## 신뢰를 얻는 방식",
-      "## Taste를 업무에 적용하기",
-      "## 나만의 Coffee Chat 만들기",
-      "## 설치, 제거, 기여, 라이선스",
+      "## 같은 Origin. 다른 Taste.",
+      "## 정보만으로는 충분하지 않을 때",
+      "## Agent가 알아야 할 것은 지식만이 아닙니다",
+      "## Origin에서 Taste까지",
+      "## Taste를 실제로 사용하기",
+      "## Coffee Chat이 다른 이유",
+      "## Coffee Chat 해보기",
+      "## 나만의 Coffee Chat Init",
+      "## 다음 행동 선택하기",
+      "## 설치, 유지보수, 기여",
     ]);
   });
 
@@ -146,9 +207,7 @@ describe("localized README projections", () => {
     );
     expect(english).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
     expect(korean).not.toContain("<COFFEE_CHAT_INSTANCE_URL>");
-    expect(korean).toContain(
-      "[**나만의 Coffee Chat 만들기**](#build-your-coffee-chat)",
-    );
+    expect(korean).toContain("[중립 엔진](#init-your-coffee-chat)");
     expect(english).not.toContain("Sangjoon Son");
     expect(korean).not.toContain("Sangjoon Son");
     expect(english).not.toContain("Built with [Coffee Chat]");
@@ -166,7 +225,7 @@ describe("localized README projections", () => {
     manifest.provenance = {
       engine: {
         repository: "https://github.com/example/coffee-chat-engine",
-        version: "1.1.0",
+        version: "2026.08.04",
         source_commit: "a".repeat(40),
         release_digest: `sha256:${"b".repeat(64)}`,
       },
@@ -179,7 +238,7 @@ describe("localized README projections", () => {
     for (const readme of projected.values()) {
       const lines = readme.toString("utf8").trimEnd().split("\n");
       expect(lines.at(-1)).toBe(
-        "Built with [Coffee Chat](https://github.com/example/coffee-chat-engine) · v1.1.0",
+        "Initialized with [Coffee Chat](https://github.com/example/coffee-chat-engine) · v2026.08.04",
       );
       expect(readme.toString("utf8")).not.toContain(
         "https://github.com/SonSangjoon/coffee-chat",

@@ -1,7 +1,7 @@
 {
   "name": "coffee-chat",
-  "version": "1.1.0",
-  "description": "Converse with and apply a public, dated perspective graph.",
+  "version": "2026.08.04",
+  "description": "Harvest Origins into Green Beans, Roast them into contextual Beans, and Brew Coffee for Coffee Chat or Coffee Pairing.",
   "author": {
     "name": "Coffee Chat"
   },
@@ -10,8 +10,9 @@
   "license": "MIT",
   "keywords": [
     "coffee-chat",
-    "knowledge-graph",
-    "perspective"
+    "green-bean",
+    "taste",
+    "coffee-pairing"
   ],
   "skills": "./skills/"
 }

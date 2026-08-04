@@ -340,17 +340,17 @@ function refreshOwnershipMarkers(
 }
 
 const CREATION_REFERENCE_SOURCES = [
-  ["skills/create-coffee-chat/references/release.json", "engine/release.json"],
+  ["skills/coffee-init/references/release.json", "engine/release.json"],
   [
-    "skills/create-coffee-chat/references/engine-release.schema.json",
+    "skills/coffee-init/references/engine-release.schema.json",
     "schemas/engine-release.schema.json",
   ],
   [
-    "skills/create-coffee-chat/references/template-surface.json",
+    "skills/coffee-init/references/template-surface.json",
     "engine/template-surface.json",
   ],
   [
-    "skills/create-coffee-chat/references/engine-template-surface.schema.json",
+    "skills/coffee-init/references/engine-template-surface.schema.json",
     "schemas/engine-template-surface.schema.json",
   ],
 ] as const;
@@ -365,7 +365,7 @@ async function creationReferenceProjection(
   // still valid inputs for Candidate contract tests. A maintained engine
   // checkout always contains the Skill, so only that checkout receives these
   // engine-only references.
-  if (!(await snapshot.exists("skills/create-coffee-chat/SKILL.md")))
+  if (!(await snapshot.exists("skills/coffee-init/SKILL.md")))
     return { outputs: [], deletions: [] };
   const outputs: RepositoryProjection["outputs"] = [];
   for (const [path, source] of CREATION_REFERENCE_SOURCES) {

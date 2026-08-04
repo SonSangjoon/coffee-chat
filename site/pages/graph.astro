@@ -15,25 +15,27 @@ const pageTitle =
 <BaseLayout
   {model}
   title={pageTitle}
-  description="Explore Notes, Sources, Entities, and their explicit relationships."
+  description="Explore Green Beans, Origins, Entities, and the explicit provenance between them."
 >
   {
     graph && (
       <>
         <section class="hero">
-          <p class="eyebrow">Knowledge graph / 지식 그래프</p>
-          <h1>Trace every view back to its records.</h1>
+          <p class="eyebrow">Provenance graph / 근거 그래프</p>
+          <h1>Trace every Green Bean back to its Origin.</h1>
           <p class="lede">
-            Notes cite Sources, mention neutral Entities, and link to other Notes.
-            The graph does not store a fixed POV or Mental Model. / 기록은 출처를
-            인용하고 중립적인 엔티티를 언급하며 다른 기록과 연결됩니다. 고정된
-            POV나 멘탈 모델은 저장하지 않습니다.
+            Green Beans cite Origins, mention neutral Entities, and link to other Green Beans.
+            The graph stores provenance for authored POVs; it does not store a
+            global Taste object or task answer. /
+            기록은 Origin을 인용하고 중립적인 Entity를 언급하며 다른 Green Bean과
+            연결됩니다. 그래프는 Green Bean의 근거를 저장하고 전역 Taste
+            객체나 작업 답변은 저장하지 않습니다.
           </p>
         </section>
         <TemporalFilters basePath={graph.base_path} activeView="graph" />
         <section class="section" aria-labelledby="graph-view-title">
-          <p class="eyebrow">Explicit relationships / 명시적 관계</p>
-          <h2 id="graph-view-title">Notes, Sources, Entities</h2>
+          <p class="eyebrow">Explicit provenance / 명시적 근거</p>
+          <h2 id="graph-view-title">Green Beans, Origins, Entities</h2>
           <GraphView {graph} />
         </section>
       </>

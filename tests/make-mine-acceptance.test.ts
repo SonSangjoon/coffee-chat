@@ -119,8 +119,13 @@ async function engineState(): Promise<{
 }> {
   const paths = await listedPaths(projectRoot);
   const files = new Map<string, Buffer>();
-  for (const path of paths)
-    files.set(path, await readFile(resolve(projectRoot, ...path.split("/"))));
+  for (const path of paths) {
+    try {
+      files.set(path, await readFile(resolve(projectRoot, ...path.split("/"))));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    }
+  }
   return {
     files,
     status: await git(
@@ -143,7 +148,13 @@ async function copyEngineWorktree(target: string): Promise<void> {
     const source = resolve(projectRoot, ...path.split("/"));
     const destination = resolve(target, ...path.split("/"));
     await mkdir(dirname(destination), { recursive: true });
-    const status = await lstat(source);
+    let status: Awaited<ReturnType<typeof lstat>>;
+    try {
+      status = await lstat(source);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+      throw error;
+    }
     if (status.isSymbolicLink())
       await symlink(await readlink(source), destination);
     else {

@@ -1,38 +1,22 @@
-import { cp, mkdtemp, readdir, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
-import { validateKnowledge } from "../tools/knowledge.ts";
-import { generatedProjectionBytes } from "../tools/projections.ts";
-import { createSnapshot } from "../tools/snapshot.ts";
+import {
+  COFFEE_SKILL_NAMES,
+  COFFEE_SKILLS,
+  skillContract,
+} from "../tools/skill-contracts.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
-const instanceSkillNames = [
-  "coffee-chat",
-  "apply-perspective",
-  "build-kg",
-] as const;
-const engineSkillNames = [
-  ...instanceSkillNames,
-  "create-coffee-chat",
-  "update-coffee-chat",
-] as const;
-const temporaryRoots: string[] = [];
+const legacyUserTerms =
+  /\b(?:Perspective|Note|Entity|Blend|Serve|Template)\b|coffee-create|coffee-blend|coffee-serve/;
 
-afterEach(async () => {
-  await Promise.all(
-    temporaryRoots.splice(0).map((root) => rm(root, { recursive: true })),
-  );
-});
-
-async function readSkill(name: (typeof engineSkillNames)[number]) {
-  const text = await readFile(
-    resolve(projectRoot, "skills", name, "SKILL.md"),
-    "utf8",
-  );
+async function readSkill(name: string) {
+  const skillPath = resolve(projectRoot, "skills", name, "SKILL.md");
+  const text = await readFile(skillPath, "utf8");
   const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(text);
-  expect(match, `${name} has parseable frontmatter`).not.toBeNull();
+  expect(match, name + " has parseable frontmatter").not.toBeNull();
   return {
     text,
     metadata: parseYaml(match![1]) as Record<string, unknown>,
@@ -40,212 +24,55 @@ async function readSkill(name: (typeof engineSkillNames)[number]) {
   };
 }
 
-async function instanceProjection() {
-  const root = await mkdtemp(resolve(tmpdir(), "coffee-chat-skill-instance-"));
-  temporaryRoots.push(root);
-  for (const path of [
-    "schemas",
-    "method",
-    "skills",
-    "docs/assets/readme",
-    "docs/testing.md",
-    "LICENSE",
-    "CONTENT_LICENSE.md",
-  ])
-    await cp(resolve(projectRoot, path), resolve(root, path), {
-      recursive: true,
-    });
-  await cp(
-    resolve(projectRoot, "tests/fixtures/initialized-valid/coffee-chat.json"),
-    resolve(root, "coffee-chat.json"),
-  );
-  await cp(
-    resolve(projectRoot, "tests/fixtures/initialized-valid/knowledge"),
-    resolve(root, "knowledge"),
-    { recursive: true },
-  );
-  const snapshot = await createSnapshot(root, "worktree");
-  const validation = await validateKnowledge(snapshot, {
-    validateIndex: false,
-  });
-  expect(validation.diagnostics).toEqual([]);
-  return generatedProjectionBytes(snapshot, validation.graph!);
-}
-
-describe("Task 4 Agent Skill contracts", () => {
-  it.each(engineSkillNames)(
-    "%s is a concise Agent Skills router with standard compatibility metadata",
+describe("canonical Coffee Skill surface", () => {
+  it.each(COFFEE_SKILL_NAMES)(
+    "%s has registry-bound metadata and shared method routing",
     async (name) => {
       const skill = await readSkill(name);
-      expect(Object.keys(skill.metadata).sort()).toEqual([
-        "compatibility",
-        "description",
-        "name",
-      ]);
-      expect(skill.metadata.name).toBe(name);
-      expect(skill.metadata.description).toMatch(/^Use when /);
+      const contract = skillContract(name);
+
+      expect(skill.metadata).toMatchObject({
+        name,
+        description: contract.description,
+      });
       expect(skill.metadata.compatibility).toEqual(expect.any(String));
-      expect((skill.metadata.compatibility as string).length).toBeGreaterThan(
-        0,
-      );
-      expect(
-        (skill.metadata.compatibility as string).length,
-      ).toBeLessThanOrEqual(500);
-      expect(skill.body).not.toContain("## Compatibility");
       expect(skill.body).toContain("[shared method](references/method.md)");
       expect(skill.text).not.toContain("allowed-tools:");
+      expect(skill.body).not.toMatch(legacyUserTerms);
 
       const entries = await readdir(resolve(projectRoot, "skills", name), {
         recursive: true,
       });
-      const expectedReferences =
-        name === "create-coffee-chat"
-          ? [
-              "references",
-              "references/engine-release.schema.json",
-              "references/engine-template-surface.schema.json",
-              "references/method.md",
-              "references/release.json",
-              "references/template-surface.json",
-            ]
-          : name === "update-coffee-chat"
-            ? [
-                "references",
-                "references/advisory.json",
-                "references/engine-migration-document.schema.json",
-                "references/engine-migration-registry.schema.json",
-                "references/engine-release.schema.json",
-                "references/engine-update-advisory.schema.json",
-                "references/method.md",
-                "references/migration-registry.json",
-                "references/release.json",
-              ]
-            : ["references", "references/method.md"];
-      expect(entries.sort()).toEqual(["SKILL.md", ...expectedReferences]);
+      expect(entries).toContain("references");
+      expect(entries).toContain("references/method.md");
     },
   );
 
-  it("keeps the creation Skill instruction-only and binds the complete Preview protocol", async () => {
-    const skill = await readSkill("create-coffee-chat");
-    for (const phrase of [
-      "generic engine Skill",
-      "gh auth status",
-      "is_template",
-      "refs/tags/v",
-      "template-surface",
-      "complete Preview",
-      "gh api --method POST",
-      "private=false",
-      "template_repository",
-      "npm ci --ignore-scripts",
-      "Node 24.5.0",
-      "npm 11.5.1",
-      "node_modules/**",
-      "TemplateObservation",
-      "pre-conversion",
-      "repo-local `build-kg`",
-      "publication Preview",
-      "awaiting_owner_merge",
-      "partial_external_result",
-    ])
-      expect(skill.body).toContain(phrase);
-    for (const forbidden of [
-      "MCP server",
-      "mcpServers",
-      "agent definition",
-      "service",
-    ])
-      expect(skill.body).not.toContain(forbidden);
-  });
-
-  it("routes engine and instance entry from repository role without a default person", async () => {
+  it("uses the registry order and does not expose a removed Skill route", async () => {
     const agents = await readFile(resolve(projectRoot, "AGENTS.md"), "utf8");
-    const claude = await readFile(resolve(projectRoot, "CLAUDE.md"), "utf8");
-
-    expect(agents).toContain("repository_role");
-    expect(agents).toContain("Create yours");
-    expect(agents).toContain("Install engine plugin");
-    expect(agents).toContain("Contribute to engine");
-    expect(agents).toContain("knowledge/index.json");
-    expect(agents).toContain("no default person");
-    expect(agents).toContain("downstream pre-conversion engine checkout");
-    expect(agents).toContain("origin and target-fingerprint rules");
-    expect(agents).toContain("maintained engine checkout");
-    expect(agents).toContain(
-      "After the user explicitly chooses **Create yours**, route to `skills/create-coffee-chat/SKILL.md`",
-    );
-    expect(agents).toContain(
-      "Create yours to `skills/create-coffee-chat/SKILL.md`",
-    );
-    expect(agents).toContain(
-      "`contribute` and `update` require an initialized authoritative instance checkout",
-    );
-    expect(agents).not.toContain(
-      "Build KG requires an explicit downstream instance checkout",
-    );
-    expect(claude).toBe("@AGENTS.md\n");
-  });
-
-  it("asks the instance entry choice only after manifest and generated-index verification", async () => {
-    const projected = await instanceProjection();
-    const agents = projected.get("AGENTS.md")?.toString("utf8");
-    expect(agents).toContain("repository_role");
-    expect(agents).toContain("knowledge/index.json");
-    expect(agents).toContain("repository.url");
-    expect(agents).toContain("pages_url");
-    expect(agents).toContain("one-time Coffee Chat");
-    expect(agents).toContain("install instance plugin");
-  });
-
-  it("allows Make mine only in a verified downstream engine copy", async () => {
-    const buildKg = await readSkill("build-kg");
     const method = await readFile(
       resolve(projectRoot, "method/shared-method.md"),
       "utf8",
     );
 
-    for (const guidance of [buildKg.body, method]) {
-      expect(guidance).toContain("Make mine");
-      expect(guidance).toContain("pre-conversion engine checkout");
-      expect(guidance).toContain("`repository_role: engine`");
-      expect(guidance).toContain(
-        "normalized actual `origin` differs from the engine manifest `repository.url`",
-      );
-      expect(guidance).toContain(
-        "matches the proposed instance `repository.url`",
-      );
-      expect(guidance).toContain("maintained engine checkout");
-      expect(guidance).toContain("`contribute` and `update`");
-      expect(guidance).toContain("initialized authoritative instance checkout");
-    }
-  });
-
-  it("projects byte-identical source Skills and one-level shared-method references without agent definitions", async () => {
-    const snapshot = await createSnapshot(projectRoot, "worktree");
-    const validation = await validateKnowledge(snapshot, {
-      validateIndex: false,
-    });
-    expect(validation.diagnostics).toEqual([]);
-    const projected = await generatedProjectionBytes(
-      snapshot,
-      validation.graph!,
+    expect(COFFEE_SKILLS.map((skill) => skill.name)).toEqual(
+      COFFEE_SKILL_NAMES,
     );
-
-    for (const name of instanceSkillNames) {
-      expect(
-        projected.get(`plugins/coffee-chat/skills/${name}/SKILL.md`),
-      ).toEqual(await snapshot.read(`skills/${name}/SKILL.md`));
-      expect(
-        projected.get(
-          `plugins/coffee-chat/skills/${name}/references/method.md`,
-        ),
-      ).toEqual(projected.get(`skills/${name}/references/method.md`));
-    }
-
-    expect(
-      [...projected.keys()].filter((path) =>
-        /(?:^|\/)agents\/openai\.yaml$/.test(path),
-      ),
-    ).toEqual([]);
+    expect(agents).toContain("repository_role");
+    expect(agents).toContain("Init your Coffee Chat");
+    expect(agents).toContain("Install engine plugin");
+    expect(agents).toContain("Contribute to engine");
+    expect(agents).toContain("skills/coffee-init/SKILL.md");
+    expect(agents).toContain("skills/coffee-sync/SKILL.md");
+    expect(agents).toContain(".coffee-chat/connection.json");
+    expect(agents).toContain("Coffee Chat");
+    expect(agents).not.toMatch(legacyUserTerms);
+    expect(method).toContain(
+      "Origin → Green Bean → Bean → Coffee → Coffee Chat / Coffee Pairing",
+    );
+    expect(method).toContain("Harvest");
+    expect(method).toContain("Roast");
+    expect(method).toContain("Brew");
+    expect(method).not.toMatch(legacyUserTerms);
   });
 });

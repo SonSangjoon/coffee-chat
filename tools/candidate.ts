@@ -1373,8 +1373,8 @@ async function supportPaths(
     "LICENSE",
     "docs/testing.md",
     "skills/coffee-chat/SKILL.md",
-    "skills/apply-perspective/SKILL.md",
-    "skills/build-kg/SKILL.md",
+    "skills/coffee-pairing/SKILL.md",
+    "skills/coffee-brew/SKILL.md",
   ];
   const found: string[] = [];
   for (const path of optional)
@@ -2262,7 +2262,7 @@ export async function prepareCandidate(
       parsed.request.mode === "make-mine" &&
       (path === "./.coffee-chat/generated-files.json" ||
         path.startsWith("./plugins/coffee-chat/") ||
-        path.startsWith("./skills/create-coffee-chat/"));
+        path.startsWith("./skills/coffee-init/"));
     if (
       inspection.blockingDiagnostics.length > 0 ||
       inspection.diagnostics.some(
@@ -2303,8 +2303,8 @@ export async function prepareCandidate(
     const engineOnly = new Set<string>([
       ...(await snapshot.list("engine")),
       "method/engine-update.md",
-      "skills/create-coffee-chat/SKILL.md",
-      "skills/update-coffee-chat/SKILL.md",
+      "skills/coffee-init/SKILL.md",
+      "skills/coffee-update/SKILL.md",
       ...makeMine.release.delivery_files.map((file) => logicalPath(file.path)),
     ]);
     for (const path of engineOnly)

@@ -15,14 +15,14 @@
     "pages_url": "https://example.github.io/example-coffee-chat/",
     "plugin": {
       "name": "coffee-chat-example",
-      "version": "1.0.0",
+      "version": "2026.08.04",
       "description": "A fictional public Coffee Chat test instance."
     },
     "content_notice": "# Content License\n\nThis fixture is fictional public-domain test content.\n",
     "provenance": {
       "engine": {
         "repository": "https://github.com/sonsangjoon/coffee-chat",
-        "version": "1.1.0",
+        "version": "2026.08.04",
         "source_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
         "release_digest": "sha256:e97899d330711df22643ba56204e619051b734f16fcd4c7f1d23e5a2292c0ceb"
       },
@@ -39,7 +39,7 @@
       "source_default_branch": "main",
       "source_default_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
       "source_default_tree": "a0116bcc933b62cf380ff90dc7b16d68773f9b82",
-      "source_release_ref": "refs/tags/v1.1.0",
+      "source_release_ref": "refs/tags/v2026.08.04",
       "source_release_commit": "e4bb10b44206ba52bf4a80ff43a4ae9577f5b26b",
       "source_release_tree": "a0116bcc933b62cf380ff90dc7b16d68773f9b82",
       "release_digest": "sha256:e97899d330711df22643ba56204e619051b734f16fcd4c7f1d23e5a2292c0ceb",

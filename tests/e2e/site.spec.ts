@@ -116,7 +116,7 @@ test("discloses the current knowledge digest and source Git commit", async ({
   ).toHaveAttribute("content", "https://github.com/sonsangjoon/coffee-chat");
   await expect(
     page.locator('meta[name="coffee-chat:engine-version"]'),
-  ).toHaveAttribute("content", "1.1.0");
+  ).toHaveAttribute("content", "2026.08.04");
   await expect(
     page.locator('meta[name="coffee-chat:engine-source-commit"]'),
   ).toHaveAttribute("content", "a".repeat(40));

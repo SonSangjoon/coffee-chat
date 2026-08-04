@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coffee-chat.dev/schemas/coffee-chat-init-preview.schema.json",
+  "title": "Coffee Chat Init Preview",
+  "allOf": [
+    { "$ref": "https://coffee-chat.dev/schemas/operation-preview.schema.json" }
+  ],
+  "type": "object",
+  "properties": { "operation": { "const": "init" } }
+}
