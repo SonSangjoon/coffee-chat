@@ -4,23 +4,26 @@
 
 **Date:** 2026-08-04
 
-`coffee-chat-evals` is a separate repository that owns the evaluation system
-for Coffee Chat. It is not a test folder copied into the Engine repository and
-it is not a collection of personal Coffee Chat records.
+`coffee-chat-eval` is a separate repository that owns the cross-track
+evaluation system and Coffee Chat performance reports. It is not a test folder
+copied into the Engine repository and it is not a collection of personal Coffee
+Chat records. The independent `coffee-chat-bench` repository is one benchmark
+track consumed by this evaluation layer; it owns its own construct, cases,
+scoring, and validity evidence.
 
 ## 1. Decision
 
 The planned evaluation source of truth is:
 
 ```text
-https://github.com/SonSangjoon/coffee-chat-evals
+https://github.com/SonSangjoon/coffee-chat-eval
 ```
 
 The repository name must match the `coffee-*` namespace. Its suite version is
 independent from the Engine CalVer. Every report binds the exact:
 
 - Engine repository and commit/release;
-- `coffee-chat-evals` suite version and commit;
+- `coffee-chat-eval` suite version and commit;
 - adapter version;
 - judge model/configuration version;
 - threshold configuration version.
@@ -32,11 +35,12 @@ adapter contract.
 
 ## 2. Ownership boundary
 
-| Repository                          | Owns                                                                                                      | Must not own                                                                              |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `coffee-chat` Engine                | Skills, runtime, schemas, deterministic validators, production fixtures, and the Eval Adapter contract.   | Gold answers, personal records, judge decisions, or benchmark history.                    |
-| `coffee-chat-evals`                 | Evaluation cases, public corpora, sealed inputs, judges, thresholds, runners, reports, and release gates. | Production behavior, personal Coffee Chat records, or an alternate Engine implementation. |
-| Individual `coffee-chat-*` instance | User-approved Origins, Green Beans, provenance, and instance state.                                       | Evaluation corpora, Engine benchmark reports, or hidden judge data.                       |
+| Repository                          | Owns                                                                                                     | Must not own                                                                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `coffee-chat` Engine                | Skills, runtime, schemas, deterministic validators, production fixtures, and the Eval Adapter contract.  | Gold answers, personal records, judge decisions, or benchmark history.                                        |
+| `coffee-chat-eval`                  | Track registry, orchestration, run receipts, result validation, performance reports, and release gates.  | Production behavior, personal Coffee Chat records, or the independent benchmark's construct and sealed cases. |
+| `coffee-chat-bench`                 | The independent candidate-agnostic judgment benchmark, cases, scoring, baselines, and validity evidence. | Product implementation tests or the complete Coffee Chat performance report.                                  |
+| Individual `coffee-chat-*` instance | User-approved Origins, Green Beans, provenance, and instance state.                                      | Evaluation corpora, Engine benchmark reports, or hidden judge data.                                           |
 
 The Eval repository tests the Engine as an external candidate through a stable
 adapter. It must not reach into private Engine modules to make a failing test
@@ -48,7 +52,7 @@ with `insufficient_observability`.
 The target repository may use this structure:
 
 ```text
-coffee-chat-evals/
+coffee-chat-eval/
 ├── README.md
 ├── evals/
 │   ├── cases/
@@ -289,7 +293,7 @@ content, or a misleading single “Taste score.”
 ### Engine pull requests
 
 Engine CI runs deterministic contract tests locally and may invoke a small
-public smoke subset from `coffee-chat-evals`. Pull requests do not need the
+public smoke subset from `coffee-chat-eval`. Pull requests do not need the
 sealed suite unless the changed surface is marked release-critical.
 
 ### Engine releases
@@ -322,7 +326,7 @@ Engine releases do not silently absorb an unrecorded suite change.
 
 ## 12. Non-goals
 
-`coffee-chat-evals` is not a production memory store, a user analytics system,
+`coffee-chat-eval` is not a production memory store, a user analytics system,
 an alternate Engine, or a public ranking of people's Taste. It evaluates
 whether Coffee Chat preserves source-grounded POV and respects its boundaries.
 
@@ -330,8 +334,8 @@ whether Coffee Chat preserves source-grounded POV and respects its boundaries.
 
 After this repository contract is approved:
 
-1. create the independent `coffee-chat-evals` repository;
-2. define the case, adapter, run, and report schemas there;
+1. create the independent `coffee-chat-eval` repository;
+2. define the track, adapter, run, and report schemas there;
 3. implement the Engine adapter surface and one public case per scene;
 4. add deterministic gates before semantic judges;
 5. add pinned rubric and pairwise evaluation;

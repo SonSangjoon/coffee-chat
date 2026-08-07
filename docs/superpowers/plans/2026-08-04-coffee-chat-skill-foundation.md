@@ -4,7 +4,7 @@
 
 **Goal:** Replace the legacy Skill surface with the canonical coffee-\* language and implement a testable Init → Harvest foundation for independent Coffee Chat repositories.
 
-**Architecture:** The engine exposes only canonical Skills and deterministic contracts. Init creates an independent coffee-chat-\* repository from the engine release payload, Sync records a relationship to that repository inside a work repository, Harvest writes durable Green Bean prose from Origins, Roast creates contextual Bean output, Brew creates Coffee, and Coffee Chat/Coffee Pairing consume that output. Evaluation cases and judges remain in the separate coffee-chat-evals repository; this engine contains only the adapter contract and observable receipts.
+**Architecture:** The engine exposes only canonical Skills and deterministic contracts. Init creates an independent coffee-chat-\* repository from the engine release payload, Sync records a relationship to that repository inside a work repository, Harvest writes durable Green Bean prose from Origins, Roast creates contextual Bean output, Brew creates Coffee, and Coffee Chat/Coffee Pairing consume that output. Product-scene evaluation orchestration and reports belong to the separate `coffee-chat-eval` repository; the independent `coffee-chat-bench` repository owns only its candidate-agnostic benchmark construct, cases, judges, and validity evidence. This engine contains only the adapter contract and observable receipts.
 
 **Tech Stack:** Node.js 24.5.0, TypeScript, Vitest, AJV JSON Schema validation, GitHub CLI instructions, Astro site projections, npm scripts already defined in package.json.
 
@@ -181,7 +181,7 @@ Each description must name its trigger, input boundary, output, and write bounda
 
 - Expose deterministic signals for provenance coverage, unsupported-claim count, POV presence, uncertainty presence, and policy leakage.
 - Emit an external-eval case envelope without personal record contents beyond the redacted input/output summary and deterministic signals.
-- Keep judge selection and thresholds in coffee-chat-evals; the engine only exposes the adapter shape.
+- Keep product-scene judge selection and thresholds in coffee-chat-eval, and keep the independent benchmark's judges and thresholds in coffee-chat-bench; the engine only exposes the adapter shape.
 
 **TDD steps**
 
@@ -227,7 +227,7 @@ Each description must name its trigger, input boundary, output, and write bounda
 - Create schemas/eval-case-envelope.schema.json.
 - Create schemas/eval-observation.schema.json.
 - Create tools/eval-adapter.ts.
-- Update docs/design/coffee-chat-evals.md and docs/design/coffee-chat-evaluation.md if implementation details differ.
+- Update docs/design/coffee-chat-eval.md, docs/design/coffee-chat-bench-contract.md, and docs/design/coffee-chat-evaluation.md if implementation details differ.
 - Add tests/eval-adapter.test.ts and tests/eval-boundary.test.ts.
 - Update package.json scripts only if a deterministic adapter check is needed.
 
@@ -236,7 +236,7 @@ Each description must name its trigger, input boundary, output, and write bounda
 - The adapter accepts a named Skill operation, sanitized case input, engine commit, and adapter version.
 - The adapter returns operation output, deterministic signals, trace references, protected-path observations, and a report binding envelope.
 - It never loads personal Coffee Chat repositories, private Green Beans, or local user records.
-- It does not implement judges, thresholds, gold cases, sealed cases, or release decisions; those belong only to coffee-chat-evals.
+- It does not implement judges, thresholds, gold cases, sealed cases, or release decisions; product-scene evaluation belongs to coffee-chat-eval and the independent benchmark's measurement assets belong to coffee-chat-bench.
 - Engine CI runs deterministic contract tests and public smoke fixtures. Release metadata records the external suite commit and report reference when supplied.
 
 **TDD steps**
@@ -254,7 +254,7 @@ Each description must name its trigger, input boundary, output, and write bounda
 
 - Update README.md, README.ko.md, docs/design/README.md, and docs/design/coffee-chat-skills.md only where the implemented contracts require wording changes.
 - Update generated engine/release.json, engine/template-surface.json, manifests, and snapshots through npm run cc -- generate.
-- Update docs/testing.md with the external Eval repository workflow.
+- Update docs/testing.md with the coffee-chat-eval workflow and the separate coffee-chat-bench track.
 - Add or update tests/readme-projections.test.ts, tests/readme-assets.test.ts, tests/generated-ownership.test.ts, and tests/skill-evaluations.test.ts.
 
 **Verification sequence**
@@ -268,7 +268,7 @@ Each description must name its trigger, input boundary, output, and write bounda
 - [ ] Run npm run gitleaks.
 - [ ] Run rg checks proving Source, Perspective, Note, Blend, Serve, Create, and Template are absent from user-facing runtime contracts and active Skill routes.
 
-**Completion check:** all generated artifacts are reproducible, all tests and checks pass, and the implementation matches docs/design/coffee-chat-skill-contracts.md and docs/design/coffee-chat-evals.md without compatibility shims.
+**Completion check:** all generated artifacts are reproducible, all tests and checks pass, and the implementation matches docs/design/coffee-chat-skill-contracts.md plus the coffee-chat-eval boundary without compatibility shims.
 
 ## Review checkpoints
 

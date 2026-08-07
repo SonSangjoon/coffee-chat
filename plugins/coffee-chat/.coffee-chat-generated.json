@@ -57,7 +57,7 @@
     },
     {
       "path": "./skills/coffee-init/references/release.json",
-      "digest": "sha256:30d6cab6d3fca4f6e104d0ac2def2376066fbb1ff33f13b756f6982220d2a2b0"
+      "digest": "sha256:f105c2d5ed78288bdbfc072d064fae90e5239bb2a6643acb059f1d7ba6859ff5"
     },
     {
       "path": "./skills/coffee-pairing/SKILL.md",
@@ -89,7 +89,7 @@
     },
     {
       "path": "./skills/coffee-update/references/advisory.json",
-      "digest": "sha256:b4d6c86c474e6775bef22910b8bc00252a63cd6317828af1324eb7c716d357e0"
+      "digest": "sha256:6a771591af6552e5334aeddd19a1d2056e2cec64c6d808cd4416e87d611eb2ef"
     },
     {
       "path": "./skills/coffee-update/references/engine-migration-document.schema.json",
@@ -117,7 +117,7 @@
     },
     {
       "path": "./skills/coffee-update/references/release.json",
-      "digest": "sha256:30d6cab6d3fca4f6e104d0ac2def2376066fbb1ff33f13b756f6982220d2a2b0"
+      "digest": "sha256:f105c2d5ed78288bdbfc072d064fae90e5239bb2a6643acb059f1d7ba6859ff5"
     }
   ]
 }

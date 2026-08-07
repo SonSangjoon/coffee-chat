@@ -33,9 +33,11 @@ import {
 
 const execFileAsync = promisify(execFile);
 
-function sanitizedGitEnvironment(): NodeJS.ProcessEnv {
+function sanitizedGitEnvironment(
+  environment: NodeJS.ProcessEnv = process.env,
+): NodeJS.ProcessEnv {
   return Object.fromEntries(
-    Object.entries(process.env).filter(
+    Object.entries(environment).filter(
       ([key]) => !key.toUpperCase().startsWith("GIT_"),
     ),
   );
@@ -137,23 +139,30 @@ export type SiteModel =
       graph: InstanceSiteModel;
     };
 
+export type SiteModelDependencies = {
+  git_environment?: NodeJS.ProcessEnv;
+};
+
 export function sourceRouteSlug(url: string): string {
   return createHash("sha256").update(url).digest("hex");
 }
 
-async function gitSourceCommit(root: string): Promise<string> {
+async function gitSourceCommit(
+  root: string,
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<string> {
   try {
     const [{ stdout: commitOutput }, { stdout: topLevelOutput }, sourceRoot] =
       await Promise.all([
         execFileAsync("git", ["rev-parse", "HEAD"], {
           cwd: root,
-          env: sanitizedGitEnvironment(),
+          env: sanitizedGitEnvironment(environment),
           encoding: "utf8",
           maxBuffer: 1024 * 1024,
         }),
         execFileAsync("git", ["rev-parse", "--show-toplevel"], {
           cwd: root,
-          env: sanitizedGitEnvironment(),
+          env: sanitizedGitEnvironment(environment),
           encoding: "utf8",
           maxBuffer: 1024 * 1024,
         }),
@@ -277,6 +286,7 @@ export function filterSiteNotes<T extends LoadedNote | SiteNote>(
 
 export async function loadSiteModel(
   request: SiteBuildRequest,
+  options: SiteModelDependencies = {},
 ): Promise<SiteModel> {
   const bound = await bindSiteBuildRequest(request);
   const snapshot = await createSnapshot(bound.source_root, "worktree");
@@ -290,7 +300,10 @@ export async function loadSiteModel(
       },
     );
 
-  const sourceCommit = await gitSourceCommit(bound.source_root);
+  const sourceCommit = await gitSourceCommit(
+    bound.source_root,
+    options.git_environment,
+  );
   const basePath = siteBasePath(validation.graph.manifest.pages_url);
 
   if (!isInstanceGraph(validation.graph)) {

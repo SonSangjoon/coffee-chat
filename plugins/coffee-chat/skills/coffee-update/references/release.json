@@ -22,8 +22,26 @@
       "class": "engine-source"
     },
     {
+      "path": "./.github/merge-policy.json",
+      "digest": "sha256:e88edea4674fbfe6f983d3702c5b5ad1313de3c261f59ba5b354b27fe57ebb44",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.github/workflows/auto-merge.yml",
+      "digest": "sha256:80bd4059c93927209422499001dbc682fd7a6a5c76108d06a400299ea75efe79",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
       "path": "./.github/workflows/ci.yml",
-      "digest": "sha256:52b3bdc20797149feef8db028d9c33cb43d76783607d6eb99c0fe72eddf0b683",
+      "digest": "sha256:b763e1db1bdb880d0f82d605e9ff8df432be6440de8f73cbc0a417b88eeda13a",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./.github/workflows/security.yml",
+      "digest": "sha256:761019032ba26474d8afec0857036889118763e298e424b19ddd5db93c507a35",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -107,7 +125,7 @@
     },
     {
       "path": "./package.json",
-      "digest": "sha256:4999479f2d070588a8ef6f962b599229006532d51447ab2600045ed02e1a4d78",
+      "digest": "sha256:af0f11fe8f76eeba73fd812dec5f586c144c0439091b0e774de20bd44fc41305",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -251,7 +269,7 @@
     },
     {
       "path": "./site/lib/load-site-model.ts",
-      "digest": "sha256:7fe8c47094857cc4f276efc19fb20b08351d73fb19dd31d236b024e8b07ca50c",
+      "digest": "sha256:9f5c73b7d12410df3579aa7136d555a6ef6367c9143c7429855e8075def350da",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -461,7 +479,7 @@
     },
     {
       "path": "./tests/plugin-lifecycle.test.ts",
-      "digest": "sha256:556c84ebf2b3dced0b44940dabf4aa3ac90180957b78f23772ba1547f3e569b5",
+      "digest": "sha256:e3f558d4cfd7cc125a2842de24eb548eadb83ec26b5c8b0bbce3dd23bf890c92",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -497,7 +515,7 @@
     },
     {
       "path": "./tests/site-model.test.ts",
-      "digest": "sha256:f162bb6ec4fe4f53e77b19810e66b5a0518b5fa4b1425bbe2cdae3f9d48c194a",
+      "digest": "sha256:7cc5a18d353b63a4a8d5fae14b05dc33d5ac91cebd7d3085a37112532d53d797",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -569,13 +587,13 @@
     },
     {
       "path": "./tests/workflow-contracts.test.ts",
-      "digest": "sha256:138ed22a64d9263215652233c533e00d3f11163cc11003e3fa51e2d72e9a6cfd",
+      "digest": "sha256:abc5aa7a2ab6d42b6662213ee9e439e17770ede4b37cff8e9e58f2503aad1c8a",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./tools/artifact-inventory.ts",
-      "digest": "sha256:3dbfe87d53f70039e3ef24da9a29395b4d8bee68eb87233c869d74a0f6e78f6d",
+      "digest": "sha256:408f880e7c7da2939d0b1d90e9e6a0414a472c81127869b040d9bda697c8b8f5",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -713,7 +731,7 @@
     },
     {
       "path": "./tools/workflow-projections.ts",
-      "digest": "sha256:1e797839ac9f0da7e582604220d2f97ba67e584927d23f4c6f2f374e0da9207a",
+      "digest": "sha256:8cf1db9476163401949cbfae7ffc71bb6bc8296575351d6f6f552daceeb87877",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -725,7 +743,13 @@
     },
     {
       "path": "./vitest.config.ts",
-      "digest": "sha256:0fce59f26ad1a17b47a5fd9571dc235aa7f48f88397f35ce8f120b7deecb29dd",
+      "digest": "sha256:ac9be1879e0bca018f7eb23ac044dedf027795164fba9f9e15a5c7cb5c28cc6e",
+      "mode": "100644",
+      "class": "engine-source"
+    },
+    {
+      "path": "./vitest.host.config.ts",
+      "digest": "sha256:713e058d8d94537fecb5b7898219bd2da5bb0efc9f159e9d403e33e76f6b9da2",
       "mode": "100644",
       "class": "engine-source"
     }
@@ -847,13 +871,13 @@
     },
     {
       "path": "./tests/engine-release.test.ts",
-      "digest": "sha256:f57555fcd8d19885c4b354831c6f2547d9b6a2de59f214078f54307ec93c4e17",
+      "digest": "sha256:d3158e2aec18e616d3d363f9f3d315cbdf644cd5a74a9a9744d2b6280d1edd7d",
       "mode": "100644",
       "class": "engine-delivery"
     },
     {
       "path": "./tests/engine-review-setup-skill.test.ts",
-      "digest": "sha256:4ae8b3f1eede313b8f9f15d2a645e351aa69ae73bc00ce8585478d9ae6cd74f8",
+      "digest": "sha256:a4088dcecb8957b45be487c00768a88bea522414deef5b269f49e0262023cb2d",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -877,7 +901,7 @@
     },
     {
       "path": "./tests/engine-update-skill.test.ts",
-      "digest": "sha256:6fe44801a00dac4a086e7a440b37747ad5da207b25e02cea0dd322d7675e3e02",
+      "digest": "sha256:00ce175b22b626858b838cfd2f980603d244b006d772f1e70ac785266e9e8a35",
       "mode": "100644",
       "class": "engine-delivery"
     },
@@ -954,5 +978,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:5d6bab28558ee6846cd82156fb6b07932b58eb59268a976d47cf65351804e747"
+  "release_digest": "sha256:65e29819f8531ef5acf37789fb2ca0282b1ce4d71a441f02822920b912261725"
 }

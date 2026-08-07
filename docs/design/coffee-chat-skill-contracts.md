@@ -5,9 +5,11 @@
 **Date:** 2026-08-04
 
 This document defines the production contract for every `coffee-*` Skill. The
-external `coffee-chat-evals` repository owns Gold/Pressure Cases, judges,
-thresholds, and reports. This Engine document owns only the operation contract
-and the adapter observability required to evaluate it.
+external `coffee-chat-eval` repository owns product-scene Gold/Pressure Cases,
+track orchestration, thresholds, and Coffee Chat performance reports. The
+independent `coffee-chat-bench` repository owns its own benchmark cases,
+scoring, and validity evidence. This Engine document owns only the operation
+contract and the adapter observability required by the evaluation layer.
 
 ## 1. Common Skill contract
 
@@ -285,7 +287,7 @@ The Skill set cannot be released until:
 3. adapter observations are complete for every Skill;
 4. state-changing Skills produce target-bound Operation Previews;
 5. read-only Skills produce zero external writes;
-6. the matching `coffee-chat-evals` report passes its hard and semantic gates;
+6. the matching `coffee-chat-eval` report passes its hard and semantic gates;
 7. generated manifests, `AGENTS.md`, schemas, fixtures, and projections contain
    only the canonical Skill set;
 8. no compatibility alias, legacy route, or old Skill name remains.
@@ -299,7 +301,7 @@ The Skill set cannot be released until:
 5. Implement `coffee-roast` + `coffee-brew` + `coffee-chat` read-only flow.
 6. Implement `coffee-pairing` controlled writes.
 7. Implement `coffee-update` ownership-preserving lifecycle changes.
-8. Run the matching `coffee-chat-evals` suite for every affected slice.
+8. Run the matching `coffee-chat-eval` suite for every affected slice.
 
 Each slice starts with a failing Engine contract test and an external Eval Case
 that describes the desired behavior.

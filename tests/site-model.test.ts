@@ -133,25 +133,23 @@ describe("Task 6 site model", () => {
     const fixture = await syntheticFixture();
     const spoof = await syntheticFixture();
     const spoofHead = await commitFixtureMarker(spoof.source, "spoof commit");
-    const previousGitDir = process.env.GIT_DIR;
-    const previousGitWorkTree = process.env.GIT_WORK_TREE;
-    process.env.GIT_DIR = resolve(spoof.source, ".git");
-    process.env.GIT_WORK_TREE = fixture.source;
-    try {
-      const model = await loadSiteModel({
+    const model = await loadSiteModel(
+      {
         source_root: fixture.source,
         output_root: fixture.output,
         artifact_class: "ephemeral-test",
-      });
-      const data = model.role === "engine" ? model.documentation : model.graph;
-      expect(data.source_commit).toBe(fixture.head);
-      expect(data.source_commit).not.toBe(spoofHead);
-    } finally {
-      if (previousGitDir === undefined) delete process.env.GIT_DIR;
-      else process.env.GIT_DIR = previousGitDir;
-      if (previousGitWorkTree === undefined) delete process.env.GIT_WORK_TREE;
-      else process.env.GIT_WORK_TREE = previousGitWorkTree;
-    }
+      },
+      {
+        git_environment: {
+          ...process.env,
+          GIT_DIR: resolve(spoof.source, ".git"),
+          GIT_WORK_TREE: fixture.source,
+        },
+      },
+    );
+    const data = model.role === "engine" ? model.documentation : model.graph;
+    expect(data.source_commit).toBe(fixture.head);
+    expect(data.source_commit).not.toBe(spoofHead);
   });
 
   it("filters perspective time and first-recorded cutoff with AND semantics", () => {
