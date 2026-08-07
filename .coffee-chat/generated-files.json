@@ -49,7 +49,7 @@
     },
     {
       "path": "./plugins/coffee-chat/.coffee-chat-generated.json",
-      "digest": "sha256:b71de4a9ee8d34d475ee65243ee4475cf37a6b1c2b0699466507ac375ec086e7"
+      "digest": "sha256:00c92eaafa2e732ab2bdd656002d574656a5d9d658a05459001551941abbd414"
     },
     {
       "path": "./plugins/coffee-chat/LICENSE",
@@ -97,7 +97,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-init/references/release.json",
-      "digest": "sha256:0b89c154092109a755f48cb0f2afe72c44a81f8feb5c0beae7ee6e7d324e4040"
+      "digest": "sha256:2f708154ed1ab4cbbfe73d0f5693d2d9b86377a762bd0fff4cb7de689d07806e"
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-pairing/SKILL.md",
@@ -129,7 +129,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-update/references/advisory.json",
-      "digest": "sha256:4e98e217f24199676e5ddc0bc01dc892ee48e8ef185ad10270dd9a53175a8160"
+      "digest": "sha256:2e3f6b24a3ca195b422aac0dd54695bcbcae882d125f8bcb4b83ef8ffd9a29c3"
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-update/references/engine-migration-document.schema.json",
@@ -157,7 +157,7 @@
     },
     {
       "path": "./plugins/coffee-chat/skills/coffee-update/references/release.json",
-      "digest": "sha256:0b89c154092109a755f48cb0f2afe72c44a81f8feb5c0beae7ee6e7d324e4040"
+      "digest": "sha256:2f708154ed1ab4cbbfe73d0f5693d2d9b86377a762bd0fff4cb7de689d07806e"
     },
     {
       "path": "./skills/coffee-brew/references/method.md",
@@ -185,7 +185,7 @@
     },
     {
       "path": "./skills/coffee-init/references/release.json",
-      "digest": "sha256:0b89c154092109a755f48cb0f2afe72c44a81f8feb5c0beae7ee6e7d324e4040"
+      "digest": "sha256:2f708154ed1ab4cbbfe73d0f5693d2d9b86377a762bd0fff4cb7de689d07806e"
     },
     {
       "path": "./skills/coffee-pairing/references/method.md",
@@ -201,7 +201,7 @@
     },
     {
       "path": "./skills/coffee-update/references/advisory.json",
-      "digest": "sha256:4e98e217f24199676e5ddc0bc01dc892ee48e8ef185ad10270dd9a53175a8160"
+      "digest": "sha256:2e3f6b24a3ca195b422aac0dd54695bcbcae882d125f8bcb4b83ef8ffd9a29c3"
     },
     {
       "path": "./skills/coffee-update/references/engine-migration-document.schema.json",
@@ -229,7 +229,7 @@
     },
     {
       "path": "./skills/coffee-update/references/release.json",
-      "digest": "sha256:0b89c154092109a755f48cb0f2afe72c44a81f8feb5c0beae7ee6e7d324e4040"
+      "digest": "sha256:2f708154ed1ab4cbbfe73d0f5693d2d9b86377a762bd0fff4cb7de689d07806e"
     }
   ]
 }

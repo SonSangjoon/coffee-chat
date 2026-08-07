@@ -35,13 +35,13 @@
     },
     {
       "path": "./.github/workflows/ci.yml",
-      "digest": "sha256:8a29ba47fda681e03e3591b5155976e3586c956096785427e83239e9a5399218",
+      "digest": "sha256:b763e1db1bdb880d0f82d605e9ff8df432be6440de8f73cbc0a417b88eeda13a",
       "mode": "100644",
       "class": "engine-source"
     },
     {
       "path": "./.github/workflows/security.yml",
-      "digest": "sha256:83b2118d5bde30f2d68f089307b9a1681f9aed46a4f0505a99d84fa781fede6f",
+      "digest": "sha256:0746826d871f98d6b702cfebae7157a0e66214d8b02f77e27d94691937ce5a4e",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -587,7 +587,7 @@
     },
     {
       "path": "./tests/workflow-contracts.test.ts",
-      "digest": "sha256:dcfb4ad64c0f2feb2ce81557f5a7732598d6cfe5b45b8e2278f73cb2d08005f7",
+      "digest": "sha256:da34d5ff00ad074a309966735ffc0e9ac39b4888b94ecdce4697f16a7454ae46",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -731,7 +731,7 @@
     },
     {
       "path": "./tools/workflow-projections.ts",
-      "digest": "sha256:708091358b72437e28f58cfd6a2ee00f0268b26eeb9459c7fab27de3d92d7313",
+      "digest": "sha256:d1c308d53af4c6243979261934128fc8eb7b7eb370df02f9754ad3407b0971e4",
       "mode": "100644",
       "class": "engine-source"
     },
@@ -978,5 +978,5 @@
       "class": "engine-delivery"
     }
   ],
-  "release_digest": "sha256:4e6bf5b608698379970e926d65964b9fabb0223038b1bccc5ea0950c07da4cfa"
+  "release_digest": "sha256:ef6c45c4ce04e3555134d9e749e50511287644095fa3ac612857aa93c2ee1ea4"
 }

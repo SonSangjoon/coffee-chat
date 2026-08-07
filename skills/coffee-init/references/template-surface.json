@@ -4,7 +4,7 @@
   "release": {
     "version": "2026.08.04",
     "source_ref": "refs/tags/v2026.08.04",
-    "release_digest": "sha256:4e6bf5b608698379970e926d65964b9fabb0223038b1bccc5ea0950c07da4cfa"
+    "release_digest": "sha256:ef6c45c4ce04e3555134d9e749e50511287644095fa3ac612857aa93c2ee1ea4"
   },
   "files": [
     {
@@ -59,7 +59,7 @@
       "disposition": "replace-instance-generated",
       "binding": {
         "kind": "content",
-        "digest": "sha256:8aa3b1e70bcfe6182ac58df2be13c4b6144735107d18739d50e9281075037c9b"
+        "digest": "sha256:03878f2c99411a7ae238276defc918b449ec1068e6940f2789cc50865ec57e03"
       }
     },
     {
@@ -180,7 +180,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:8a29ba47fda681e03e3591b5155976e3586c956096785427e83239e9a5399218"
+        "digest": "sha256:b763e1db1bdb880d0f82d605e9ff8df432be6440de8f73cbc0a417b88eeda13a"
       }
     },
     {
@@ -213,7 +213,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:83b2118d5bde30f2d68f089307b9a1681f9aed46a4f0505a99d84fa781fede6f"
+        "digest": "sha256:0746826d871f98d6b702cfebae7157a0e66214d8b02f77e27d94691937ce5a4e"
       }
     },
     {
@@ -1324,7 +1324,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:dcfb4ad64c0f2feb2ce81557f5a7732598d6cfe5b45b8e2278f73cb2d08005f7"
+        "digest": "sha256:da34d5ff00ad074a309966735ffc0e9ac39b4888b94ecdce4697f16a7454ae46"
       }
     },
     {
@@ -1588,7 +1588,7 @@
       "disposition": "adopt-engine-source",
       "binding": {
         "kind": "content",
-        "digest": "sha256:708091358b72437e28f58cfd6a2ee00f0268b26eeb9459c7fab27de3d92d7313"
+        "digest": "sha256:d1c308d53af4c6243979261934128fc8eb7b7eb370df02f9754ad3407b0971e4"
       }
     },
     {
@@ -1625,5 +1625,5 @@
       }
     }
   ],
-  "surface_digest": "sha256:83083f77e6c20d4959d7391ea6b54a38df2f0a6e1e46727bf31d2c313f7fbe2d"
+  "surface_digest": "sha256:7e3c1a303c92b451835918dc32b3e4011b9a6ac72900a92cd19127f0d749411e"
 }
