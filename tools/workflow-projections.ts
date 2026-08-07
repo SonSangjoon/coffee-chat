@@ -255,6 +255,8 @@ jobs:
           node-version: 24.5.0
       - name: Verify workflow and action policy
         run: npm run ci:policy
+      - name: Install locked dependencies
+        run: npm ci
       - name: Scan repository for secrets
         run: node --experimental-strip-types tools/gitleaks.ts scan --mode repository --redact=100
 

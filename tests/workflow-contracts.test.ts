@@ -267,7 +267,7 @@ describe("Coffee Chat security workflow", () => {
     expect(Object.keys(jobs)).toEqual(["policy", "dependency-review"]);
     expect(
       runCorpus(jobSteps(object(jobs.policy, "Security policy job"))),
-    ).toContain("npm run ci:policy");
+    ).toMatch(/npm run ci:policy[\s\S]*npm ci/);
     expect(raw).not.toMatch(/\brg\b/);
 
     const dependencyReview = object(
