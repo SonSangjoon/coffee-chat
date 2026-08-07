@@ -1,0 +1,13 @@
+# Protected workflow, authority, release, and host-boundary paths.
+/.github/ @SonSangjoon
+/AGENTS.md @SonSangjoon
+/package.json @SonSangjoon
+/package-lock.json @SonSangjoon
+/tests/e2e/** @SonSangjoon
+/tools/workflow-projections.ts @SonSangjoon
+/tools/ci-policy.mjs @SonSangjoon
+/tools/merge-policy.mjs @SonSangjoon
+/tools/release-version.ts @SonSangjoon
+/tools/gitleaks.ts @SonSangjoon
+/tools/artifact-inventory.ts @SonSangjoon
+/engine/release.json @SonSangjoon

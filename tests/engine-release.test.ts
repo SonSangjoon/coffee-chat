@@ -143,7 +143,7 @@ describe("deterministic engine release contracts", () => {
     const instancePages = instance.outputs
       .find((output) => output.path.endsWith("pages.yml"))!
       .bytes.toString("utf8");
-    expect(engineCodeql).not.toMatch(/^\s*push:/m);
+    expect(engineCodeql).toMatch(/^\s*push:/m);
     expect(enginePages).not.toMatch(/^\s*push:/m);
     expect(instanceCodeql).toMatch(/^\s*push:/m);
     expect(instancePages).toMatch(/^\s*push:/m);

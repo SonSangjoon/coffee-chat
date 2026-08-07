@@ -1,0 +1,15 @@
+{
+  "protectedFiles": ["AGENTS.md", "package.json", "package-lock.json"],
+  "protectedPrefixes": [
+    ".github/",
+    "tests/e2e/",
+    "tools/workflow-projections.ts",
+    "tools/ci-policy.mjs",
+    "tools/merge-policy.mjs",
+    "tools/release-version.ts",
+    "tools/gitleaks.ts",
+    "tools/artifact-inventory.ts",
+    "engine/release.json",
+    "docs/engineering/"
+  ]
+}

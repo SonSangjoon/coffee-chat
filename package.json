@@ -11,11 +11,15 @@
   "scripts": {
     "cc": "node --experimental-strip-types tools/cc.ts",
     "test": "vitest run --maxWorkers=2",
+    "test:host": "vitest run --config vitest.host.config.ts --maxWorkers=1",
+    "test:all": "npm test && npm run test:host",
     "test:watch": "vitest",
     "test:site": "playwright test",
-    "test:acceptance": "vitest run --maxWorkers=1 tests/make-mine-acceptance.test.ts tests/fixture-isolation.test.ts tests/gitleaks-contracts.test.ts tests/skill-evaluations.test.ts tests/plugin-lifecycle.test.ts",
+    "test:acceptance": "vitest run --maxWorkers=1 tests/make-mine-acceptance.test.ts tests/fixture-isolation.test.ts tests/gitleaks-contracts.test.ts tests/skill-evaluations.test.ts",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
+    "ci:policy": "node .github/ci-policy.mjs",
+    "merge:policy": "node .github/merge-policy.mjs",
     "gitleaks:scan": "node --experimental-strip-types tools/gitleaks.ts scan --mode repository",
     "site:build": "node --experimental-strip-types tools/site-build.ts",
     "site:check": "node --experimental-strip-types tools/site-build.ts --check"

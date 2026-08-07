@@ -13,39 +13,59 @@ const uploadPagesAction =
 const deployPagesAction =
   "actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e";
 const codeqlInitAction =
-  "github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38";
+  "github/codeql-action/init@c4dd10e44af883a891fe31ced449bcb4a6728b9b";
 const codeqlAnalyzeAction =
-  "github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38";
+  "github/codeql-action/analyze@c4dd10e44af883a891fe31ced449bcb4a6728b9b";
+const dependencyReviewAction =
+  "actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294";
+const attestBuildAction =
+  "actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45";
+const sbomAction =
+  "anchore/sbom-action@d94f46e13c6c62f59525ac9a1e147a99dc0b9bf5";
 
 type JsonObject = Record<string, unknown>;
 type LoadedWorkflow = { raw: string; value: JsonObject };
 
 describe("Task 7 Coffee Chat CI workflow", () => {
-  it("exposes one read-only pull-request verification check", async () => {
+  it("exposes policy and quality checks for pull requests and merge queues", async () => {
     const { raw, value } = await loadWorkflow("ci.yml");
     const events = object(value.on, "CI on");
     const permissions = object(value.permissions, "CI permissions");
     const jobs = object(value.jobs, "CI jobs");
 
     expect(value.name).toBe("Coffee Chat CI");
-    expect(Object.keys(events)).toEqual(["pull_request"]);
+    expect(Object.keys(events)).toEqual([
+      "pull_request",
+      "merge_group",
+      "push",
+    ]);
     expect(events).not.toHaveProperty("pull_request_target");
     expect(raw).not.toMatch(/\bpull_request_target\b/);
     expect(permissions).toEqual({ contents: "read" });
-    expect(Object.keys(jobs)).toEqual(["verify"]);
+    expect(Object.keys(jobs)).toEqual(["policy", "quality"]);
 
-    const verify = object(jobs.verify, "CI verify job");
-    expect(verify.name).toBe("verify");
-    expect(effectivePermissions(value, verify)).toEqual({ contents: "read" });
-    expect(verify).not.toHaveProperty("environment");
+    const policy = object(jobs.policy, "CI policy job");
+    expect(policy.name).toBe("policy");
+    expect(effectivePermissions(value, policy)).toEqual({ contents: "read" });
+    expect(policy).not.toHaveProperty("environment");
 
-    const steps = jobSteps(verify);
+    const quality = object(jobs.quality, "CI quality job");
+    expect(quality.name).toBe("quality");
+    expect(effectivePermissions(value, quality)).toEqual({ contents: "read" });
+    expect(quality).not.toHaveProperty("environment");
+
+    const policySteps = jobSteps(policy);
+    const policyRuns = runCorpus(policySteps);
+    expect(policyRuns).toContain("merge-policy.json");
+
+    const steps = jobSteps(quality);
     const runs = runCorpus(steps);
     const searchable = stepCorpus(steps);
     expect(runs).toMatch(/(?:^|\n)npm ci(?:\n|$)/);
     expect(searchable).toMatch(/gitleaks/i);
     expect(runs).toMatch(/tools\/gitleaks\.ts[^\n]*--redact/);
     expect(runs).toMatch(/(?:^|\n)npm test(?:\s|\n|$)/);
+    expect(runs).toMatch(/(?:^|\n)npm run test:host(?:\n|$)/);
     expect(runs).toMatch(/(?:^|\n)npm run typecheck(?:\n|$)/);
     expect(runs).toContain("npm run cc -- check --snapshot worktree");
     expect(searchable).toMatch(/plugin/i);
@@ -117,10 +137,15 @@ describe("Task 7 Coffee Chat Pages workflow", () => {
 
 describe("Task 7 shared workflow hardening", () => {
   it("pins every Action, disables credential persistence, and receives no secrets", async () => {
-    const [ci, pages] = await Promise.all([
+    const workflows = await Promise.all([
       loadWorkflow("ci.yml"),
       loadWorkflow("pages.yml"),
+      loadWorkflow("codeql.yml"),
+      loadWorkflow("security.yml"),
+      loadWorkflow("release.yml"),
+      loadWorkflow("auto-merge.yml"),
     ]);
+    const [ci, pages, codeql, security, release, autoMerge] = workflows;
 
     expect([...new Set(usedActions(ci.value))].sort()).toEqual(
       [checkoutAction, setupNodeAction].sort(),
@@ -133,8 +158,18 @@ describe("Task 7 shared workflow hardening", () => {
         deployPagesAction,
       ].sort(),
     );
+    expect([...new Set(usedActions(codeql.value))].sort()).toEqual(
+      [checkoutAction, codeqlInitAction, codeqlAnalyzeAction].sort(),
+    );
+    expect([...new Set(usedActions(security.value))].sort()).toEqual(
+      [checkoutAction, setupNodeAction, dependencyReviewAction].sort(),
+    );
+    expect([...new Set(usedActions(release.value))].sort()).toEqual(
+      [checkoutAction, setupNodeAction, attestBuildAction, sbomAction].sort(),
+    );
+    expect(usedActions(autoMerge.value)).toEqual([]);
 
-    for (const workflow of [ci, pages]) {
+    for (const workflow of workflows) {
       expect(hasObjectKey(workflow.value, "secrets")).toBe(false);
       expect(workflow.raw).not.toMatch(/\$\{\{\s*secrets\./i);
       expect(workflow.raw).not.toMatch(/\bpull_request_target\b/);
@@ -142,11 +177,11 @@ describe("Task 7 shared workflow hardening", () => {
       const checkoutSteps = allSteps(workflow.value).filter(
         (step) => step.uses === checkoutAction,
       );
-      expect(checkoutSteps.length).toBeGreaterThan(0);
       for (const step of checkoutSteps) {
-        expect(
-          object(step.with, "checkout inputs")["persist-credentials"],
-        ).toBe(false);
+        const persistCredentials = object(step.with, "checkout inputs")[
+          "persist-credentials"
+        ];
+        expect(persistCredentials).toBe(workflow === release ? true : false);
       }
 
       for (const action of usedActions(workflow.value)) {
@@ -156,6 +191,11 @@ describe("Task 7 shared workflow hardening", () => {
           setupNodeAction,
           uploadPagesAction,
           deployPagesAction,
+          codeqlInitAction,
+          codeqlAnalyzeAction,
+          dependencyReviewAction,
+          attestBuildAction,
+          sbomAction,
         ]).toContain(action);
       }
     }
@@ -163,15 +203,20 @@ describe("Task 7 shared workflow hardening", () => {
 });
 
 describe("Task 1 CodeQL workflow", () => {
-  it("analyzes JavaScript and TypeScript on pull requests without a creation-time push", async () => {
+  it("analyzes JavaScript and TypeScript on pull requests, merge queues, and main", async () => {
     const { raw, value } = await loadWorkflow("codeql.yml");
     const events = object(value.on, "CodeQL on");
     const permissions = object(value.permissions, "CodeQL permissions");
     const jobs = object(value.jobs, "CodeQL jobs");
 
     expect(value.name).toBe("CodeQL");
-    expect(Object.keys(events)).toEqual(["pull_request"]);
-    expect(events).not.toHaveProperty("push");
+    expect(Object.keys(events)).toEqual([
+      "pull_request",
+      "merge_group",
+      "push",
+      "schedule",
+      "workflow_dispatch",
+    ]);
     expect(events).not.toHaveProperty("pull_request_target");
     expect(raw).not.toMatch(/\bpull_request_target\b/);
     expect(raw).not.toMatch(/\$\{\{\s*secrets\./i);
@@ -203,6 +248,77 @@ describe("Task 1 CodeQL workflow", () => {
   });
 });
 
+describe("Coffee Chat security workflow", () => {
+  it("keeps policy scanning required and reviews dependencies on pull requests", async () => {
+    const { raw, value } = await loadWorkflow("security.yml");
+    const events = object(value.on, "Security on");
+    const permissions = object(value.permissions, "Security permissions");
+    const jobs = object(value.jobs, "Security jobs");
+
+    expect(value.name).toBe("Coffee Chat Security");
+    expect(Object.keys(events)).toEqual([
+      "pull_request",
+      "merge_group",
+      "push",
+      "schedule",
+      "workflow_dispatch",
+    ]);
+    expect(permissions).toEqual({ contents: "read" });
+    expect(Object.keys(jobs)).toEqual(["policy", "dependency-review"]);
+    expect(
+      runCorpus(jobSteps(object(jobs.policy, "Security policy job"))),
+    ).toMatch(/tools\/gitleaks\.ts[^\n]*--redact/);
+
+    const dependencyReview = object(
+      jobs["dependency-review"],
+      "Dependency review job",
+    );
+    expect(dependencyReview.if).toBe(
+      "${{ github.event_name == 'pull_request' }}",
+    );
+    expect(effectivePermissions(value, dependencyReview)).toEqual({
+      contents: "read",
+      "pull-requests": "read",
+    });
+    const dependencyStep = jobSteps(dependencyReview)[0];
+    expect(dependencyStep.uses).toBe(dependencyReviewAction);
+    expect(
+      object(dependencyStep.with, "Dependency review inputs")[
+        "fail-on-severity"
+      ],
+    ).toBe("high");
+    expect(raw).not.toMatch(/\bpull_request_target\b/);
+  });
+});
+
+describe("Coffee Chat auto-merge controller", () => {
+  it("only enables squash auto-merge for the latest low-risk PR", async () => {
+    const { raw, value } = await loadWorkflow("auto-merge.yml");
+    const trigger = object(value.on, "Auto-merge on");
+    const permissions = object(value.permissions, "Auto-merge permissions");
+    const jobs = object(value.jobs, "Auto-merge jobs");
+    const enable = object(jobs.enable, "Auto-merge enable job");
+    const runs = runCorpus(jobSteps(enable));
+
+    expect(Object.keys(trigger)).toEqual(["workflow_run"]);
+    expect(
+      object(trigger.workflow_run, "workflow_run trigger").workflows,
+    ).toEqual(["Coffee Chat CI", "CodeQL", "Coffee Chat Security"]);
+    expect(permissions).toEqual({
+      contents: "write",
+      "pull-requests": "write",
+    });
+    expect(Object.keys(jobs)).toEqual(["enable"]);
+    expect(runs).toContain("gh pr checks");
+    expect(runs).toContain("--required");
+    expect(runs).toContain("--auto --squash --match-head-commit");
+    expect(runs).toContain("merge-policy.json?ref=main");
+    expect(runs).toContain("HEAD_SHA");
+    expect(allSteps(value).every((step) => step.uses === undefined)).toBe(true);
+    expect(raw).not.toMatch(/actions\/(?:checkout|setup-node)@/);
+  });
+});
+
 describe("Coffee Chat CalVer release workflow", () => {
   it("owns the release mutation and keeps its write boundary explicit", async () => {
     const { raw, value } = await loadWorkflow("release.yml");
@@ -215,13 +331,15 @@ describe("Coffee Chat CalVer release workflow", () => {
 
     expect(value.name).toBe("Coffee Chat Release");
     expect(Object.keys(events)).toEqual(["workflow_dispatch"]);
-    expect(permissions).toEqual({ contents: "write" });
+    expect(permissions).toEqual({ contents: "read" });
     expect(releaseJob.if).toBe("${{ github.ref == 'refs/heads/main' }}");
     expect(effectivePermissions(value, releaseJob)).toEqual({
       contents: "write",
+      "id-token": "write",
+      attestations: "write",
     });
     expect([...new Set(usedActions(value))].sort()).toEqual(
-      [checkoutAction, setupNodeAction].sort(),
+      [checkoutAction, setupNodeAction, attestBuildAction, sbomAction].sort(),
     );
     expect(
       object(
@@ -233,16 +351,26 @@ describe("Coffee Chat CalVer release workflow", () => {
     expect(runs).toMatch(/tools\/release-version\.ts prepare --version/);
     expect(runs).toContain("npm run cc -- generate");
     expect(runs).toContain("npm run cc -- generate --check --format json");
-    expect(runs).toContain("npm test");
+    expect(runs).toContain("npm run test:all");
     expect(runs).toContain("npm run typecheck");
     expect(runs).toContain("npm run format:check");
     expect(runs).toContain("npm run gitleaks:scan");
     expect(runs).toContain("npm run site:build");
     expect(runs).toContain("npm run site:check");
+    expect(steps.some((step) => step.uses === sbomAction)).toBe(true);
+    expect(
+      object(
+        steps.find((step) => step.uses === sbomAction)?.with,
+        "SBOM inputs",
+      ).format,
+    ).toBe("cyclonedx-json");
+    expect(runs).toContain(".sbom.json");
     expect(runs).toContain("Publishing the existing CalVer baseline");
     expect(runs).toMatch(/git tag -a "v\$\{VERSION\}"/);
     expect(runs).toMatch(/git push origin "v\$\{VERSION\}"/);
     expect(runs).toMatch(/gh release create "v\$\{VERSION\}"/);
+    expect(runs).toContain("dist/release/coffee-chat-\${VERSION}.tar.gz");
+    expect(environmentName(releaseJob.environment)).toBe("release");
     expect(raw).not.toMatch(/git push[^\n]*--force/);
     expect(raw).not.toMatch(/\$\{\{\s*secrets\./i);
   });

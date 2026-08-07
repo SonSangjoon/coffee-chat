@@ -2,14 +2,71 @@ name: Coffee Chat CI
 
 on:
   pull_request:
+  merge_group:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
 
+concurrency:
+  group: coffee-chat-ci-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  verify:
-    name: verify
-    runs-on: ubuntu-latest
+  policy:
+    name: policy
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository without persisted credentials
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.5.0
+      - name: Verify workflow and merge policy
+        run: |
+          set -euo pipefail
+          while IFS= read -r ACTION; do
+            REF="${ACTION##*@}"
+            [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "Unpinned action: $ACTION" >&2; exit 1; }
+          done < <(rg -o '^[[:space:]]*uses:[[:space:]]+[^[:space:]#]+' .github/workflows | sed 's/.*@//')
+          DISALLOWED_TRIGGER='pull_request_'target
+          ! rg -n -F "$DISALLOWED_TRIGGER" .github/workflows
+          SECRET_MARKER="$(printf '\044{{ secrets.')"
+          ! rg -n -F "$SECRET_MARKER" .github/workflows
+          for WORKFLOW in .github/workflows/*.yml; do
+            rg -q '^permissions:' "$WORKFLOW"
+          done
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync(".github/merge-policy.json","utf8")); if (!Array.isArray(p.protectedFiles) || !Array.isArray(p.protectedPrefixes)) process.exit(1);'
+      - name: Classify changed paths
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > "$RUNNER_TEMP/changed-files"
+          POLICY="$(< .github/merge-policy.json)"
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            while IFS= read -r PREFIX; do
+              [[ "$FILE" == "$PREFIX"* ]] && echo "protected: $FILE" && exit 0
+            done < <(jq -r '.protectedPrefixes[]?' <<<"$POLICY")
+            while IFS= read -r EXACT; do
+              [ "$FILE" = "$EXACT" ] && echo "protected: $FILE" && exit 0
+            done < <(jq -r '.protectedFiles[]?' <<<"$POLICY")
+          done < "$RUNNER_TEMP/changed-files"
+          echo "auto lane: no protected paths"
+
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -29,6 +86,8 @@ jobs:
         run: node --experimental-strip-types tools/gitleaks.ts scan --mode repository --redact=100
       - name: Run complete test suite
         run: npm test
+      - name: Run isolated native host integration gate
+        run: npm run test:host
       - name: Type-check source
         run: npm run typecheck
       - name: Verify deterministic graph and projections

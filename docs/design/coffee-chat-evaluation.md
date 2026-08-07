@@ -9,10 +9,14 @@ that an input produces the intended result, respects the intended boundary, and
 does not merely produce fluent text. Evaluation therefore precedes the next
 implementation of each Skill.
 
-The canonical evaluation suite lives in the separate
-[`coffee-chat-evals`](./coffee-chat-evals.md) repository. This Engine document
-defines the evaluation principles and the production boundary; cases, judges,
-thresholds, runners, and reports are owned by that repository.
+The canonical Coffee Chat evaluation run lives in the separate
+[`coffee-chat-eval`](https://github.com/SonSangjoon/coffee-chat-eval) repository.
+This Engine document defines the evaluation principles and the production
+boundary; track registration, runners, result validation, and performance
+reports are owned by `coffee-chat-eval`. The independent
+[`coffee-chat-bench`](https://github.com/SonSangjoon/coffee-chat-bench) is one
+candidate-agnostic benchmark track and does not own the complete product
+report.
 
 ## 1. Evaluation principles
 
@@ -46,11 +50,12 @@ An aggregate may be used for release comparison, but never as the only gate.
 
 ## 2. Gold case boundary
 
-Gold and Pressure Cases are synthetic or explicitly consented examples owned by
-`coffee-chat-evals`. They must not copy a user's private Coffee Chat repository
+Gold and Pressure Cases for Coffee Chat product scenes are synthetic or
+explicitly consented examples owned by `coffee-chat-eval`. They must not copy a
+user's private Coffee Chat repository
 into the Engine repository.
 
-The external Eval repository defines each case with:
+The external Eval repository defines each product-scene case with:
 
 ```text
 case_id
@@ -220,7 +225,8 @@ ground truth that the system's representation is recognizable to its owner.
 
 ## 10. Required external suite coverage
 
-The external `coffee-chat-evals` suite must define at least these cases:
+The external `coffee-chat-eval` suite must register at least these product-scene
+cases:
 
 | Case                           | What it proves                                                                            |
 | ------------------------------ | ----------------------------------------------------------------------------------------- |
@@ -244,7 +250,7 @@ The external `coffee-chat-evals` suite must define at least these cases:
 
 An Engine release that changes Init, Sync, Harvest, Roast, Brew, Coffee
 Chat, Coffee Pairing, or Update must receive a matching report from
-`coffee-chat-evals` and pass:
+`coffee-chat-eval` and pass:
 
 1. all deterministic contract gates for affected scenes;
 2. all Green Bean hard conditions and rubric thresholds on the gold suite;

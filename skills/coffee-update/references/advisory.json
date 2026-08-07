@@ -4,7 +4,7 @@
   "target": {
     "repository": "https://github.com/SonSangjoon/coffee-chat",
     "version": "2026.08.04",
-    "release_digest": "sha256:5d6bab28558ee6846cd82156fb6b07932b58eb59268a976d47cf65351804e747"
+    "release_digest": "sha256:4e6bf5b608698379970e926d65964b9fabb0223038b1bccc5ea0950c07da4cfa"
   },
   "registry_digest": "sha256:92d08686a73e43e1c842a739f2f6d0018fca5995c12a6d55f5f597b31c4954c3",
   "reference_schemas": {

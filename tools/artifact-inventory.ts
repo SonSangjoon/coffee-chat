@@ -80,6 +80,9 @@ const MANAGED_PATHS = [
   "method/shared-method.md",
   "package-lock.json",
   "package.json",
+  ".github/merge-policy.json",
+  ".github/workflows/auto-merge.yml",
+  ".github/workflows/security.yml",
   "playwright.config.ts",
   "schemas/candidate-manifest.schema.json",
   "schemas/candidate-request.schema.json",
@@ -183,6 +186,7 @@ const MANAGED_PATHS = [
   "tools/workflow-projections.ts",
   "tsconfig.json",
   "vitest.config.ts",
+  "vitest.host.config.ts",
 ] as const;
 
 const DELIVERY_PATHS = [
@@ -236,11 +240,18 @@ const EXCLUDED_PATHS = [
   ".github/workflows/codeql.yml",
   ".github/workflows/pages.yml",
   ".github/workflows/release.yml",
+  ".github/CODEOWNERS",
+  ".github/ci-policy.mjs",
+  ".github/dependabot.yml",
+  ".github/merge-policy.d.mts",
+  ".github/merge-policy.mjs",
+  ".github/pull_request_template.md",
   "AGENTS.md",
   "CLAUDE.md",
   "CONTENT_LICENSE.md",
   "README.ko.md",
   "README.md",
+  "SECURITY.md",
   "coffee-chat.json",
   "docs/superpowers/plans/2026-08-01-coffee-chat-v1.md",
   "docs/superpowers/plans/2026-08-02-codeql-merge-gate.md",
@@ -251,13 +262,16 @@ const EXCLUDED_PATHS = [
   "docs/superpowers/plans/2026-08-04-coffee-chat-calver.md",
   "docs/superpowers/plans/2026-08-04-coffee-chat-readme-v3.md",
   "docs/superpowers/plans/2026-08-04-coffee-chat-skill-foundation.md",
+  "docs/superpowers/plans/2026-08-05-problem-discovery-study.md",
   "docs/superpowers/specs/2026-07-30-coffee-chat-design.md",
   "docs/superpowers/specs/2026-08-02-coffee-chat-readme-design.md",
   "docs/superpowers/specs/2026-08-03-coffee-chat-agent-lifecycle-design.md",
   "docs/superpowers/specs/2026-08-04-coffee-chat-calver-design.md",
   "docs/design/README.md",
   "docs/design/coffee-chat-architecture.md",
-  "docs/design/coffee-chat-evals.md",
+  "docs/design/coffee-chat-bench.md",
+  "docs/design/coffee-chat-bench-contract.md",
+  "docs/design/coffee-chat-eval.md",
   "docs/design/coffee-chat-evaluation.md",
   "docs/design/coffee-chat-operation-preview.md",
   "docs/design/coffee-chat-skill-contracts.md",
@@ -265,6 +279,8 @@ const EXCLUDED_PATHS = [
   "docs/design/coffee-chat-user-scenes.md",
   "docs/design/coffee-chat.md",
   "docs/research/2026-08-04-coffee-chat-ux-research.md",
+  "docs/quality-map.md",
+  "tests/merge-policy.test.ts",
   "docs/testing.md",
   "engine/migrations/registry.json",
   "engine/release-config.json",
@@ -405,7 +421,16 @@ export function artifactPolicyForPath(
       normalized.startsWith("skills/coffee-update/") ||
       normalized.startsWith("plugins/");
     const authored =
-      normalized === "coffee-chat.json" || normalized === "CONTENT_LICENSE.md";
+      normalized === "coffee-chat.json" ||
+      normalized === "CONTENT_LICENSE.md" ||
+      normalized === ".github/CODEOWNERS" ||
+      normalized === ".github/ci-policy.mjs" ||
+      normalized === ".github/dependabot.yml" ||
+      normalized === ".github/merge-policy.d.mts" ||
+      normalized === ".github/merge-policy.mjs" ||
+      normalized === ".github/pull_request_template.md" ||
+      normalized === "tests/merge-policy.test.ts" ||
+      normalized === "SECURITY.md";
     return {
       path: normalized,
       states: {

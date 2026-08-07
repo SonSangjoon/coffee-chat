@@ -7,6 +7,8 @@ Coffee Chat verifies the generic engine and disposable fictional instances witho
 ```sh
 npm ci
 npm test
+npm run test:host
+npm run test:all
 npm run typecheck
 npm run format:check
 npm run gitleaks:scan
@@ -18,7 +20,11 @@ npm run site:check
 npm run test:site
 ```
 
-`npm run test:acceptance` runs the cross-cutting local acceptance set. It covers the input-only Make mine flow, generated-artifact isolation, secret rejection, query behavior, and native plugin lifecycle before the browser suite runs separately through `npm run test:site`.
+`npm run test:acceptance` runs the deterministic cross-cutting local acceptance
+set. It covers the input-only Make mine flow, generated-artifact isolation,
+secret rejection, and query behavior. `npm run test:host` is the separate
+Codex/Claude native lifecycle gate. `npm run test:all` runs both lanes before
+the browser suite runs separately through `npm run test:site`.
 
 Release preparation is CI-owned. The GitHub Actions release workflow derives a
 UTC `YYYY.MM.DD` version, creates the next migration edge, regenerates the
@@ -93,7 +99,14 @@ README asset tests parse PNG signatures and IHDR dimensions directly, enforce by
 
 ## Native host isolation
 
-Codex lifecycle tests create an existing temporary `CODEX_HOME` and use marketplace-qualified selectors. They never override `HOME` or write the real Codex configuration. The test installs an unrelated sentinel plugin together with the generic engine and two fictional namespaces, compares source and installed bytes, removes each Coffee Chat plugin independently, and proves the other two packages and sentinel remain unchanged. Empty host-owned cache parent directories may remain after removal; plugin payload and inventory entries may not.
+Run native lifecycle tests with `npm run test:host`. They create an existing
+temporary `CODEX_HOME` and use marketplace-qualified selectors. They never
+override `HOME` or write the real Codex configuration. The test installs an
+unrelated sentinel plugin together with the generic engine and two fictional
+namespaces, compares source and installed bytes, removes each Coffee Chat
+plugin independently, and proves the other two packages and sentinel remain
+unchanged. Empty host-owned cache parent directories may remain after removal;
+plugin payload and inventory entries may not.
 
 Claude lifecycle tests use a temporary `CLAUDE_CONFIG_DIR`, plugin cache, and disposable project with local scope. When the `claude` executable is absent, the test is skipped with the explicit reason `unsupported host: claude executable absent`. If the executable exists, missing or changed lifecycle commands are failures rather than silent skips.
 

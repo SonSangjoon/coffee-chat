@@ -474,6 +474,10 @@ async function createFictionalInstanceMarketplace(
     recursive: true,
     force: true,
   });
+  await rm(resolve(root, "skills/coffee-sync"), {
+    recursive: true,
+    force: true,
+  });
   const manifestPath = resolve(root, "coffee-chat.json");
   const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
     profile: { id: string; display_name: string; short_name: string };
@@ -640,6 +644,8 @@ async function assertV1SkillOnlySurface(
       "skills/coffee-init/references/method.md",
       "skills/coffee-init/references/release.json",
       "skills/coffee-init/references/template-surface.json",
+      "skills/coffee-sync/SKILL.md",
+      "skills/coffee-sync/references/method.md",
       "skills/coffee-update/SKILL.md",
       "skills/coffee-update/references/advisory.json",
       "skills/coffee-update/references/engine-migration-document.schema.json",

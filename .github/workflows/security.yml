@@ -1,0 +1,59 @@
+name: Coffee Chat Security
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "43 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: security-policy
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository without persisted credentials
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Set up pinned Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: 24.5.0
+      - name: Verify workflow and action policy
+        run: |
+          set -euo pipefail
+          while IFS= read -r ACTION; do
+            REF="${ACTION##*@}"
+            [[ "$REF" =~ ^[0-9a-f]{40}$ ]] || { echo "Unpinned action: $ACTION" >&2; exit 1; }
+          done < <(rg -o '^[[:space:]]*uses:[[:space:]]+[^[:space:]#]+' .github/workflows | sed 's/.*@//')
+          DISALLOWED_TRIGGER='pull_request_'target
+          ! rg -n -F "$DISALLOWED_TRIGGER" .github/workflows
+          SECRET_MARKER="$(printf '\044{{ secrets.')"
+          ! rg -n -F "$SECRET_MARKER" .github/workflows
+          for WORKFLOW in .github/workflows/*.yml; do
+            rg -q '^permissions:' "$WORKFLOW"
+          done
+      - name: Scan repository for secrets
+        run: node --experimental-strip-types tools/gitleaks.ts scan --mode repository --redact=100
+
+  dependency-review:
+    name: dependency-review
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294
+        with:
+          fail-on-severity: high
